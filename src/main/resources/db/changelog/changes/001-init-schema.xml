@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Users -->
+    <changeSet id="001" author="roland">
+        <createTable tableName="users">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)" />
+            <column name="role" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Warehouse locations -->
+    <changeSet id="002" author="roland">
+        <createTable tableName="warehouse_locations">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="address_line1" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line2" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country" type="VARCHAR(2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(50)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Warehouses -->
+    <changeSet id="003" author="roland">
+        <createTable tableName="warehouses">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="location_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="created_by_user_id" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="warehouses" baseColumnNames="location_id"
+                                 constraintName="fk_warehouses_location"
+                                 referencedTableName="warehouse_locations" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        <addForeignKeyConstraint baseTableName="warehouses" baseColumnNames="created_by_user_id"
+                                 constraintName="fk_warehouses_user"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- Products -->
+    <changeSet id="004" author="roland">
+        <createTable tableName="products">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sku" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="unit" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="net_price" type="NUMERIC(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vat_rate" type="NUMERIC(5,3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Stock balances -->
+    <changeSet id="005" author="roland">
+        <createTable tableName="stock_balances">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="warehouse_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="NUMERIC(15,2)" defaultValueNumeric="0"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+        <addUniqueConstraint tableName="stock_balances"
+                             columnNames="warehouse_id, product_id"
+                             constraintName="uq_stock_warehouse_product"/>
+        <addForeignKeyConstraint baseTableName="stock_balances" baseColumnNames="warehouse_id"
+                                 constraintName="fk_stock_warehouse"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="stock_balances" baseColumnNames="product_id"
+                                 constraintName="fk_stock_product"
+                                 referencedTableName="products" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- Partners -->
+    <changeSet id="006" author="roland">
+        <createTable tableName="partners">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tax_number" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Contacts -->
+    <changeSet id="007" author="roland">
+        <createTable tableName="contacts">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="partner_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line1" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line2" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country" type="VARCHAR(2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(50)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="contacts" baseColumnNames="partner_id"
+                                 constraintName="fk_contacts_partner"
+                                 referencedTableName="partners" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- Documents -->
+    <changeSet id="008" author="roland">
+        <createTable tableName="documents">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="number" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="partner_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_user_id" type="INTEGER"/>
+            <column name="warehouse_id" type="INTEGER"/>
+            <column name="total_amount" type="NUMERIC(15,2)" defaultValueNumeric="0"/>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="completed_at" type="TIMESTAMP"/>
+            <column name="related_document_id" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="partner_id"
+                                 constraintName="fk_documents_partner"
+                                 referencedTableName="partners" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="created_by_user_id"
+                                 constraintName="fk_documents_user"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="warehouse_id"
+                                 constraintName="fk_documents_warehouse"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="related_document_id"
+                                 constraintName="fk_documents_related"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- Document lines -->
+    <changeSet id="009" author="roland">
+        <createTable tableName="document_lines">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="document_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="NUMERIC(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit_price" type="NUMERIC(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_price" type="NUMERIC(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_lines" baseColumnNames="document_id"
+                                 constraintName="fk_doclines_document"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="document_lines" baseColumnNames="product_id"
+                                 constraintName="fk_doclines_product"
+                                 referencedTableName="products" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+    </changeSet>
+
+    <!-- Default admin -->
+    <changeSet id="010" author="roland" runOnChange="true" runAlways="true">
+        <insert tableName="users">
+            <column name="username" value="admin"/>
+            <column name="email" value="admin@example.com"/>
+            <column name="password" value="$2a$12$Xn0TF.Pc6cT3WvagkECNFeVpwGCZKYDlhTo6VkuujyDKU/9Ury8Ia"/><!-- password is: admin.ADMIN.1234 -->
+            <column name="role" value="ADMIN"/>
+            <column name="created_at" valueComputed="now()"/>
+            <column name="updated_at" valueComputed="now()"/>
+        </insert>
+    </changeSet>
+
+    <!-- Indexes -->
+    <changeSet id="011" author="roland">
+        <createIndex indexName="idx_warehouses_location_id" tableName="warehouses">
+            <column name="location_id"/>
+        </createIndex>
+        <createIndex indexName="idx_warehouses_created_by_user_id" tableName="warehouses">
+            <column name="created_by_user_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_stock_balances_warehouse_id" tableName="stock_balances">
+            <column name="warehouse_id"/>
+        </createIndex>
+        <createIndex indexName="idx_stock_balances_product_id" tableName="stock_balances">
+            <column name="product_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_contacts_partner_id" tableName="contacts">
+            <column name="partner_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_documents_partner_id" tableName="documents">
+            <column name="partner_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_created_by_user_id" tableName="documents">
+            <column name="created_by_user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_warehouse_id" tableName="documents">
+            <column name="warehouse_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_related_document_id" tableName="documents">
+            <column name="related_document_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_document_lines_document_id" tableName="document_lines">
+            <column name="document_id"/>
+        </createIndex>
+        <createIndex indexName="idx_document_lines_product_id" tableName="document_lines">
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
