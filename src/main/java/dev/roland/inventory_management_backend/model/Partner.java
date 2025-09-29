@@ -1,15 +1,19 @@
 package dev.roland.inventory_management_backend.model;
 
 import dev.roland.inventory_management_backend.model.enums.PartnerType;
-import dev.roland.inventory_management_backend.model.enums.UserRole;
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "partners")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Partner {
 
     @Id
@@ -26,7 +30,6 @@ public class Partner {
     @Column(name = "tax_number", length = 50)
     private String taxNumber;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

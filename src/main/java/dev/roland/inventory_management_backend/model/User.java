@@ -2,7 +2,7 @@ package dev.roland.inventory_management_backend.model;
 
 import dev.roland.inventory_management_backend.model.enums.UserRole;
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -11,6 +11,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -30,7 +35,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

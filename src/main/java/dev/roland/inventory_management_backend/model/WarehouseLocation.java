@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.model;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -10,6 +10,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "warehouse_locations")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class WarehouseLocation {
 
     @Id
@@ -34,7 +39,6 @@ public class WarehouseLocation {
     @Column(name = "address_line2")
     private String addressLine2;
 
-    @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

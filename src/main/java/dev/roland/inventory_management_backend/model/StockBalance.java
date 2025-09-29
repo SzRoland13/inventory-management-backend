@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -9,6 +10,11 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "stock_balances",
         uniqueConstraints = @UniqueConstraint(columnNames = {"warehouse_id", "product_id"}))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class StockBalance {
 
     @Id
