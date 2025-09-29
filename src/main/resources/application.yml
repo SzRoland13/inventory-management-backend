@@ -10,3 +10,5 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
+
+jwt_secret: ${JWT_SECRET}
