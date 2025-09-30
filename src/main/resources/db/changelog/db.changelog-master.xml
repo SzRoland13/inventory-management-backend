@@ -7,4 +7,5 @@
 
     <include file="db/changelog/changes/001-init-schema.xml"/>
     <include file="db/changelog/changes/002-add-one-time-code-table.xml"/>
+    <include file="db/changelog/changes/003-add-refresh-tokens-table.xml"/>
 </databaseChangeLog>

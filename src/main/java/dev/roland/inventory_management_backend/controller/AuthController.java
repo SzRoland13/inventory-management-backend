@@ -1,7 +1,6 @@
 package dev.roland.inventory_management_backend.controller;
 
-import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
+import dev.roland.inventory_management_backend.dto.auth.*;
 import dev.roland.inventory_management_backend.facade.AuthFacade;
 import dev.roland.inventory_management_backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +27,15 @@ public class AuthController {
     @PostMapping("/first-login")
     ResponseEntity<Void> handleFirstLogin(@RequestBody EmailRequest request) {
         return authFacade.handleFirstLogin(request);
+    }
+
+    @PostMapping("/setup-password")
+    ResponseEntity<Void> handleSetupOfNewPassword(@RequestBody PasswordSetupRequest request) {
+        return authService.handleSetupOfNewPassword(request);
+    }
+
+    @PostMapping
+    ResponseEntity<LoginResponse> handleLogin(@RequestBody LoginRequest request) {
+        return authFacade.handleLogin(request);
     }
 }
