@@ -22,15 +22,17 @@ public class AuthServiceImpl implements AuthService {
         Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
 
         if (optionalUser.isEmpty()) {
-            return new ResponseEntity<>(new CheckFirstLoginResponse(false, false), HttpStatus.BAD_REQUEST);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CheckFirstLoginResponse(false, false));
         }
 
         User user = optionalUser.get();
 
         if (user.getPassword() == null) {
-            return new ResponseEntity<>(new CheckFirstLoginResponse(true, true), HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(new CheckFirstLoginResponse(true, true));
         } else {
-            return new ResponseEntity<>(new CheckFirstLoginResponse(true, false), HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.OK).body(new CheckFirstLoginResponse(true, false));
         }
     }
+
+
 }
