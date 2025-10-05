@@ -13,8 +13,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -44,33 +46,45 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    /**
+     * Sends an HTML email using a Mustache template.
+     * @param details contains recipient, subject, template name, and model
+     * @return true if email sent successfully, false otherwise
+     */
     @Override
     public boolean sendMailWithTemplate(EmailDetails details) {
         try {
-            MustacheFactory mf = new DefaultMustacheFactory();
-            Mustache mustache = mf.compile("templates/"+details.getTemplateName().getFileName() + ".mustache");
-
-            StringWriter writer = new StringWriter();
-            mustache.execute(writer, details.getTemplateModel()).flush();
-            String htmlBody = writer.toString();
-
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    mimeMessage,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
-
-            helper.setFrom(sender);
-            helper.setTo(details.getRecipient());
-            helper.setSubject(details.getSubject());
-            helper.setText(htmlBody, true);
-
-            javaMailSender.send(mimeMessage);
+            String htmlBody = renderTemplate(details.getTemplateName().getFileName(), details.getTemplateModel());
+            sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
             return true;
-
-        } catch (MessagingException | java.io.IOException e) {
+        } catch (Exception e) {
             return false;
         }
+    }
+
+    private String renderTemplate(String templateName, Map<String, Object> model) throws IOException {
+        MustacheFactory mf = new DefaultMustacheFactory();
+        Mustache mustache = mf.compile("templates/" + templateName + ".mustache");
+
+        try (StringWriter writer = new StringWriter()) {
+            mustache.execute(writer, model).flush();
+            return writer.toString();
+        }
+    }
+
+    private void sendHtmlEmail(String to, String subject, String htmlBody) throws MessagingException {
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(
+                mimeMessage,
+                MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                StandardCharsets.UTF_8.name()
+        );
+
+        helper.setFrom(sender);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlBody, true);
+
+        javaMailSender.send(mimeMessage);
     }
 }
