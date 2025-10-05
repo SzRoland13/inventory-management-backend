@@ -31,7 +31,7 @@ public class AuthController {
         return authFacade.sendOneTimeCode(request);
     }
 
-    @PostMapping("/validate-first-login")
+    @PostMapping("/validate-one-time-code")
     ResponseEntity<ApiResponse<Void>> validateOneTimeCodeLogin(@Valid @RequestBody FirstLoginValidationRequest request) {
         return authFacade.validateOneTimeCodeLogin(request);
     }
