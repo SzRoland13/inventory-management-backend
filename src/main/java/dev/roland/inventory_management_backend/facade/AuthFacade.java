@@ -28,10 +28,10 @@ public interface AuthFacade {
      * Handles login by verifying credentials and generating auth tokens
      *
      * @param request user's email address and password
-     * @return user data and generated tokens
+     * @return void
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
-    ResponseEntity<ApiResponse<LoginResponse>> handleLogin(LoginRequest request);
+    ResponseEntity<ApiResponse<Void>> handleLogin(LoginRequest request);
 
     /**
      * Handles token refresh by validating token validity and expiry
@@ -42,4 +42,30 @@ public interface AuthFacade {
      */
     ResponseEntity<ApiResponse<LoginResponse.TokensDetails>> handleTokenRefresh(RefreshRequest request);
 
+    /**
+     * Initializes Two-Factor Authentication (2FA) setup for a user by generating a TOTP secret.
+     *
+     * @param request contains the user's email
+     * @return ApiResponse with the generated QR code image (Base64 data URI)
+     * @throws ApiException if user does not exist or already has 2FA enabled
+     */
+    ResponseEntity<ApiResponse<String>> setup2fa(EmailRequest request);
+
+    /**
+     * Completes the 2FA setup process by validating the user's initial TOTP code.
+     *
+     * @param request contains the user's email and the TOTP code for verification
+     * @return ApiResponse indicating successful 2FA setup
+     * @throws ApiException if the user does not exist or the TOTP code is invalid
+     */
+    ResponseEntity<ApiResponse<Void>> verify2fa(TwoFactorVerifyRequest request);
+
+    /**
+     * Validates a user's TOTP code during the login flow.
+     *
+     * @param request contains the user's email and the TOTP code
+     * @return ApiResponse containing user details and generated access/refresh tokens
+     * @throws ApiException if the user does not exist or the TOTP code is invalid
+     */
+    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request);
 }

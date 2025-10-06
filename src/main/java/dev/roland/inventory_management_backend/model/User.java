@@ -35,6 +35,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @Column(name = "totp_secret")
+    private String totpSecret;
+
+    @Column(name = "is_2fa_enabled", nullable = false)
+    private boolean is2faEnabled = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
