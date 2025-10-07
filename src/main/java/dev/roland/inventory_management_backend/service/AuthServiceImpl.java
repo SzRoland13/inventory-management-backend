@@ -66,6 +66,4 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));
     }
-
-
 }

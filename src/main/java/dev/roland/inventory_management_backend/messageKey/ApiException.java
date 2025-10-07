@@ -8,7 +8,7 @@ public class ApiException extends RuntimeException {
     private final MessageKey messageKey;
 
     public ApiException(MessageKey messageKey) {
-        super(messageKey.getKey()); // optional, for logs
+        super(messageKey.getKey());
         this.messageKey = messageKey;
     }
 }

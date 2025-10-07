@@ -31,7 +31,7 @@ public class AuthController {
         return authFacade.sendOneTimeCode(request);
     }
 
-    @PostMapping("/validate-first-login")
+    @PostMapping("/validate-one-time-code")
     ResponseEntity<ApiResponse<Void>> validateOneTimeCodeLogin(@Valid @RequestBody FirstLoginValidationRequest request) {
         return authFacade.validateOneTimeCodeLogin(request);
     }
@@ -42,12 +42,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<ApiResponse<LoginResponse>> handleLogin(@Valid @RequestBody LoginRequest request) {
+    ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(@Valid @RequestBody LoginRequest request) {
         return authFacade.handleLogin(request);
     }
 
     @PostMapping("/refresh")
     ResponseEntity<ApiResponse<LoginResponse.TokensDetails>> handleTokenRefresh(@Valid @RequestBody RefreshRequest request) {
         return authFacade.handleTokenRefresh(request);
+    }
+
+    @PostMapping("/2fa/setup")
+    ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody EmailRequest request) {
+        return authFacade.setup2fa(request);
+    }
+
+    @PostMapping("/2fa/verify")
+    ResponseEntity<ApiResponse<Void>> verify2fa(@Valid @RequestBody TwoFactorVerifyRequest request) {
+        return authFacade.verify2fa(request);
+    }
+
+    @PostMapping("/2fa/verify-login")
+    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(@Valid @RequestBody TwoFactorVerifyRequest request) {
+        return authFacade.verify2faLogin(request);
     }
 }
