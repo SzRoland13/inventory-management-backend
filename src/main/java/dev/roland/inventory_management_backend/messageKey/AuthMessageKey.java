@@ -14,6 +14,7 @@ public enum AuthMessageKey implements MessageKey {
     TWO_FA_ALREADY_ENABLED("auth.two-fa-already-enabled"),
     TWO_FA_CODE_GENERATED("auth.two-fa-code-generated"),
     INVALID_TWO_FA_CODE("auth.invalid-two-fa-code"),
+    INVALID_OR_EXPIRED_SESSION("auth.invalid-or-expired-session"),
     TWO_FA_SETUP_COMPLETE("auth.two-fa-setup-complete"),
     TWO_FA_NOT_ENABLED("auth.two-fa-not-enabled"),
     PASSWORD_VALID_NEEDS_TWO_FA("auth.password-valid-needs-two-fa"),

@@ -35,6 +35,7 @@ public class AuthFacadeImpl  implements AuthFacade {
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final TwoFactorAuthService twoFactorAuthService;
+    private final LoginSessionService loginSessionService;
 
     /**
      *  Handles first-time login by verifying credentials and sending a one-time code.
@@ -132,7 +133,7 @@ public class AuthFacadeImpl  implements AuthFacade {
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> handleLogin(LoginRequest request) {
+    public ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(LoginRequest request) {
         User user = userService.findUserByEmail(request.getEmail()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
@@ -148,7 +149,12 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.TWO_FA_NOT_ENABLED);
         }
 
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, null));
+        String shortLivedToken = loginSessionService.createTemporarySession(user.getEmail());
+
+        ShortLivedTokenResponse response = new ShortLivedTokenResponse();
+        response.setShortLivedToken(shortLivedToken);
+
+        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
     }
 
 
@@ -242,6 +248,12 @@ public class AuthFacadeImpl  implements AuthFacade {
     public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request) {
         User user = userService.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
+
+        String emailFromToken = loginSessionService.consumeSessionToken(request.getShortLivedToken());
+
+        if (emailFromToken == null || !emailFromToken.equals(request.getEmail())) {
+            throw new ApiException(AuthMessageKey.INVALID_OR_EXPIRED_SESSION);
+        }
 
         boolean valid = twoFactorAuthService.verifyCode(user.getTotpSecret(), request.getCode());
         if (!valid) {

@@ -28,10 +28,10 @@ public interface AuthFacade {
      * Handles login by verifying credentials and generating auth tokens
      *
      * @param request user's email address and password
-     * @return void
+     * @return Short life token to later provide with 2FA login
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
-    ResponseEntity<ApiResponse<Void>> handleLogin(LoginRequest request);
+    ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(LoginRequest request);
 
     /**
      * Handles token refresh by validating token validity and expiry

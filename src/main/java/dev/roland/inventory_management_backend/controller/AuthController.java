@@ -42,7 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<ApiResponse<Void>> handleLogin(@Valid @RequestBody LoginRequest request) {
+    ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(@Valid @RequestBody LoginRequest request) {
         return authFacade.handleLogin(request);
     }
 

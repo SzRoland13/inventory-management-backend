@@ -21,4 +21,9 @@ spring:
           auth: true
           starttls:
             enable: true
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2000
 jwt_secret: ${JWT_SECRET}
