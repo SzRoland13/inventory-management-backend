@@ -14,6 +14,6 @@ public class TwoFactorVerifyRequest {
     @NotBlank(message = "Verifier code cannot be empty")
     private String code;
 
-    @NotBlank(message = "Short lived token cannot be empty")
-    private String shortLivedToken;
+    @NotBlank(message = "Short life token cannot be empty")
+    private String shortLifeToken;
 }

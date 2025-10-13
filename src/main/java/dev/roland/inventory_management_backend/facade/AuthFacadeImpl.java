@@ -81,7 +81,7 @@ public class AuthFacadeImpl  implements AuthFacade {
      * @throws ApiException if user does not exist or one time code invalid
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> validateOneTimeCodeLogin(FirstLoginValidationRequest request) {
+    public ResponseEntity<ApiResponse<Void>> validateOneTimeCode(FirstLoginValidationRequest request) {
         OneTimeCode oneTimeCode = oneTimeCodeService.findByCode(request.getOneTimeCode()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
@@ -133,7 +133,7 @@ public class AuthFacadeImpl  implements AuthFacade {
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
     @Override
-    public ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(LoginRequest request) {
+    public ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(LoginRequest request) {
         User user = userService.findUserByEmail(request.getEmail()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
@@ -149,10 +149,10 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.TWO_FA_NOT_ENABLED);
         }
 
-        String shortLivedToken = loginSessionService.createTemporarySession(user.getEmail());
+        String shortLifeToken = loginSessionService.createTemporarySession(user.getEmail());
 
-        ShortLivedTokenResponse response = new ShortLivedTokenResponse();
-        response.setShortLivedToken(shortLivedToken);
+        ShortLifeTokenResponse response = new ShortLifeTokenResponse();
+        response.setShortLifeToken(shortLifeToken);
 
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
     }
@@ -214,7 +214,7 @@ public class AuthFacadeImpl  implements AuthFacade {
     }
 
     /**
-     * Verifies the 2FA TOTP code provided by the user during setup or login.
+     * Verifies the 2FA TOTP code provided by the user during setup.
      *
      * @param request contains the user's email and the TOTP verification code
      * @return ApiResponse indicates if the setup was successful
@@ -238,7 +238,7 @@ public class AuthFacadeImpl  implements AuthFacade {
     }
 
     /**
-     * Verifies the 2FA TOTP code provided by the user during setup or login.
+     * Verifies the 2FA TOTP code provided by the user during login.
      *
      * @param request contains the user's email and the TOTP verification code
      * @return ApiResponse user data and access tokens
@@ -249,7 +249,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         User user = userService.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
 
-        String emailFromToken = loginSessionService.consumeSessionToken(request.getShortLivedToken());
+        String emailFromToken = loginSessionService.consumeSessionToken(request.getShortLifeToken());
 
         if (emailFromToken == null || !emailFromToken.equals(request.getEmail())) {
             throw new ApiException(AuthMessageKey.INVALID_OR_EXPIRED_SESSION);

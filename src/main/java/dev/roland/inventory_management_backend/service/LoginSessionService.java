@@ -16,7 +16,7 @@ public class LoginSessionService {
     private static final long SESSION_TTL_MINUTES = 5;
 
     /**
-     * Generate and store a short-lived login session token.
+     * Generate and store a short-life login session token.
      *
      * @param email user email
      * @return generated token
@@ -30,7 +30,7 @@ public class LoginSessionService {
 
     /**
      * Validate and consume a temporary session token.
-     * @param token the short-lived token
+     * @param token the short-life token
      * @return email associated with the token
      */
     public String consumeSessionToken(String token) {

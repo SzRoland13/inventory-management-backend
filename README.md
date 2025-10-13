@@ -85,9 +85,9 @@ The application uses a multi-step secure authentication process with **JWT, refr
 - Validates code and sets up a new password.
 3. **Regular Login**
 - User enters email and password.
-- If 2FA is enabled backend returns a **short-lived session token.**
+- If 2FA is enabled backend returns a **short-life session token.**
 4. **2FA Verification (Microsoft/Google Authenticator**
-- User submits their **email, 2FA code, short-lived token.**
+- User submits their **email, 2FA code, short-life token.**
 - On success → receives **access token and refresh token.**
 5. **Refresh Token Flow**
 - When access token expires, frontend calls **`/auth/refresh`** to obtain a new access token.
@@ -96,7 +96,7 @@ The application uses a multi-step secure authentication process with **JWT, refr
 
 ### 🔒 Technologies
 - **JWT (Access + Refresh tokens) for stateless auth**
-- **Redis for short-lived login sessions**
+- **Redis for short-life login sessions**
 - **TOTP (RFC 6238) via Authenticator apps**
 - **Flyway for database migrations**
 - **Lombok + JPA + Validation for clean model layer**
@@ -111,7 +111,7 @@ The application uses a multi-step secure authentication process with **JWT, refr
 - **✅ Password setup and reset flow**
 - **✅ Email-based 2FA setup and verification**
 - **✅ JWT access and refresh token system**
-- **✅ Redis-based short-lived session storage**
+- **✅ Redis-based short-life session storage**
 - **✅ Modular architecture with services and facades**
 - **✅ Centralized exception handling and message keys**
 - **✅ Ready for Docker + Nginx deployment**
