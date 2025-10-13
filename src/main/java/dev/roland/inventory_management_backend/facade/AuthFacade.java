@@ -22,7 +22,7 @@ public interface AuthFacade {
      * @return ApiResponse indicating whether the one time code was valid
      * @throws ApiException if user does not exist or one time code invalid
      */
-    ResponseEntity<ApiResponse<Void>> validateOneTimeCodeLogin(FirstLoginValidationRequest request);
+    ResponseEntity<ApiResponse<Void>> validateOneTimeCode(FirstLoginValidationRequest request);
 
     /**
      * Handles login by verifying credentials and generating auth tokens
@@ -31,7 +31,7 @@ public interface AuthFacade {
      * @return Short life token to later provide with 2FA login
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
-    ResponseEntity<ApiResponse<ShortLivedTokenResponse>> handleLogin(LoginRequest request);
+    ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(LoginRequest request);
 
     /**
      * Handles token refresh by validating token validity and expiry
