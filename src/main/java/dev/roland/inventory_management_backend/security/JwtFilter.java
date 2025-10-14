@@ -44,8 +44,8 @@ public class JwtFilter  extends OncePerRequestFilter {
             } else {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid token");
             }
-
-            filterChain.doFilter(request, response);
         }
+
+        filterChain.doFilter(request, response);
     }
 }

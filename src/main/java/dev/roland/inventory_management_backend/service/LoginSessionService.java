@@ -1,9 +1,12 @@
 package dev.roland.inventory_management_backend.service;
 
+import dev.roland.inventory_management_backend.dto.auth.TokenWithExpiry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -13,7 +16,8 @@ public class LoginSessionService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    private static final long SESSION_TTL_MINUTES = 5;
+    @Value("${redis.session.ttl-minutes}")
+    private long sessionTtlMinutes;
 
     /**
      * Generate and store a short-life login session token.
@@ -21,11 +25,11 @@ public class LoginSessionService {
      * @param email user email
      * @return generated token
      */
-    public String createTemporarySession(String email) {
+    public TokenWithExpiry createTemporarySessionWithExpiry(String email) {
         String token = UUID.randomUUID().toString();
-        redisTemplate.opsForValue().set(token, email, SESSION_TTL_MINUTES, TimeUnit.MINUTES);
-
-        return token;
+        Instant expiresAt = Instant.now().plusSeconds(sessionTtlMinutes * 60);
+        redisTemplate.opsForValue().set(token, email, sessionTtlMinutes, TimeUnit.MINUTES);
+        return new TokenWithExpiry(token, expiresAt);
     }
 
     /**

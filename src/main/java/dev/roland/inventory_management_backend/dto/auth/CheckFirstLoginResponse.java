@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CheckFirstLoginResponse {
-    private boolean isEmailRegistered;
-    private boolean isFirstLogin;
+    private boolean emailRegistered;
+    private boolean firstLogin;
 }

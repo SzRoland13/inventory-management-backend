@@ -263,11 +263,19 @@
     </changeSet>
 
     <!-- Default admin -->
-    <changeSet id="010" author="roland" runOnChange="true" runAlways="true">
+    <changeSet id="010" author="roland">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM users WHERE username='admin';
+            </sqlCheck>
+        </preConditions>
         <insert tableName="users">
             <column name="username" value="admin"/>
             <column name="email" value="admin@example.com"/>
-            <column name="password" value="$2a$12$Xn0TF.Pc6cT3WvagkECNFeVpwGCZKYDlhTo6VkuujyDKU/9Ury8Ia"/><!-- password is: admin.ADMIN.1234 -->
+            <column name="password" value="$2a$12$Xn0TF.Pc6cT3WvagkECNFeVpwGCZKYDlhTo6VkuujyDKU/9Ury8Ia"/><!-- password is: admin.ADMIN.1234! -->
             <column name="role" value="ADMIN"/>
             <column name="created_at" valueComputed="now()"/>
             <column name="updated_at" valueComputed="now()"/>

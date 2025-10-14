@@ -145,16 +145,17 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
         }
 
-        if (!user.is2faEnabled()) {
-            throw new ApiException(AuthMessageKey.TWO_FA_NOT_ENABLED);
-        }
+        TokenWithExpiry tokenWithExpiry = loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
 
-        String shortLifeToken = loginSessionService.createTemporarySession(user.getEmail());
+        ShortLifeTokenResponse response = ShortLifeTokenResponse
+                .builder()
+                .shortLifeToken(tokenWithExpiry.getToken())
+                .expiresAt(tokenWithExpiry.getExpiresAt())
+                .build();
 
-        ShortLifeTokenResponse response = new ShortLifeTokenResponse();
-        response.setShortLifeToken(shortLifeToken);
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
+        return !user.is2faEnabled() ?
+                ResponseEntity.badRequest().body(ApiResponse.failure(AuthMessageKey.TWO_FA_NOT_ENABLED, response))
+                : ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
     }
 
 

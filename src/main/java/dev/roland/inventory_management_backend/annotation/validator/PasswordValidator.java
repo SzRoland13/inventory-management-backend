@@ -36,7 +36,9 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
         String sequences = "abcdefghijklmnopqrstuvwxyz0123456789";
         for (int i = 0; i < sequences.length() - 3; i++) {
             String seq = sequences.substring(i, i + 4);
-            if (lower.contains(seq)) return false;
+            if (lower.contains(seq) || lower.contains(new StringBuilder(seq).reverse().toString())) {
+                return false;
+            }
         }
 
         return true;
