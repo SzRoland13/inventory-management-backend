@@ -215,30 +215,6 @@ public class AuthFacadeImpl  implements AuthFacade {
     }
 
     /**
-     * Verifies the 2FA TOTP code provided by the user during setup.
-     *
-     * @param request contains the user's email and the TOTP verification code
-     * @return ApiResponse indicates if the setup was successful
-     * @throws ApiException if user not found or code is invalid
-     */
-    @Override
-    @Transactional
-    public ResponseEntity<ApiResponse<Void>> verify2fa(TwoFactorVerifyRequest request) {
-        User user = userService.findUserByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
-
-        boolean valid = twoFactorAuthService.verifyCode(user.getTotpSecret(), request.getCode());
-        if (!valid) {
-            throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
-        }
-
-        user.set2faEnabled(true);
-        userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TWO_FA_SETUP_COMPLETE, null));
-    }
-
-    /**
      * Verifies the 2FA TOTP code provided by the user during login.
      *
      * @param request contains the user's email and the TOTP verification code
@@ -247,6 +223,8 @@ public class AuthFacadeImpl  implements AuthFacade {
      */
     @Override
     public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request) {
+        boolean firstTime2FAEnabled = false;
+
         User user = userService.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
 
@@ -261,6 +239,13 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
         }
 
+        // If first-time setup, enable 2FA here
+        if (!user.is2faEnabled()) {
+            user.set2faEnabled(true);
+            userService.save(user);
+            firstTime2FAEnabled = true;
+        }
+
         LoginResponse.UserDetails userDetails = new LoginResponse.UserDetails(
                 user.getEmail(),
                 user.getUsername(),
@@ -268,7 +253,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         );
 
         return ResponseEntity.ok(
-                ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user)))
+                ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user), firstTime2FAEnabled))
         );
     }
 

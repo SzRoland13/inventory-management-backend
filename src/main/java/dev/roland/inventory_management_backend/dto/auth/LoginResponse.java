@@ -11,6 +11,7 @@ public class LoginResponse {
 
     private UserDetails user;
     private TokensDetails tokens;
+    private boolean firstTime2FAEnabled;
 
     @Getter
     @Setter

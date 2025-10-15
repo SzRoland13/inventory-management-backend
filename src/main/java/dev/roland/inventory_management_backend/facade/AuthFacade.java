@@ -51,14 +51,6 @@ public interface AuthFacade {
      */
     ResponseEntity<ApiResponse<String>> setup2fa(EmailRequest request);
 
-    /**
-     * Completes the 2FA setup process by validating the user's initial TOTP code.
-     *
-     * @param request contains the user's email and the TOTP code for verification
-     * @return ApiResponse indicating successful 2FA setup
-     * @throws ApiException if the user does not exist or the TOTP code is invalid
-     */
-    ResponseEntity<ApiResponse<Void>> verify2fa(TwoFactorVerifyRequest request);
 
     /**
      * Validates a user's TOTP code during the login flow.

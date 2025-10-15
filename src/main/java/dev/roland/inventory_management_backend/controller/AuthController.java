@@ -56,11 +56,6 @@ public class AuthController {
         return authFacade.setup2fa(request);
     }
 
-    @PostMapping("/2fa/verify")
-    ResponseEntity<ApiResponse<Void>> verify2fa(@Valid @RequestBody TwoFactorVerifyRequest request) {
-        return authFacade.verify2fa(request);
-    }
-
     @PostMapping("/2fa/login")
     ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(@Valid @RequestBody TwoFactorVerifyRequest request) {
         return authFacade.verify2faLogin(request);
