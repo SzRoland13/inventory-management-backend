@@ -55,19 +55,17 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
         }
 
-        String oneTimeCode = generateOneTimeCode();
+        OneTimeCode code = oneTimeCodeService.findByUserId(user.getId())
+                .orElse(new OneTimeCode());
 
-        if (sendFirstLoginEmail(user, oneTimeCode)) {
-            oneTimeCodeService.save(
-                    OneTimeCode.builder()
-                            .code(oneTimeCode)
-                            .user(user)
-                            .expiresAt(LocalDateTime.now().plusMinutes(30))
-                            .build()
-            );
+        code.setUser(user);
+        code.setCode(generateOneTimeCode());
+        code.setExpiresAt(LocalDateTime.now().plusMinutes(30));
 
+        if (sendFirstLoginEmail(user, code.getCode())) {
+            oneTimeCodeService.save(code);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, null));
+                    .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
         } else {
             throw new ApiException(AuthMessageKey.EMAIL_SEND_FAILED);
         }
@@ -119,6 +117,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         EmailDetails emailDetails = EmailDetails.builder()
                 .recipient(user.getEmail())
                 .templateName(MailTemplate.ONE_TIME_CODE_MAIL)
+                .subject("One Time Code for Login")
                 .templateModel(model)
                 .build();
 
@@ -253,7 +252,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         );
 
         return ResponseEntity.ok(
-                ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user), firstTime2FAEnabled))
+                ApiResponse.success(firstTime2FAEnabled ? AuthMessageKey.TWO_FA_SETUP_COMPLETE : AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user), firstTime2FAEnabled))
         );
     }
 

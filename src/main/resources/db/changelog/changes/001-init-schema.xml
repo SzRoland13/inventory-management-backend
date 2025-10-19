@@ -21,6 +21,9 @@
             <column name="role" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="is_otc_setup_complete" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="now()"/>
         </createTable>
@@ -265,12 +268,12 @@
     <!-- Default admin -->
     <changeSet id="010" author="roland">
         <preConditions onFail="MARK_RAN">
-            <not>
+            <and>
                 <tableExists tableName="users"/>
-            </not>
-            <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM users WHERE username='admin';
-            </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM users WHERE username = 'admin';
+                </sqlCheck>
+            </and>
         </preConditions>
         <insert tableName="users">
             <column name="username" value="admin"/>
@@ -279,6 +282,7 @@
             <column name="role" value="ADMIN"/>
             <column name="created_at" valueComputed="now()"/>
             <column name="updated_at" valueComputed="now()"/>
+            <column name="is_otc_setup_complete" valueBoolean="true" />
         </insert>
     </changeSet>
 

@@ -58,6 +58,7 @@ public class EmailServiceImpl implements EmailService {
             sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

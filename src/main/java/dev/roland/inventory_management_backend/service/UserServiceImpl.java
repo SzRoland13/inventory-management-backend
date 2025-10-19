@@ -1,8 +1,13 @@
 package dev.roland.inventory_management_backend.service;
 
+import dev.roland.inventory_management_backend.dto.ApiResponse;
+import dev.roland.inventory_management_backend.messageKey.ApiException;
+import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -46,5 +51,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findUserById(Long userId) {
         return userRepository.findById(userId);
+    }
+
+    /**
+     * Validates the current authenticated user session.
+     *
+     * @param auth the {@link Authentication} object automatically injected by Spring Security,
+     *             representing the currently authenticated user
+     * @return a {@link ResponseEntity} containing an {@link ApiResponse} with a success status
+     *         if the session is valid
+     * @throws ApiException if the authentication is missing, invalid, or the principal cannot be resolved
+     */
+    @Override
+    public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ApiException(AuthMessageKey.INVALID_TOKEN);
+        }
+
+        User user = (User) auth.getPrincipal();
+        if (user == null) {
+            throw new ApiException(AuthMessageKey.INVALID_TOKEN);
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
     }
 }

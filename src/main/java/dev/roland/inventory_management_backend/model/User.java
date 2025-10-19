@@ -42,6 +42,9 @@ public class User {
     @Column(name = "is_2fa_enabled", nullable = false)
     private boolean is2faEnabled = false;
 
+    @Column(name = "is_otc_setup_complete", nullable = false)
+    private boolean isOtcSetupComplete = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

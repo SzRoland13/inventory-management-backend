@@ -29,4 +29,13 @@ public interface OneTimeCodeService {
      * @param oneTimeCode the {@link OneTimeCode} entity to delete
      */
     void delete(OneTimeCode oneTimeCode);
+
+    /**
+     * Retrieves a {@link OneTimeCode} entity from the database that matches the given user id.
+     *
+     * @param userId the one time code string to look up
+     * @return an {@link Optional} containing the found {@link OneTimeCode},
+     * or an empty {@link Optional} if no matching token exists
+     */
+    Optional<OneTimeCode> findByUserId(Long userId);
 }

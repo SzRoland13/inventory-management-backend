@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface OneTimeCodeRepository extends JpaRepository<OneTimeCode, Long> {
     Optional<OneTimeCode> findByCode(String code);
+
+    Optional<OneTimeCode> findByUserId(Long userId);
 }
