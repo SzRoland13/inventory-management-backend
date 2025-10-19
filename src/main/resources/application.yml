@@ -7,6 +7,10 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
@@ -23,7 +27,10 @@ spring:
             enable: true
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
       timeout: 2000
 jwt_secret: ${JWT_SECRET}
+redis:
+  session:
+    ttl-minutes: ${REDIS_SESSION_TTL_MINUTES:8}

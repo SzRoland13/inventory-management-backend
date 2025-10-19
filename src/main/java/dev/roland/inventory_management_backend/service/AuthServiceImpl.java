@@ -25,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
      * This method checks if provided credentials are valid and if it is first login (missing password)
      *
      * @param request email address of user
-     * @return success or failure ApiResponse based on if the user is trying to log in first time or not
+     * @return ApiResponse based on if the user is trying to log in first time or not
      * @throws ApiException if user is not registered
      */
     @Override
@@ -33,11 +33,13 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
 
-        if (user.getPassword() == null) {
-            return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, new CheckFirstLoginResponse(true, true)));
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.failure(AuthMessageKey.NOT_FIRST_LOGIN, new CheckFirstLoginResponse(true, false)));
-        }
+        boolean firstLogin = user.getPassword() == null;
+
+        AuthMessageKey messageKey = firstLogin
+                ? AuthMessageKey.FIRST_LOGIN
+                : AuthMessageKey.NOT_FIRST_LOGIN;
+
+        return ResponseEntity.ok(ApiResponse.success(messageKey, new CheckFirstLoginResponse(true, firstLogin)));
     }
 
     /**
@@ -53,7 +55,8 @@ public class AuthServiceImpl implements AuthService {
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
 
-        if (user.getPassword() != null) {
+
+        if (user.getPassword() != null || user.isOtcSetupComplete()) {
            throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
         }
 
@@ -62,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setOtcSetupComplete(true);
 
         userRepository.save(user);
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));

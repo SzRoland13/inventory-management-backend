@@ -16,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class User {
 
     @Id
@@ -41,6 +42,9 @@ public class User {
     @Column(name = "is_2fa_enabled", nullable = false)
     private boolean is2faEnabled = false;
 
+    @Column(name = "is_otc_setup_complete", nullable = false)
+    private boolean isOtcSetupComplete = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -48,7 +52,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Warehouse> warehouses = new ArrayList<>();
 }
 

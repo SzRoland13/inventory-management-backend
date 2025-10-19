@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("api/V1/auth")
+@RequestMapping("api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -54,11 +54,6 @@ public class AuthController {
     @PostMapping("/2fa/setup")
     ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody EmailRequest request) {
         return authFacade.setup2fa(request);
-    }
-
-    @PostMapping("/2fa/verify")
-    ResponseEntity<ApiResponse<Void>> verify2fa(@Valid @RequestBody TwoFactorVerifyRequest request) {
-        return authFacade.verify2fa(request);
     }
 
     @PostMapping("/2fa/login")

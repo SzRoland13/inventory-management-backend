@@ -6,9 +6,6 @@ import lombok.*;
 import java.util.Map;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@RequiredArgsConstructor
 @Builder
 public class EmailDetails {
 

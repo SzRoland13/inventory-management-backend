@@ -1,7 +1,9 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.*;
+import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
+import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
+import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import org.springframework.http.ResponseEntity;
 

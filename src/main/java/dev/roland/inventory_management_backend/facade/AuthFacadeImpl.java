@@ -55,19 +55,17 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
         }
 
-        String oneTimeCode = generateOneTimeCode();
+        OneTimeCode code = oneTimeCodeService.findByUserId(user.getId())
+                .orElse(new OneTimeCode());
 
-        if (sendFirstLoginEmail(user, oneTimeCode)) {
-            oneTimeCodeService.save(
-                    OneTimeCode.builder()
-                            .code(oneTimeCode)
-                            .user(user)
-                            .expiresAt(LocalDateTime.now().plusMinutes(30))
-                            .build()
-            );
+        code.setUser(user);
+        code.setCode(generateOneTimeCode());
+        code.setExpiresAt(LocalDateTime.now().plusMinutes(30));
 
+        if (sendFirstLoginEmail(user, code.getCode())) {
+            oneTimeCodeService.save(code);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, null));
+                    .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
         } else {
             throw new ApiException(AuthMessageKey.EMAIL_SEND_FAILED);
         }
@@ -119,6 +117,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         EmailDetails emailDetails = EmailDetails.builder()
                 .recipient(user.getEmail())
                 .templateName(MailTemplate.ONE_TIME_CODE_MAIL)
+                .subject("One Time Code for Login")
                 .templateModel(model)
                 .build();
 
@@ -145,16 +144,17 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
         }
 
-        if (!user.is2faEnabled()) {
-            throw new ApiException(AuthMessageKey.TWO_FA_NOT_ENABLED);
-        }
+        TokenWithExpiry tokenWithExpiry = loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
 
-        String shortLifeToken = loginSessionService.createTemporarySession(user.getEmail());
+        ShortLifeTokenResponse response = ShortLifeTokenResponse
+                .builder()
+                .shortLifeToken(tokenWithExpiry.getToken())
+                .expiresAt(tokenWithExpiry.getExpiresAt())
+                .build();
 
-        ShortLifeTokenResponse response = new ShortLifeTokenResponse();
-        response.setShortLifeToken(shortLifeToken);
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
+        return !user.is2faEnabled() ?
+                ResponseEntity.badRequest().body(ApiResponse.failure(AuthMessageKey.TWO_FA_NOT_ENABLED, response))
+                : ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, response));
     }
 
 
@@ -214,30 +214,6 @@ public class AuthFacadeImpl  implements AuthFacade {
     }
 
     /**
-     * Verifies the 2FA TOTP code provided by the user during setup.
-     *
-     * @param request contains the user's email and the TOTP verification code
-     * @return ApiResponse indicates if the setup was successful
-     * @throws ApiException if user not found or code is invalid
-     */
-    @Override
-    @Transactional
-    public ResponseEntity<ApiResponse<Void>> verify2fa(TwoFactorVerifyRequest request) {
-        User user = userService.findUserByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
-
-        boolean valid = twoFactorAuthService.verifyCode(user.getTotpSecret(), request.getCode());
-        if (!valid) {
-            throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
-        }
-
-        user.set2faEnabled(true);
-        userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TWO_FA_SETUP_COMPLETE, null));
-    }
-
-    /**
      * Verifies the 2FA TOTP code provided by the user during login.
      *
      * @param request contains the user's email and the TOTP verification code
@@ -246,6 +222,8 @@ public class AuthFacadeImpl  implements AuthFacade {
      */
     @Override
     public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request) {
+        boolean firstTime2FAEnabled = false;
+
         User user = userService.findUserByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
 
@@ -260,6 +238,13 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
         }
 
+        // If first-time setup, enable 2FA here
+        if (!user.is2faEnabled()) {
+            user.set2faEnabled(true);
+            userService.save(user);
+            firstTime2FAEnabled = true;
+        }
+
         LoginResponse.UserDetails userDetails = new LoginResponse.UserDetails(
                 user.getEmail(),
                 user.getUsername(),
@@ -267,7 +252,7 @@ public class AuthFacadeImpl  implements AuthFacade {
         );
 
         return ResponseEntity.ok(
-                ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user)))
+                ApiResponse.success(firstTime2FAEnabled ? AuthMessageKey.TWO_FA_SETUP_COMPLETE : AuthMessageKey.LOGIN_SUCCESS, new LoginResponse(userDetails, generateTokens(user), firstTime2FAEnabled))
         );
     }
 

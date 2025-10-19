@@ -45,4 +45,16 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
     public void delete(OneTimeCode oneTimeCode) {
         oneTimeCodeRepository.delete(oneTimeCode);
     }
+
+    /**
+     * Retrieves a {@link OneTimeCode} entity from the database that matches the given user id.
+     *
+     * @param userId the one time code string to look up
+     * @return an {@link Optional} containing the found {@link OneTimeCode},
+     * or an empty {@link Optional} if no matching token exists
+     */
+    @Override
+    public Optional<OneTimeCode> findByUserId(Long userId) {
+        return oneTimeCodeRepository.findByUserId(userId);
+    }
 }

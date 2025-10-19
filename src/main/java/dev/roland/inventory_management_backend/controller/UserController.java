@@ -10,13 +10,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/V1/user")
+@RequestMapping("api/v1/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -34,5 +32,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> reset2fa(@Valid @RequestBody Reset2FARequest request) {
         return userFacade.resetUser2FA(request);
+    }
+
+
+    @GetMapping("/check-session")
+    public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
+        return userService.checkSession(auth);
     }
 }
