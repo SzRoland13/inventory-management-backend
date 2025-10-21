@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import dev.roland.inventory_management_backend.model.User;
 import jakarta.validation.constraints.NotNull;
@@ -47,4 +48,6 @@ public interface UserService {
      * @throws ApiException if the authentication is missing, invalid, or the principal cannot be resolved
      */
     ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth);
+
+    ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers();
 }

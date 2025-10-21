@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.controller;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
 import dev.roland.inventory_management_backend.dto.user.Reset2FARequest;
 import dev.roland.inventory_management_backend.facade.UserFacade;
@@ -38,5 +39,10 @@ public class UserController {
     @GetMapping("/check-session")
     public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
         return userService.checkSession(auth);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
+        return userService.getAllUsers();
     }
 }

@@ -1,8 +1,11 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
+import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -68,11 +72,25 @@ public class UserServiceImpl implements UserService {
             throw new ApiException(AuthMessageKey.INVALID_TOKEN);
         }
 
-        User user = (User) auth.getPrincipal();
+        User user = userRepository.findByUsername(auth.getName()).orElseThrow(
+                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
+        );
+
         if (user == null) {
             throw new ApiException(AuthMessageKey.INVALID_TOKEN);
         }
 
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+
+        return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, new AllUserResponse(mapUserToUserDto(users))));
+    }
+
+    private List<UserDto> mapUserToUserDto(List<User> users) {
+        return users.stream().map(UserDto::new).toList();
     }
 }

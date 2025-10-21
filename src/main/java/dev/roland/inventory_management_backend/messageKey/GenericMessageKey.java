@@ -2,7 +2,8 @@ package dev.roland.inventory_management_backend.messageKey;
 
 public enum GenericMessageKey  implements MessageKey {
     GENERIC_ERROR("error.generic"),
-    VALIDATION_ERROR("error.validation");
+    VALIDATION_ERROR("error.validation"),
+    REQUEST_SUCCESS("request.success");
 
     private final String key;
 
