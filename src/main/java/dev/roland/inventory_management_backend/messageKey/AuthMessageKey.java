@@ -21,7 +21,9 @@ public enum AuthMessageKey implements MessageKey {
     PASSWORD_VALID_NEEDS_TWO_FA("auth.password-valid-needs-two-fa"),
     ONE_TIME_CODE_SENT("auth.one-time-code-sent"),
     ONE_TIME_CODE_VALIDATION_SUCCESS("auth.one-time-code-validation-success"),
-    ONE_TIME_CODE_EXPIRED("auth.one-time-code-expired");
+    ONE_TIME_CODE_EXPIRED("auth.one-time-code-expired"),
+    ONE_TIME_CODE_SHOULD_BE_VERIFIED_FIRST("auth.one-time-code.validate-before-two-fa"),
+    ;
 
     private final String key;
 

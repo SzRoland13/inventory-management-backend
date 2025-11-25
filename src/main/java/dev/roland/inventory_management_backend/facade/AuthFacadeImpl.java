@@ -9,6 +9,7 @@ import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.model.enums.MailTemplate;
+import dev.roland.inventory_management_backend.model.enums.UserStatus;
 import dev.roland.inventory_management_backend.security.JwtUtil;
 import dev.roland.inventory_management_backend.service.*;
 import jakarta.transaction.Transactional;
@@ -203,6 +204,10 @@ public class AuthFacadeImpl  implements AuthFacade {
             throw new ApiException(AuthMessageKey.TWO_FA_ALREADY_ENABLED);
         }
 
+        if (!user.isOtcSetupComplete()) {
+            throw new ApiException(AuthMessageKey.ONE_TIME_CODE_SHOULD_BE_VERIFIED_FIRST);
+        }
+
         String secret = twoFactorAuthService.generateSecret();
 
         user.setTotpSecret(secret);
@@ -239,8 +244,9 @@ public class AuthFacadeImpl  implements AuthFacade {
         }
 
         // If first-time setup, enable 2FA here
-        if (!user.is2faEnabled()) {
+        if (!user.is2faEnabled() && user.isOtcSetupComplete()) {
             user.set2faEnabled(true);
+            user.setStatus(UserStatus.ACTIVE);
             userService.save(user);
             firstTime2FAEnabled = true;
         }
