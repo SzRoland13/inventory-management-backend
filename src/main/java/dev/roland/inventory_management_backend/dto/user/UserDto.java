@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.dto.user;
 
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.model.enums.UserRole;
+import dev.roland.inventory_management_backend.model.enums.UserStatus;
 import lombok.*;
 
 @Getter
@@ -18,6 +19,7 @@ public class UserDto {
         this.role = user.getRole();
         this.TwoFaEnabled = user.is2faEnabled();
         this.otcSetupCompleted = user.isOtcSetupComplete();
+        this.userStatus = user.getStatus();
     }
 
     private long id;
@@ -26,4 +28,5 @@ public class UserDto {
     private UserRole role;
     private boolean TwoFaEnabled;
     private boolean otcSetupCompleted;
+    private UserStatus userStatus;
 }

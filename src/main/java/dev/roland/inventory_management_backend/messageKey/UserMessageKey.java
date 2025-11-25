@@ -4,7 +4,10 @@ public enum UserMessageKey implements MessageKey {
 
     REGISTRATION_SUCCESSFUL("user.registration-successful"),
     TWO_FA_SETUP_RESET_COMPLETE("user.two-fa-setup-reset-complete"),
-    INVALID_ROLE("user.invalid-role");
+    INVALID_ROLE("user.invalid-role"),
+    UPDATE_SUCCESS("user.update-success"),
+    USER_NOT_FOUND("user.not-found"),
+    ;
 
     private final String key;
 

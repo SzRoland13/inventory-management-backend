@@ -2,6 +2,8 @@ package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
+import dev.roland.inventory_management_backend.dto.user.UpdateUserRequest;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import dev.roland.inventory_management_backend.model.User;
 import jakarta.validation.constraints.NotNull;
@@ -50,4 +52,6 @@ public interface UserService {
     ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth);
 
     ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers();
+
+    ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, UpdateUserRequest updateRequest);
 }
