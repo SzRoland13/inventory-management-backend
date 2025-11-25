@@ -1,11 +1,7 @@
 package dev.roland.inventory_management_backend.controller;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
-import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
-import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
-import dev.roland.inventory_management_backend.dto.user.UpdateUserRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.dto.user.*;
 import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.service.UserService;
 import jakarta.validation.Valid;
@@ -26,14 +22,14 @@ public class UserController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<LoginResponse.UserDetails>> registerUser(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<UserDto>> registerUser(@Valid @RequestBody RegisterUserRequest request) {
         return userFacade.registerUser(request);
     }
 
-    @PostMapping("/reset-2fa/{id}")
+    @PostMapping("/reset-2fa")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
-        return userFacade.resetUser2FA(id);
+    public ResponseEntity<ApiResponse<Void>> reset2fa(@RequestBody Reset2FaRequest request) {
+        return userFacade.resetUser2FA(request);
     }
 
     @GetMapping("/check-session")
@@ -47,8 +43,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id,
-                                                           @RequestBody UpdateUserRequest updateRequest) {
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest updateRequest) {
         return userService.updateUser(id, updateRequest);
     }
 }

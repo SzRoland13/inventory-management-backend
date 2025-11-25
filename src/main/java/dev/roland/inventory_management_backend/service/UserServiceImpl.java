@@ -86,13 +86,25 @@ public class UserServiceImpl implements UserService {
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
     }
 
+    /**
+     * Returns all the saved users.
+     *
+     * @return a {@link java.util.List} of {@link UserDto}
+     */
     @Override
     public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
         List<User> users = userRepository.findAll();
 
-        return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, new AllUserResponse(mapUserToUserDto(users))));
+        return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, new AllUserResponse(mapUsersToUserDtos(users))));
     }
 
+    /**
+     * Updates the user with that data passed.
+     *
+     * @param id - the id of the user to update
+     * @param updateRequest - the data to update the user
+     * @return the updated user in a {@link UserDto}
+     */
     @Override
     public ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, UpdateUserRequest updateRequest) {
         User userToUpdate = userRepository.findById(id).orElseThrow(
@@ -118,7 +130,7 @@ public class UserServiceImpl implements UserService {
         return ResponseEntity.ok(ApiResponse.success(UserMessageKey.UPDATE_SUCCESS, new UserDto(userRepository.save(userToUpdate))));
     }
 
-    private List<UserDto> mapUserToUserDto(List<User> users) {
+    private List<UserDto> mapUsersToUserDtos(List<User> users) {
         return users.stream().map(UserDto::new).toList();
     }
 }

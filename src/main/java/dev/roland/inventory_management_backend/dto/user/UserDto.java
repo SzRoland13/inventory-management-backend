@@ -17,7 +17,7 @@ public class UserDto {
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.role = user.getRole();
-        this.TwoFaEnabled = user.is2faEnabled();
+        this.twoFaEnabled = user.is2faEnabled();
         this.otcSetupCompleted = user.isOtcSetupComplete();
         this.userStatus = user.getStatus();
     }
@@ -26,7 +26,7 @@ public class UserDto {
     private String username;
     private String email;
     private UserRole role;
-    private boolean TwoFaEnabled;
+    private boolean twoFaEnabled;
     private boolean otcSetupCompleted;
     private UserStatus userStatus;
 }

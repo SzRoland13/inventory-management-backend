@@ -51,7 +51,19 @@ public interface UserService {
      */
     ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth);
 
+    /**
+     * Returns all the saved users.
+     *
+     * @return a {@link java.util.List} of {@link UserDto}
+     */
     ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers();
 
+    /**
+     * Updates the user with that data passed.
+     *
+     * @param id - the id of the user to update
+     * @param updateRequest - the data to update the user
+     * @return the updated user in a {@link UserDto}
+     */
     ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, UpdateUserRequest updateRequest);
 }
