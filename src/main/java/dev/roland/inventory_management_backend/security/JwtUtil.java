@@ -34,7 +34,6 @@ public class JwtUtil {
                         .atZone(ZoneId.systemDefault())
                         .toInstant()))
                 .sign(Algorithm.HMAC256(secret));
-
     }
 
     public DecodedJWT validateToken(String token) throws JWTVerificationException {

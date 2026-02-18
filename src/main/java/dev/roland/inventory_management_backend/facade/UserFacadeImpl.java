@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.Reset2FaRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
@@ -27,7 +27,7 @@ public class UserFacadeImpl implements UserFacade {
      * @return created user entity.
      */
     @Override
-    public ResponseEntity<ApiResponse<UserDto>> registerUser(RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<UserDto>> registerUser(AddEditUserRequest request) {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())

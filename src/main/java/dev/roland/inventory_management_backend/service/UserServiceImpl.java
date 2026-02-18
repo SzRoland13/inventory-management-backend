@@ -1,8 +1,8 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
+import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
-import dev.roland.inventory_management_backend.dto.user.UpdateUserRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
@@ -106,7 +106,7 @@ public class UserServiceImpl implements UserService {
      * @return the updated user in a {@link UserDto}
      */
     @Override
-    public ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, UpdateUserRequest updateRequest) {
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, AddEditUserRequest updateRequest) {
         User userToUpdate = userRepository.findById(id).orElseThrow(
                 () -> new ApiException(UserMessageKey.USER_NOT_FOUND)
         );
@@ -122,7 +122,7 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setUsername(updateRequest.getUsername());
 
         try {
-            userToUpdate.setRole(UserRole.valueOf(updateRequest.getUserRole()));
+            userToUpdate.setRole(UserRole.valueOf(updateRequest.getRole()));
         } catch (IllegalArgumentException e) {
             throw new ApiException(UserMessageKey.INVALID_ROLE);
         }

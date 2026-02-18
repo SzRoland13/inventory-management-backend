@@ -22,8 +22,14 @@ public class UserController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserDto>> registerUser(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<UserDto>> registerUser(@Valid @RequestBody AddEditUserRequest request) {
         return userFacade.registerUser(request);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody AddEditUserRequest updateRequest) {
+        return userService.updateUser(id, updateRequest);
     }
 
     @PostMapping("/reset-2fa")
@@ -38,12 +44,9 @@ public class UserController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest updateRequest) {
-        return userService.updateUser(id, updateRequest);
-    }
 }

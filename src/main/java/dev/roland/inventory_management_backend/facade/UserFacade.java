@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.Reset2FaRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ public interface UserFacade {
      * @param request user details for registration.
      * @return created user entity.
      */
-    ResponseEntity<ApiResponse<UserDto>> registerUser(RegisterUserRequest request);
+    ResponseEntity<ApiResponse<UserDto>> registerUser(AddEditUserRequest request);
 
     /**
      * Handles 2FA reset for a user.
