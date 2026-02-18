@@ -9,6 +9,7 @@ import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.model.enums.UserRole;
+import dev.roland.inventory_management_backend.model.enums.UserStatus;
 import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class UserFacadeImpl implements UserFacade {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
+                .status(UserStatus.PENDING_VERIFICATION)
                 .build();
 
         try {

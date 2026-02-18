@@ -75,13 +75,9 @@ public class UserServiceImpl implements UserService {
             throw new ApiException(AuthMessageKey.INVALID_TOKEN);
         }
 
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow(
+        userRepository.findByUsername(auth.getName()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
-
-        if (user == null) {
-            throw new ApiException(AuthMessageKey.INVALID_TOKEN);
-        }
 
         return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
     }
