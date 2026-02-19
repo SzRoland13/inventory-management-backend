@@ -6,7 +6,7 @@ import java.util.Optional;
 public enum UserStatus {
     ACTIVE,
     SUSPENDED,
-    PENDING_VERIFICATION,
+    SETUP_REQUIRED,
     ;
 
     public static Optional<UserStatus> fromString(String value) {

@@ -31,7 +31,7 @@ public class UserFacadeImpl implements UserFacade {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .status(UserStatus.PENDING_VERIFICATION)
+                .status(UserStatus.SETUP_REQUIRED)
                 .build();
 
         try {
@@ -108,7 +108,7 @@ public class UserFacadeImpl implements UserFacade {
             throw new ApiException(UserMessageKey.USER_NOT_SUSPENDED);
         }
 
-        user.setStatus(UserStatus.PENDING_VERIFICATION);
+        user.setStatus(UserStatus.SETUP_REQUIRED);
         userService.save(user);
 
         return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_ACTIVATED, null));

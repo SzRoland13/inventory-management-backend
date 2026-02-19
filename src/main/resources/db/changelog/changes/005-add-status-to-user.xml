@@ -7,7 +7,7 @@
 
     <changeSet id="001" author="roland">
         <addColumn tableName="users">
-            <column name="status" type="VARCHAR(50)" defaultValue="PENDING_VERIFICATION">
+            <column name="status" type="VARCHAR(50)" defaultValue="SETUP_REQUIRED">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
