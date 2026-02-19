@@ -32,12 +32,6 @@ public class UserController {
         return userService.updateUser(id, updateRequest);
     }
 
-    @PostMapping("/reset-2fa")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> reset2fa(@RequestBody Reset2FaRequest request) {
-        return userFacade.resetUser2FA(request);
-    }
-
     @GetMapping("/check-session")
     public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
         return userService.checkSession(auth);
@@ -49,4 +43,27 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    @PostMapping("/reset-2fa/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
+        return userFacade.resetUser2FA(id);
+    }
+
+    @PostMapping("/suspend/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id) {
+        return userFacade.suspendUser(id);
+    }
+
+    @PostMapping("/activate/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
+        return userFacade.activateUser(id);
+    }
+
+    @PostMapping("/reset-password/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable Long id) {
+        return userFacade.resetPassword(id);
+    }
 }
