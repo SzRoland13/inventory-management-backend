@@ -30,7 +30,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public boolean sendSimpleMail(EmailDetails details) {
         try {
-
             SimpleMailMessage mailMessage
                     = new SimpleMailMessage();
 
@@ -40,6 +39,7 @@ public class EmailServiceImpl implements EmailService {
             mailMessage.setSubject(details.getSubject());
 
             javaMailSender.send(mailMessage);
+
             return true;
         } catch (Exception e) {
             return false;

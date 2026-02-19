@@ -9,18 +9,18 @@ import lombok.Getter;
 public class ApiResponse<T> {
     private boolean success;
     private String messageKey;
-    private T data;
+    private T payload;
 
-    public static <T> ApiResponse<T> success(MessageKey key, T data) {
-        return new ApiResponse<>(true, key.getKey(), data);
+    public static <T> ApiResponse<T> success(MessageKey key, T payload) {
+        return new ApiResponse<>(true, key.getKey(), payload);
     }
 
     public static <T> ApiResponse<T> failure(MessageKey key) {
         return new ApiResponse<>(false, key.getKey(), null);
     }
 
-    public static <T> ApiResponse<T> failure(MessageKey key, T data) {
-        return new ApiResponse<>(false, key.getKey(), data);
+    public static <T> ApiResponse<T> failure(MessageKey key, T payload) {
+        return new ApiResponse<>(false, key.getKey(), payload);
     }
 
 }

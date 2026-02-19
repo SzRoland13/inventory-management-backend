@@ -1,6 +1,9 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
+import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.messageKey.ApiException;
 import dev.roland.inventory_management_backend.model.User;
 import jakarta.validation.constraints.NotNull;
@@ -47,4 +50,20 @@ public interface UserService {
      * @throws ApiException if the authentication is missing, invalid, or the principal cannot be resolved
      */
     ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth);
+
+    /**
+     * Returns all the saved users.
+     *
+     * @return a {@link java.util.List} of {@link UserDto}
+     */
+    ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers();
+
+    /**
+     * Updates the user with that data passed.
+     *
+     * @param id - the id of the user to update
+     * @param updateRequest - the data to update the user
+     * @return the updated user in a {@link UserDto}
+     */
+    ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, AddEditUserRequest updateRequest);
 }

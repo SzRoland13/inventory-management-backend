@@ -34,3 +34,11 @@ jwt_secret: ${JWT_SECRET}
 redis:
   session:
     ttl-minutes: ${REDIS_SESSION_TTL_MINUTES:8}
+
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+      servlet:
+        DispatcherServlet: DEBUG

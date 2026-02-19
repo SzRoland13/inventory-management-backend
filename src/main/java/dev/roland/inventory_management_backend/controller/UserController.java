@@ -1,9 +1,7 @@
 package dev.roland.inventory_management_backend.controller;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
-import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
-import dev.roland.inventory_management_backend.dto.user.Reset2FARequest;
+import dev.roland.inventory_management_backend.dto.user.*;
 import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.service.UserService;
 import jakarta.validation.Valid;
@@ -24,19 +22,48 @@ public class UserController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<LoginResponse.UserDetails>> registerUser(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<UserDto>> registerUser(@Valid @RequestBody AddEditUserRequest request) {
         return userFacade.registerUser(request);
     }
 
-    @PostMapping("/reset-2fa")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> reset2fa(@Valid @RequestBody Reset2FARequest request) {
-        return userFacade.resetUser2FA(request);
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody AddEditUserRequest updateRequest) {
+        return userService.updateUser(id, updateRequest);
     }
-
 
     @GetMapping("/check-session")
     public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
         return userService.checkSession(auth);
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @PostMapping("/reset-2fa/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
+        return userFacade.resetUser2FA(id);
+    }
+
+    @PostMapping("/suspend/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id) {
+        return userFacade.suspendUser(id);
+    }
+
+    @PostMapping("/activate/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
+        return userFacade.activateUser(id);
+    }
+
+    @PostMapping("/reset-password/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable Long id) {
+        return userFacade.resetPassword(id);
     }
 }

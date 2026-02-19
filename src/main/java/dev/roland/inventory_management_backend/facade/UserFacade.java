@@ -1,10 +1,8 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
-import dev.roland.inventory_management_backend.dto.user.RegisterUserRequest;
-import dev.roland.inventory_management_backend.dto.user.Reset2FARequest;
-import jakarta.validation.Valid;
+import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import org.springframework.http.ResponseEntity;
 
 public interface UserFacade {
@@ -16,13 +14,37 @@ public interface UserFacade {
      * @param request user details for registration.
      * @return created user entity.
      */
-    ResponseEntity<ApiResponse<LoginResponse.UserDetails>> registerUser(@Valid RegisterUserRequest request);
+    ResponseEntity<ApiResponse<UserDto>> registerUser(AddEditUserRequest request);
 
     /**
-     * Handles 2FA reset for a user.
+     * Handles 2FA reset for a single user.
      *
-     * @param request user's id.
+     * @param id user id to reset the 2fa for.
      * @return void.
      */
-    ResponseEntity<ApiResponse<Void>> resetUser2FA(@Valid Reset2FARequest request);
+    ResponseEntity<ApiResponse<Void>> resetUser2FA(Long id);
+
+    /**
+     * Suspends a user and resets their password and 2FA.
+     *
+     * @param id user id to suspend.
+     * @return void.
+     */
+    ResponseEntity<ApiResponse<Void>> suspendUser(Long id);
+
+    /**
+     * Activates a suspended user.
+     *
+     * @param id user id to activate.
+     * @return void.
+     */
+    ResponseEntity<ApiResponse<Void>> activateUser(Long id);
+
+    /**
+     * Resets a user's password and 2FA.
+     *
+     * @param id user id to reset password for.
+     * @return void.
+     */
+    ResponseEntity<ApiResponse<Void>> resetPassword(Long id);
 }

@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.model;
 
 import dev.roland.inventory_management_backend.model.enums.UserRole;
+import dev.roland.inventory_management_backend.model.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -44,6 +45,10 @@ public class User {
 
     @Column(name = "is_otc_setup_complete", nullable = false)
     private boolean isOtcSetupComplete = false;
+
+    @Column(name = "status", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
