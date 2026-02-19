@@ -70,6 +70,7 @@ public class UserFacadeImpl implements UserFacade {
 
     /**
      * Suspends a user and resets their password and 2FA.
+     * Can suspend users in any status (SETUP_REQUIRED, ACTIVE).
      *
      * @param id user id to suspend.
      * @return void.
@@ -80,15 +81,12 @@ public class UserFacadeImpl implements UserFacade {
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
 
-        UserStatus previousStatus = user.getStatus();
-
-        if (previousStatus == UserStatus.SUSPENDED) {
+        if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new ApiException(UserMessageKey.USER_ALREADY_SUSPENDED);
         }
 
-
         user.setStatus(UserStatus.SUSPENDED);
-        // Reset password and 2FA when suspending
+
         resetUserPasswordAndAuth(user);
         userService.save(user);
 
@@ -122,6 +120,7 @@ public class UserFacadeImpl implements UserFacade {
 
     /**
      * Resets a user's password and 2FA.
+     * Only works if user has completed initial setup.
      *
      * @param id user id to reset password for.
      * @return void.
@@ -137,6 +136,8 @@ public class UserFacadeImpl implements UserFacade {
         }
 
         resetUserPasswordAndAuth(user);
+        user.setStatus(UserStatus.SETUP_REQUIRED);
+
         userService.save(user);
 
         return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
@@ -145,7 +146,7 @@ public class UserFacadeImpl implements UserFacade {
     /**
      * Helper method to reset user password and authentication.
      * Sets password to null so user must request new one-time password.
-     * Resets 2FA setup completely.
+     * Resets 2FA setup completely (only if it exists).
      *
      * @param user the user to reset.
      */
@@ -154,8 +155,10 @@ public class UserFacadeImpl implements UserFacade {
         user.setPassword(null);
         user.setOtcSetupComplete(false);
 
-        // Reset 2FA
-        user.setTotpSecret(null);
-        user.set2faEnabled(false);
+        // Reset 2FA only if it's actually enabled
+        if (user.is2faEnabled() || user.getTotpSecret() != null) {
+            user.setTotpSecret(null);
+            user.set2faEnabled(false);
+        }
     }
 }
