@@ -80,9 +80,12 @@ public class UserFacadeImpl implements UserFacade {
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
 
-        if (user.getStatus() == UserStatus.SUSPENDED) {
+        UserStatus previousStatus = user.getStatus();
+
+        if (previousStatus == UserStatus.SUSPENDED) {
             throw new ApiException(UserMessageKey.USER_ALREADY_SUSPENDED);
         }
+
 
         user.setStatus(UserStatus.SUSPENDED);
         // Reset password and 2FA when suspending
@@ -94,6 +97,7 @@ public class UserFacadeImpl implements UserFacade {
 
     /**
      * Activates a suspended user.
+     * Always returns user to SETUP_REQUIRED status so they must set up their account again.
      *
      * @param id user id to activate.
      * @return void.
@@ -108,6 +112,8 @@ public class UserFacadeImpl implements UserFacade {
             throw new ApiException(UserMessageKey.USER_NOT_SUSPENDED);
         }
 
+        // Always return to SETUP_REQUIRED after activation
+        // User will need to set up password and optionally 2FA again
         user.setStatus(UserStatus.SETUP_REQUIRED);
         userService.save(user);
 
