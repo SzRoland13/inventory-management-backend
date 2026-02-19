@@ -132,6 +132,10 @@ public class UserFacadeImpl implements UserFacade {
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
 
+        if (!user.isOtcSetupComplete()) {
+            throw new ApiException(UserMessageKey.PASSWORD_NOT_SET);
+        }
+
         resetUserPasswordAndAuth(user);
         userService.save(user);
 
