@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TokenRefreshResult {
-    String accessToken;
-    boolean shouldClearRefreshToken;
+  String accessToken;
+  boolean shouldClearRefreshToken;
 }

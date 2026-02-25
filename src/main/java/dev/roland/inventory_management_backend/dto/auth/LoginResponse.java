@@ -9,16 +9,16 @@ import lombok.*;
 @AllArgsConstructor
 public class LoginResponse {
 
-    private UserDetails user;
-    private boolean firstTime2FAEnabled;
+  private UserDetails user;
+  private boolean firstTime2FAEnabled;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UserDetails {
-        private String email;
-        private String username;
-        private UserRole role;
-    }
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class UserDetails {
+    private String email;
+    private String username;
+    private UserRole role;
+  }
 }

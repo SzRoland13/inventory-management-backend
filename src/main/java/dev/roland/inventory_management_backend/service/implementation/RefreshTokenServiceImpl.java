@@ -1,41 +1,42 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.repository.RefreshTokenRepository;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
-    private final RefreshTokenRepository refreshTokenRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
 
-    @Override
-    public JpaRepository<RefreshToken, Long> getRepository() {
-        return refreshTokenRepository;
-    }
+  @Override
+  public JpaRepository<RefreshToken, Long> getRepository() {
+    return refreshTokenRepository;
+  }
 
-    @Override
-    public MessageKey getNotFoundMessageKey() {
-        return NotFoundMessageKey.REFRESH_TOKEN;
-    }
+  @Override
+  public MessageKey getNotFoundMessageKey() {
+    return NotFoundMessageKey.REFRESH_TOKEN;
+  }
 
-    /**
-     * Retrieves a {@link RefreshToken} entity from the database that matches the given token value.
-     *
-     * @param token the token string to look up
-     * @return an {@link Optional} containing the found {@link RefreshToken},
-     * or an empty {@link Optional} if no matching token exists
-     */
-    @Override
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
-    }
+  /**
+   * Retrieves a {@link RefreshToken} entity from the database that matches the given token value.
+   *
+   * @param token the token string to look up
+   * @return an {@link Optional} containing the found {@link RefreshToken}, or an empty {@link
+   *     Optional} if no matching token exists
+   */
+  @Override
+  public Optional<RefreshToken> findByToken(String token) {
+    return refreshTokenRepository.findByToken(token);
+  }
 }

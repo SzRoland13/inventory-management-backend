@@ -1,11 +1,11 @@
 package dev.roland.inventory_management_backend.dto.auth;
 
-import lombok.Data;
-
 import java.time.Instant;
+
+import lombok.Data;
 
 @Data
 public class TokenWithExpiry {
-    private final String token;
-    private final Instant expiresAt;
+  private final String token;
+  private final Instant expiresAt;
 }

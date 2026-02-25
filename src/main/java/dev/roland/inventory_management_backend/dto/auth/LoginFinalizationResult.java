@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class LoginFinalizationResult {
-    private LoginResponse loginResponse;
-    private AuthTokens tokens;
-    private boolean firstTime2faEnabled;
+  private LoginResponse loginResponse;
+  private AuthTokens tokens;
+  private boolean firstTime2faEnabled;
 }

@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class LogoutResult {
 
-    private boolean clearAccessToken;
-    private boolean clearRefreshToken;
+  private boolean clearAccessToken;
+  private boolean clearRefreshToken;
 }
