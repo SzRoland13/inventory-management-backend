@@ -152,6 +152,7 @@ public class AuthFacadeImpl implements AuthFacade {
         loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
 
     return ShortLifeTokenResponse.builder()
+        .is2faEnabled(user.is2faEnabled())
         .shortLifeToken(tokenWithExpiry.getToken())
         .expiresAt(tokenWithExpiry.getExpiresAt())
         .build();
