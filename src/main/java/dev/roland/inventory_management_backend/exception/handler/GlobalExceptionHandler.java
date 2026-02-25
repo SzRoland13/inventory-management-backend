@@ -1,7 +1,7 @@
-package dev.roland.inventory_management_backend.security;
+package dev.roland.inventory_management_backend.exception.handler;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.messageKey.ApiException;
+import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

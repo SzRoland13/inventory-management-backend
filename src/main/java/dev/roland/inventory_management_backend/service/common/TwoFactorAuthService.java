@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.common;
 
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;

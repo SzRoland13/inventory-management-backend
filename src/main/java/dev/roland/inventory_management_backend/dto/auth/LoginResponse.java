@@ -1,6 +1,6 @@
 package dev.roland.inventory_management_backend.dto.auth;
 
-import dev.roland.inventory_management_backend.model.enums.UserRole;
+import dev.roland.inventory_management_backend.enums.UserRole;
 import lombok.*;
 
 @Getter

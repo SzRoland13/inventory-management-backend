@@ -2,7 +2,7 @@ package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.auth.*;
-import dev.roland.inventory_management_backend.messageKey.ApiException;
+import dev.roland.inventory_management_backend.exception.ApiException;
 import org.springframework.http.ResponseEntity;
 
 public interface AuthFacade {

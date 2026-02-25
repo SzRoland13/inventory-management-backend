@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.model;
 
-import dev.roland.inventory_management_backend.model.enums.UserRole;
-import dev.roland.inventory_management_backend.model.enums.UserStatus;
+import dev.roland.inventory_management_backend.enums.UserRole;
+import dev.roland.inventory_management_backend.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;

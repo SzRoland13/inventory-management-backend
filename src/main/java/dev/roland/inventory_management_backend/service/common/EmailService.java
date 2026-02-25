@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.common;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -20,14 +20,13 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class EmailServiceImpl implements EmailService {
+public class EmailService {
 
     private final JavaMailSender javaMailSender;
 
     @Value("${spring.mail.username}")
     private String sender;
 
-    @Override
     public boolean sendSimpleMail(EmailDetails details) {
         try {
             SimpleMailMessage mailMessage
@@ -51,7 +50,6 @@ public class EmailServiceImpl implements EmailService {
      * @param details contains recipient, subject, template name, and model
      * @return true if email sent successfully, false otherwise
      */
-    @Override
     public boolean sendMailWithTemplate(EmailDetails details) {
         try {
             String htmlBody = renderTemplate(details.getTemplateName().getFileName(), details.getTemplateModel());

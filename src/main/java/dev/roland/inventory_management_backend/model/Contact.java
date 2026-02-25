@@ -1,6 +1,6 @@
 package dev.roland.inventory_management_backend.model;
 
-import dev.roland.inventory_management_backend.model.enums.ContactType;
+import dev.roland.inventory_management_backend.enums.ContactType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;

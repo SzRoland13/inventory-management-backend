@@ -1,5 +1,6 @@
-package dev.roland.inventory_management_backend.messageKey;
+package dev.roland.inventory_management_backend.exception;
 
+import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import lombok.Getter;
 
 @Getter

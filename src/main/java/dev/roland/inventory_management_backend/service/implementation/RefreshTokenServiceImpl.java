@@ -1,7 +1,8 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.implementation;
 
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.repository.RefreshTokenRepository;
+import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

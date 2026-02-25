@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.common;
 
 import dev.roland.inventory_management_backend.dto.auth.TokenWithExpiry;
 import lombok.RequiredArgsConstructor;

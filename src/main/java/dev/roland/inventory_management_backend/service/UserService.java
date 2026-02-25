@@ -4,7 +4,7 @@ import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
-import dev.roland.inventory_management_backend.messageKey.ApiException;
+import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.model.User;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;

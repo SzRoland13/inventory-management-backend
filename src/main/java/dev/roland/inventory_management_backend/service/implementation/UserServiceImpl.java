@@ -1,16 +1,17 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.implementation;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
-import dev.roland.inventory_management_backend.messageKey.ApiException;
+import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.model.enums.UserRole;
+import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.repository.UserRepository;
+import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

@@ -1,7 +1,8 @@
-package dev.roland.inventory_management_backend.service;
+package dev.roland.inventory_management_backend.service.implementation;
 
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.repository.OneTimeCodeRepository;
+import dev.roland.inventory_management_backend.service.OneTimeCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

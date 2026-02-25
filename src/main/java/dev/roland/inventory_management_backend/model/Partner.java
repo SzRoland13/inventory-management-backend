@@ -1,6 +1,6 @@
 package dev.roland.inventory_management_backend.model;
 
-import dev.roland.inventory_management_backend.model.enums.PartnerType;
+import dev.roland.inventory_management_backend.enums.PartnerType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;

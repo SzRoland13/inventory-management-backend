@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.model.enums;
+package dev.roland.inventory_management_backend.enums;
 
 public enum DocumentType {
     INCOMING,

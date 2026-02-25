@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.security;
+package dev.roland.inventory_management_backend.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-public class RedisConfig {
+public class RedisConfiguration {
 
     @Value("${spring.data.redis.host}")
     private String RedisHost;

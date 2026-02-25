@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.model;
 
-import dev.roland.inventory_management_backend.model.enums.DocumentStatus;
-import dev.roland.inventory_management_backend.model.enums.DocumentType;
+import dev.roland.inventory_management_backend.enums.DocumentStatus;
+import dev.roland.inventory_management_backend.enums.DocumentType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
