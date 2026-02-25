@@ -66,4 +66,13 @@ public interface AuthFacade {
      * @throws ApiException if the user does not exist or the TOTP code is invalid
      */
     ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request, HttpServletResponse response);
+
+    /**
+     * Handles user logout by clearing auth cookies.
+     *
+     * @param refreshToken the refresh token from cookie
+     * @param response HttpServletResponse to clear cookies
+     * @return success response
+     */
+    ResponseEntity<ApiResponse<Void>> handleLogout(String refreshToken, HttpServletResponse response);
 }

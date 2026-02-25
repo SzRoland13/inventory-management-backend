@@ -206,9 +206,12 @@ public class AuthFacadeImpl  implements AuthFacade {
         if (jwtUtil.isTokenExpired(savedToken.getToken())) {
             refreshTokenService.delete(savedToken);
 
+            // Clear the refresh token cookie
             Cookie refresh = new Cookie("refresh_token", "");
             refresh.setPath("/");
             refresh.setMaxAge(0);
+            refresh.setHttpOnly(true);
+            refresh.setSecure(secureCookie);
 
             response.addCookie(refresh);
 
@@ -217,6 +220,7 @@ public class AuthFacadeImpl  implements AuthFacade {
 
         String newAccessToken = jwtUtil.generateAccessToken(savedToken.getUser());
 
+        // Set new access token as HTTP-only cookie
         Cookie accessCookie = new Cookie("access_token", newAccessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(secureCookie);
@@ -261,12 +265,14 @@ public class AuthFacadeImpl  implements AuthFacade {
 
     /**
      * Verifies the 2FA TOTP code provided by the user during login.
+     * Sets HTTP-only cookies for access and refresh tokens.
      *
      * @param request contains the user's email and the TOTP verification code
      * @return ApiResponse user data and access tokens
      * @throws ApiException if user not found or code is invalid
      */
     @Override
+    @Transactional
     public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request, HttpServletResponse response) {
         boolean firstTime2FAEnabled = false;
 
@@ -292,34 +298,43 @@ public class AuthFacadeImpl  implements AuthFacade {
             firstTime2FAEnabled = true;
         }
 
+        // Generate tokens and set as HTTP-only cookies
+        CookieTokens tokens = generateTokens(user);
+        setAuthCookies(response, tokens);
+
         LoginResponse.UserDetails userDetails = new LoginResponse.UserDetails(
                 user.getEmail(),
                 user.getUsername(),
                 user.getRole()
         );
 
-        CookieTokens tokens = generateTokens(user);
-
-        Cookie accessCookie = new Cookie("access_token", tokens.getAccessToken());
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(secureCookie);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (accessTokenExpirationTime / 1000));
-
-        Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefreshToken());
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(secureCookie);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge((int) (refreshTokenExpirationTime / 1000));
-
-        response.addCookie(accessCookie);
-        response.addCookie(refreshCookie);
-
         MessageKey key = firstTime2FAEnabled ? AuthMessageKey.TWO_FA_SETUP_COMPLETE : AuthMessageKey.LOGIN_SUCCESS;
 
         return ResponseEntity.ok(
                 ApiResponse.success(key, new LoginResponse(userDetails, firstTime2FAEnabled))
         );
+    }
+
+    /**
+     * Handles user logout by clearing auth cookies.
+     *
+     * @param refreshToken the refresh token from cookie
+     * @param response HttpServletResponse to clear cookies
+     * @return success response
+     */
+    @Transactional
+    @Override
+    public ResponseEntity<ApiResponse<Void>> handleLogout(String refreshToken, HttpServletResponse response) {
+        // Delete refresh token from database if exists
+        if (refreshToken != null) {
+            refreshTokenService.findByToken(refreshToken)
+                    .ifPresent(refreshTokenService::delete);
+        }
+
+        // Clear both access and refresh token cookies
+        clearAuthCookies(response);
+
+        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.LOGOUT_SUCCESS, null));
     }
 
     /**
@@ -340,5 +355,52 @@ public class AuthFacadeImpl  implements AuthFacade {
         refreshTokenService.save(tokenEntity);
 
         return new CookieTokens(accessToken, refreshToken);
+    }
+
+    /**
+     * Sets authentication cookies (access and refresh tokens) as HTTP-only cookies.
+     *
+     * @param response HttpServletResponse to add cookies
+     * @param tokens CookieTokens containing access and refresh tokens
+     */
+    private void setAuthCookies(HttpServletResponse response, CookieTokens tokens) {
+        // Set access token cookie
+        Cookie accessCookie = new Cookie("access_token", tokens.getAccessToken());
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(secureCookie);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge((int) (accessTokenExpirationTime / 1000));
+        response.addCookie(accessCookie);
+
+        // Set refresh token cookie
+        Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefreshToken());
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(secureCookie);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge((int) (refreshTokenExpirationTime / 1000));
+        response.addCookie(refreshCookie);
+    }
+
+    /**
+     * Clears authentication cookies by setting their max age to 0.
+     *
+     * @param response HttpServletResponse to clear cookies
+     */
+    private void clearAuthCookies(HttpServletResponse response) {
+        // Clear access token cookie
+        Cookie accessCookie = new Cookie("access_token", "");
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(secureCookie);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(0);
+        response.addCookie(accessCookie);
+
+        // Clear refresh token cookie
+        Cookie refreshCookie = new Cookie("refresh_token", "");
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(secureCookie);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(0);
+        response.addCookie(refreshCookie);
     }
 }
