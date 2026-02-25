@@ -69,4 +69,11 @@ public class AuthController {
     ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(@Valid @RequestBody TwoFactorVerifyRequest request, HttpServletResponse response) {
         return authFacade.verify2faLogin(request, response);
     }
+
+    @PostMapping("/logout")
+    ResponseEntity<ApiResponse<Void>> handleLogout(
+            @CookieValue(value = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
+        return authFacade.handleLogout(refreshToken, response);
+    }
 }

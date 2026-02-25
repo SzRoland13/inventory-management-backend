@@ -44,7 +44,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthFacadeImpl  implements AuthFacade {
+public class AuthFacadeImpl implements AuthFacade {
 
     private final UserService userService;
     private final EmailService emailService;
@@ -183,7 +183,6 @@ public class AuthFacadeImpl  implements AuthFacade {
                 ResponseEntity.ok().body(ApiResponse.failure(AuthMessageKey.TWO_FA_NOT_ENABLED, responseToken))
                 : ResponseEntity.accepted().body(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, responseToken));
     }
-
 
     /**
      * Handles refresh token validation and access token regeneration.
