@@ -9,6 +9,7 @@ import java.time.Instant;
 @Builder
 public class ShortLifeTokenResponse {
 
+    private boolean is2faEnabled;
     private String shortLifeToken;
     private Instant expiresAt;
 }

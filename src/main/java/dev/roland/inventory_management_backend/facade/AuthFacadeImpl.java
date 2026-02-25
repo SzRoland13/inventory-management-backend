@@ -1,13 +1,15 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.configuration.AppConfiguration;
-import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.CookieTokens;
+import dev.roland.inventory_management_backend.dto.auth.AuthTokens;
 import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
 import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
+import dev.roland.inventory_management_backend.dto.auth.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
 import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
+import dev.roland.inventory_management_backend.dto.auth.LogoutResult;
 import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
+import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
 import dev.roland.inventory_management_backend.dto.auth.TokenWithExpiry;
 import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.dto.mail.EmailDetails;
@@ -16,23 +18,18 @@ import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.service.common.JwtService;
 import dev.roland.inventory_management_backend.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import dev.roland.inventory_management_backend.service.UserService;
 import dev.roland.inventory_management_backend.service.common.EmailService;
+import dev.roland.inventory_management_backend.service.common.JwtService;
 import dev.roland.inventory_management_backend.service.common.LoginSessionService;
 import dev.roland.inventory_management_backend.service.common.TwoFactorAuthService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -60,12 +57,11 @@ public class AuthFacadeImpl implements AuthFacade {
      *  Handles first-time login by verifying credentials and sending a one-time code.
      *
      * @param request user's email address
-     * @return ApiResponse indicating whether the email was sent successfully
      * @throws ApiException if user does not exist or is not a first-time login
      */
     @Transactional
     @Override
-    public ResponseEntity<ApiResponse<Void>> sendOneTimeCode(EmailRequest request) {
+    public void sendOneTimeCode(EmailRequest request) {
         User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         if (user.getPassword() != null) {
@@ -79,12 +75,10 @@ public class AuthFacadeImpl implements AuthFacade {
         code.setCode(generateOneTimeCode());
         code.setExpiresAt(LocalDateTime.now().plusMinutes(30));
 
-        if (sendFirstLoginEmail(user, code.getCode())) {
-            oneTimeCodeService.save(code);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
-        } else {
+        if (!sendFirstLoginEmail(user, code.getCode())) {
             throw new ApiException(AuthMessageKey.EMAIL_SEND_FAILED);
+        } else {
+            oneTimeCodeService.save(code);
         }
     }
 
@@ -92,11 +86,10 @@ public class AuthFacadeImpl implements AuthFacade {
      * Validates user's first login one time code
      *
      * @param request user's email and one time code
-     * @return ApiResponse indicating whether the one time code was valid
      * @throws ApiException if user does not exist or one time code invalid
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> validateOneTimeCode(FirstLoginValidationRequest request) {
+    public void validateOneTimeCode(FirstLoginValidationRequest request) {
         OneTimeCode oneTimeCode = oneTimeCodeService.findByCode(request.getOneTimeCode()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
@@ -112,7 +105,6 @@ public class AuthFacadeImpl implements AuthFacade {
         }
 
         oneTimeCodeService.delete(oneTimeCode);
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, null));
     }
 
     /**
@@ -149,7 +141,7 @@ public class AuthFacadeImpl implements AuthFacade {
      * @throws ApiException if user does not exist or provided credentials are invalid
      */
     @Override
-    public ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(LoginRequest request) {
+    public ShortLifeTokenResponse handleLogin(LoginRequest request) {
         User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         try {
@@ -161,15 +153,11 @@ public class AuthFacadeImpl implements AuthFacade {
 
         TokenWithExpiry tokenWithExpiry = loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
 
-        ShortLifeTokenResponse responseToken = ShortLifeTokenResponse
+        return ShortLifeTokenResponse
                 .builder()
                 .shortLifeToken(tokenWithExpiry.getToken())
                 .expiresAt(tokenWithExpiry.getExpiresAt())
                 .build();
-
-        return !user.is2faEnabled() ?
-                ResponseEntity.ok().body(ApiResponse.failure(AuthMessageKey.TWO_FA_NOT_ENABLED, responseToken))
-                : ResponseEntity.accepted().body(ApiResponse.success(AuthMessageKey.PASSWORD_VALID_NEEDS_TWO_FA, responseToken));
     }
 
     /**
@@ -180,43 +168,24 @@ public class AuthFacadeImpl implements AuthFacade {
      * @throws ApiException if refresh token invalid or expired
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> handleTokenRefresh(String token, HttpServletResponse response) {
+    public TokenRefreshResult handleTokenRefresh(String token) {
+
         if (token == null) {
             throw new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS);
         }
 
         RefreshToken savedToken =
-                refreshTokenService
-                        .findByToken(token)
+                refreshTokenService.findByToken(token)
                         .orElseThrow(() -> new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS));
 
         if (jwtService.isTokenExpired(savedToken.getToken())) {
             refreshTokenService.delete(savedToken);
-
-            // Clear the refresh token cookie
-            Cookie refresh = new Cookie("refresh_token", "");
-            refresh.setPath("/");
-            refresh.setMaxAge(0);
-            refresh.setHttpOnly(true);
-            refresh.setSecure(appConfiguration.isSecureCookie());
-
-            response.addCookie(refresh);
-
-            throw new UnauthorizedException(AuthMessageKey.TOKEN_EXPIRED);
+            return new TokenRefreshResult(null, true);
         }
 
         String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
 
-        // Set new access token as HTTP-only cookie
-        Cookie accessCookie = new Cookie("access_token", newAccessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(appConfiguration.isSecureCookie());
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (appConfiguration.getAccessTokenExpirationTime() / 1000));
-
-        response.addCookie(accessCookie);
-
-        return ResponseEntity.ok().build();
+        return new TokenRefreshResult(newAccessToken, false);
     }
 
     /**
@@ -228,7 +197,7 @@ public class AuthFacadeImpl implements AuthFacade {
      */
     @Override
     @Transactional
-    public ResponseEntity<ApiResponse<String>> setup2fa(EmailRequest request) {
+    public String setup2fa(EmailRequest request) {
         User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         if (user.is2faEnabled()) {
@@ -244,9 +213,7 @@ public class AuthFacadeImpl implements AuthFacade {
         user.setTotpSecret(secret);
         userService.save(user);
 
-        String qrCode = twoFactorAuthService.generateQrCodeImage(secret, user.getEmail());
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TWO_FA_CODE_GENERATED, qrCode));
+        return twoFactorAuthService.generateQrCodeImage(secret, user.getEmail());
     }
 
     /**
@@ -259,7 +226,8 @@ public class AuthFacadeImpl implements AuthFacade {
      */
     @Override
     @Transactional
-    public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request, HttpServletResponse response) {
+    public LoginFinalizationResult verify2faLogin(TwoFactorVerifyRequest request) {
+
         boolean firstTime2FAEnabled = false;
 
         User user = userService.findUserByEmailOrThrow(request.getEmail());
@@ -275,7 +243,6 @@ public class AuthFacadeImpl implements AuthFacade {
             throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
         }
 
-        // If first-time setup, enable 2FA here
         if (!user.is2faEnabled() && user.isOtcSetupComplete()) {
             user.set2faEnabled(true);
             user.setStatus(UserStatus.ACTIVE);
@@ -283,20 +250,22 @@ public class AuthFacadeImpl implements AuthFacade {
             firstTime2FAEnabled = true;
         }
 
-        // Generate tokens and set as HTTP-only cookies
-        CookieTokens tokens = generateTokens(user);
-        setAuthCookies(response, tokens);
+        AuthTokens tokens = generateTokens(user);
 
-        LoginResponse.UserDetails userDetails = new LoginResponse.UserDetails(
-                user.getEmail(),
-                user.getUsername(),
-                user.getRole()
-        );
+        LoginResponse.UserDetails userDetails =
+                new LoginResponse.UserDetails(
+                        user.getEmail(),
+                        user.getUsername(),
+                        user.getRole()
+                );
 
-        MessageKey key = firstTime2FAEnabled ? AuthMessageKey.TWO_FA_SETUP_COMPLETE : AuthMessageKey.LOGIN_SUCCESS;
+        LoginResponse response =
+                new LoginResponse(userDetails, firstTime2FAEnabled);
 
-        return ResponseEntity.ok(
-                ApiResponse.success(key, new LoginResponse(userDetails, firstTime2FAEnabled))
+        return new LoginFinalizationResult(
+                response,
+                tokens,
+                firstTime2FAEnabled
         );
     }
 
@@ -304,22 +273,18 @@ public class AuthFacadeImpl implements AuthFacade {
      * Handles user logout by clearing auth cookies.
      *
      * @param refreshToken the refresh token from cookie
-     * @param response HttpServletResponse to clear cookies
      * @return success response
      */
-    @Transactional
     @Override
-    public ResponseEntity<ApiResponse<Void>> handleLogout(String refreshToken, HttpServletResponse response) {
-        // Delete refresh token from database if exists
+    @Transactional
+    public LogoutResult handleLogout(String refreshToken) {
+
         if (refreshToken != null) {
             refreshTokenService.findByToken(refreshToken)
                     .ifPresent(refreshTokenService::delete);
         }
 
-        // Clear both access and refresh token cookies
-        clearAuthCookies(response);
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.LOGOUT_SUCCESS, null));
+        return new LogoutResult(true, true);
     }
 
     /**
@@ -329,7 +294,7 @@ public class AuthFacadeImpl implements AuthFacade {
      * @return access and refresh tokens
      */
     @Transactional
-    private CookieTokens generateTokens(User user) {
+    private AuthTokens generateTokens(User user) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
@@ -339,53 +304,6 @@ public class AuthFacadeImpl implements AuthFacade {
         tokenEntity.setExpiryDate(LocalDateTime.now().plusSeconds(appConfiguration.getRefreshTokenExpirationTime() / 1000));
         refreshTokenService.save(tokenEntity);
 
-        return new CookieTokens(accessToken, refreshToken);
-    }
-
-    /**
-     * Sets authentication cookies (access and refresh tokens) as HTTP-only cookies.
-     *
-     * @param response HttpServletResponse to add cookies
-     * @param tokens CookieTokens containing access and refresh tokens
-     */
-    private void setAuthCookies(HttpServletResponse response, CookieTokens tokens) {
-        // Set access token cookie
-        Cookie accessCookie = new Cookie("access_token", tokens.getAccessToken());
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(appConfiguration.isSecureCookie());
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (appConfiguration.getAccessTokenExpirationTime() / 1000));
-        response.addCookie(accessCookie);
-
-        // Set refresh token cookie
-        Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefreshToken());
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(appConfiguration.isSecureCookie());
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge((int) (appConfiguration.getRefreshTokenExpirationTime() / 1000));
-        response.addCookie(refreshCookie);
-    }
-
-    /**
-     * Clears authentication cookies by setting their max age to 0.
-     *
-     * @param response HttpServletResponse to clear cookies
-     */
-    private void clearAuthCookies(HttpServletResponse response) {
-        // Clear access token cookie
-        Cookie accessCookie = new Cookie("access_token", "");
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(appConfiguration.isSecureCookie());
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(0);
-        response.addCookie(accessCookie);
-
-        // Clear refresh token cookie
-        Cookie refreshCookie = new Cookie("refresh_token", "");
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(appConfiguration.isSecureCookie());
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(0);
-        response.addCookie(refreshCookie);
+        return new AuthTokens(accessToken, refreshToken);
     }
 }

@@ -1,16 +1,14 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
 import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
 import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.repository.UserRepository;
 import dev.roland.inventory_management_backend.service.AuthService;
+import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
 
@@ -30,31 +28,21 @@ public class AuthServiceImpl implements AuthService {
      * @throws ApiException if user is not registered
      */
     @Override
-    public ResponseEntity<ApiResponse<CheckFirstLoginResponse>> checkIfFirstLogin(EmailRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
+    public CheckFirstLoginResponse checkIfFirstLogin(EmailRequest request) {
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
-        boolean firstLogin = user.getPassword() == null;
-
-        AuthMessageKey messageKey = firstLogin
-                ? AuthMessageKey.FIRST_LOGIN
-                : AuthMessageKey.NOT_FIRST_LOGIN;
-
-        return ResponseEntity.ok(ApiResponse.success(messageKey, new CheckFirstLoginResponse(true, firstLogin)));
+        return new CheckFirstLoginResponse(true, user.getPassword() == null);
     }
 
     /**
      * This method checks if provided credentials are valid and if it is then saves the new password of user
      *
      * @param request email of user and the password two times
-     * @return Returns void if everything worked
      * @throws ApiException if user credentials are invalid or the two passwords do not match
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> handleSetupOfNewPassword(PasswordSetupRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+    public void handleSetupOfNewPassword(PasswordSetupRequest request) {
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
 
         if (user.getPassword() != null || user.isOtcSetupComplete()) {
@@ -68,7 +56,6 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setOtcSetupComplete(true);
 
-        userRepository.save(user);
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));
+        userService.save(user);
     }
 }

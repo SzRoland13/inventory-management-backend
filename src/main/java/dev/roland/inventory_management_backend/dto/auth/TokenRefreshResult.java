@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CookieTokens {
-    private String accessToken;
-    private String refreshToken;
+public class TokenRefreshResult {
+    String accessToken;
+    boolean shouldClearRefreshToken;
 }
