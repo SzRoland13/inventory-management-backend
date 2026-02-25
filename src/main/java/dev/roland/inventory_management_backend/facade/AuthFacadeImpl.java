@@ -298,6 +298,23 @@ public class AuthFacadeImpl  implements AuthFacade {
                 user.getRole()
         );
 
+        CookieTokens tokens = generateTokens(user);
+
+        Cookie accessCookie = new Cookie("access_token", tokens.getAccessToken());
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(secureCookie);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge((int) (accessTokenExpirationTime / 1000));
+
+        Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefreshToken());
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(secureCookie);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge((int) (refreshTokenExpirationTime / 1000));
+
+        response.addCookie(accessCookie);
+        response.addCookie(refreshCookie);
+
         MessageKey key = firstTime2FAEnabled ? AuthMessageKey.TWO_FA_SETUP_COMPLETE : AuthMessageKey.LOGIN_SUCCESS;
 
         return ResponseEntity.ok(
