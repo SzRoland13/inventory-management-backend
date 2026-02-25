@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.model;
 
+import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @ToString
-public class OneTimeCode {
+public class OneTimeCode implements IdInterface<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

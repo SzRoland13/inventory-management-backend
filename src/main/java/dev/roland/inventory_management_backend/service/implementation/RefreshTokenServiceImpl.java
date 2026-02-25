@@ -1,9 +1,12 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import dev.roland.inventory_management_backend.messageKey.MessageKey;
+import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.repository.RefreshTokenRepository;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,6 +16,16 @@ import java.util.Optional;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
+
+    @Override
+    public JpaRepository<RefreshToken, Long> getRepository() {
+        return refreshTokenRepository;
+    }
+
+    @Override
+    public MessageKey getNotFoundMessageKey() {
+        return NotFoundMessageKey.REFRESH_TOKEN;
+    }
 
     /**
      * Retrieves a {@link RefreshToken} entity from the database that matches the given token value.
@@ -24,26 +37,5 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
-    }
-
-    /**
-     * Deletes the specified {@link RefreshToken} entity from the database.
-     *
-     * @param token the {@link RefreshToken} entity to delete
-     */
-    @Override
-    public void delete(RefreshToken token) {
-        refreshTokenRepository.delete(token);
-    }
-
-    /**
-     * Persists a new {@link RefreshToken} entity or updates an existing one in the database.
-     *
-     * @param refreshToken the {@link RefreshToken} entity to save or update
-     * @return the saved or updated {@link RefreshToken} entity
-     */
-    @Override
-    public RefreshToken save(RefreshToken refreshToken) {
-        return refreshTokenRepository.save(refreshToken);
     }
 }

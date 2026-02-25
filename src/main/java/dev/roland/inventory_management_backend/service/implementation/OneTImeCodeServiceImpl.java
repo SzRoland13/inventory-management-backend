@@ -1,9 +1,12 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import dev.roland.inventory_management_backend.messageKey.MessageKey;
+import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.repository.OneTimeCodeRepository;
 import dev.roland.inventory_management_backend.service.OneTimeCodeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,15 +17,15 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
 
     private final OneTimeCodeRepository oneTimeCodeRepository;
 
-    /**
-     * Persists a new {@link OneTimeCode} entity or updates an existing one in the database.
-     *
-     * @param oneTimeCode the {@link OneTimeCode} entity to save or update
-     * @return the saved or updated {@link OneTimeCode} entity
-     */
+
     @Override
-    public OneTimeCode save(OneTimeCode oneTimeCode) {
-        return oneTimeCodeRepository.save(oneTimeCode);
+    public JpaRepository<OneTimeCode, Long> getRepository() {
+        return oneTimeCodeRepository;
+    }
+
+    @Override
+    public MessageKey getNotFoundMessageKey() {
+        return NotFoundMessageKey.ONE_TIME_CODE;
     }
 
     /**
@@ -35,16 +38,6 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
     @Override
     public Optional<OneTimeCode> findByCode(String code) {
         return oneTimeCodeRepository.findByCode(code);
-    }
-
-    /**
-     * Deletes the specified {@link OneTimeCode} entity from the database.
-     *
-     * @param oneTimeCode the {@link OneTimeCode} entity to delete
-     */
-    @Override
-    public void delete(OneTimeCode oneTimeCode) {
-        oneTimeCodeRepository.delete(oneTimeCode);
     }
 
     /**
