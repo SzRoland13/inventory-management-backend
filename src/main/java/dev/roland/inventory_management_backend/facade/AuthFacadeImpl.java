@@ -66,9 +66,7 @@ public class AuthFacadeImpl implements AuthFacade {
     @Transactional
     @Override
     public ResponseEntity<ApiResponse<Void>> sendOneTimeCode(EmailRequest request) {
-        User user = userService.findUserByEmail(request.getEmail()).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         if (user.getPassword() != null) {
             throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
@@ -152,9 +150,7 @@ public class AuthFacadeImpl implements AuthFacade {
      */
     @Override
     public ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(LoginRequest request) {
-        User user = userService.findUserByEmail(request.getEmail()).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         try {
             UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword());
@@ -233,8 +229,7 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     @Transactional
     public ResponseEntity<ApiResponse<String>> setup2fa(EmailRequest request) {
-        User user = userService.findUserByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         if (user.is2faEnabled()) {
             throw new ApiException(AuthMessageKey.TWO_FA_ALREADY_ENABLED);
@@ -267,8 +262,7 @@ public class AuthFacadeImpl implements AuthFacade {
     public ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request, HttpServletResponse response) {
         boolean firstTime2FAEnabled = false;
 
-        User user = userService.findUserByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
+        User user = userService.findUserByEmailOrThrow(request.getEmail());
 
         String emailAddressFromToken = loginSessionService.consumeSessionToken(request.getShortLifeToken());
 

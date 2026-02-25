@@ -1,17 +1,14 @@
 package dev.roland.inventory_management_backend.facade;
 
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
-import dev.roland.inventory_management_backend.exception.ApiException;
-import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
-import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
-import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
+import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
+import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,7 +24,7 @@ public class UserFacadeImpl implements UserFacade {
      * @return created user entity.
      */
     @Override
-    public ResponseEntity<ApiResponse<UserDto>> registerUser(AddEditUserRequest request) {
+    public UserDto registerUser(AddEditUserRequest request) {
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -42,20 +39,17 @@ public class UserFacadeImpl implements UserFacade {
 
         User newUser = userService.save(user);
 
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.REGISTRATION_SUCCESSFUL, new UserDto(newUser)));
+        return new UserDto(newUser);
     }
 
     /**
      * Handles 2FA reset for a single user.
      *
      * @param id user id to reset the 2fa for.
-     * @return void.
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> resetUser2FA(Long id) {
-        User user = userService.findUserById(id).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+    public void resetUser2FA(Long id) {
+        User user = userService.findByIdOrThrow(id);
 
         if (user.getTotpSecret() == null && !user.is2faEnabled()) {
             throw new ApiException(UserMessageKey.TWO_FA_NOT_ENABLED);
@@ -64,8 +58,6 @@ public class UserFacadeImpl implements UserFacade {
         user.setTotpSecret(null);
         user.set2faEnabled(false);
         userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.TWO_FA_SETUP_RESET_COMPLETE, null));
     }
 
     /**
@@ -73,13 +65,10 @@ public class UserFacadeImpl implements UserFacade {
      * Can suspend users in any status (SETUP_REQUIRED, ACTIVE).
      *
      * @param id user id to suspend.
-     * @return void.
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> suspendUser(Long id) {
-        User user = userService.findUserById(id).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+    public void suspendUser(Long id) {
+        User user = userService.findByIdOrThrow(id);
 
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new ApiException(UserMessageKey.USER_ALREADY_SUSPENDED);
@@ -89,8 +78,6 @@ public class UserFacadeImpl implements UserFacade {
 
         resetUserPasswordAndAuth(user);
         userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_SUSPENDED, null));
     }
 
     /**
@@ -98,13 +85,10 @@ public class UserFacadeImpl implements UserFacade {
      * Always returns user to SETUP_REQUIRED status so they must set up their account again.
      *
      * @param id user id to activate.
-     * @return void.
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> activateUser(Long id) {
-        User user = userService.findUserById(id).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+    public void activateUser(Long id) {
+        User user = userService.findByIdOrThrow(id);
 
         if (user.getStatus() != UserStatus.SUSPENDED) {
             throw new ApiException(UserMessageKey.USER_NOT_SUSPENDED);
@@ -114,8 +98,6 @@ public class UserFacadeImpl implements UserFacade {
         // User will need to set up password and optionally 2FA again
         user.setStatus(UserStatus.SETUP_REQUIRED);
         userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_ACTIVATED, null));
     }
 
     /**
@@ -123,13 +105,10 @@ public class UserFacadeImpl implements UserFacade {
      * Only works if user has completed initial setup.
      *
      * @param id user id to reset password for.
-     * @return void.
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> resetPassword(Long id) {
-        User user = userService.findUserById(id).orElseThrow(
-                () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
-        );
+    public void resetPassword(Long id) {
+        User user = userService.findByIdOrThrow(id);
 
         if (!user.isOtcSetupComplete()) {
             throw new ApiException(UserMessageKey.PASSWORD_NOT_SET);
@@ -139,8 +118,6 @@ public class UserFacadeImpl implements UserFacade {
         user.setStatus(UserStatus.SETUP_REQUIRED);
 
         userService.save(user);
-
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
     }
 
     /**

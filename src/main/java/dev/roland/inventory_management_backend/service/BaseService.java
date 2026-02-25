@@ -1,13 +1,15 @@
 package dev.roland.inventory_management_backend.service;
 
-import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.exception.NotFoundException;
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
+import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.function.Consumer;
 
-public interface BaseService<T, ID extends Serializable> {
+public interface BaseService<T extends IdInterface<ID>, ID extends Serializable> {
 
     JpaRepository<T, ID> getRepository();
 
@@ -17,22 +19,37 @@ public interface BaseService<T, ID extends Serializable> {
         return getRepository().save(entity);
     }
 
-    default T findById(ID id) {
+    default T findByIdOrThrow(ID id) {
         return getRepository()
                 .findById(id)
                 .orElseThrow(() ->
-                        new ApiException(getNotFoundMessageKey())
+                        new NotFoundException(getNotFoundMessageKey())
                 );
     }
 
     default void deleteById(ID id) {
-        if (!getRepository().existsById(id)) {
-            throw new ApiException(getNotFoundMessageKey());
+        getRepository().delete(findByIdOrThrow(id));
+    }
+
+    default boolean existsById(ID id) {
+        return getRepository().existsById(id);
+    }
+
+    default void delete(T entity) {
+        if (!existsById(entity.getId())) {
+            throw new NotFoundException(getNotFoundMessageKey());
         }
-        getRepository().deleteById(id);
+
+        getRepository().delete(entity);
     }
 
     default List<T> findAll() {
         return getRepository().findAll();
+    }
+
+    default T update(ID id, Consumer<T> updater) {
+        T entity = findByIdOrThrow(id);
+        updater.accept(entity);
+        return save(entity);
     }
 }

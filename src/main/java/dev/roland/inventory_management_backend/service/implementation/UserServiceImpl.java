@@ -1,24 +1,25 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.exception.NotFoundException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
-import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
+import dev.roland.inventory_management_backend.messageKey.MessageKey;
+import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.repository.UserRepository;
 import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,39 +27,27 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    @Override
+    public JpaRepository<User, Long> getRepository() {
+        return userRepository;
+    }
+
+    @Override
+    public MessageKey getNotFoundMessageKey() {
+        return NotFoundMessageKey.USER;
+    }
+
     /**
      * Retrieves a {@link User} entity from the database that matches the given email address.
      *
      * @param email the email address to look up
-     * @return an {@link Optional} containing the found {@link User},
-     * or an empty {@link Optional} if no matching entity exists
+     * @return the found {@link User},
+     * or throws a {@link NotFoundException} if not found
      */
     @Override
-    public Optional<User> findUserByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    /**
-     * Persists a new {@link User} entity or updates an existing one in the database.
-     *
-     * @param user the {@link User} entity to save or update
-     * @return the saved or updated {@link User} entity
-     */
-    @Override
-    public User save(User user) {
-        return userRepository.save(user);
-    }
-
-    /**
-     * Retrieves a {@link User} entity from the database that matches the given id.
-     *
-     * @param userId the id to look up
-     * @return an {@link Optional} containing the found {@link User},
-     * or an empty {@link Optional} if no matching entity exists
-     */
-    @Override
-    public Optional<User> findUserById(Long userId) {
-        return userRepository.findById(userId);
+    public User findUserByEmailOrThrow(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.USER));
     }
 
     /**
@@ -66,12 +55,10 @@ public class UserServiceImpl implements UserService {
      *
      * @param auth the {@link Authentication} object automatically injected by Spring Security,
      *             representing the currently authenticated user
-     * @return a {@link ResponseEntity} containing an {@link ApiResponse} with a success status
-     *         if the session is valid
      * @throws ApiException if the authentication is missing, invalid, or the principal cannot be resolved
      */
     @Override
-    public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
+    public void checkSession(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             throw new ApiException(AuthMessageKey.INVALID_TOKEN);
         }
@@ -79,8 +66,6 @@ public class UserServiceImpl implements UserService {
         userRepository.findByUsername(auth.getName()).orElseThrow(
                 () -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS)
         );
-
-        return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
     }
 
     /**
@@ -89,42 +74,41 @@ public class UserServiceImpl implements UserService {
      * @return a {@link java.util.List} of {@link UserDto}
      */
     @Override
-    public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public AllUserResponse getAllUsers() {
+        List<User> users = findAll();
 
-        return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, new AllUserResponse(mapUsersToUserDtos(users))));
+        return new AllUserResponse(mapUsersToUserDtos(users));
     }
 
     /**
      * Updates the user with that data passed.
      *
      * @param id - the id of the user to update
-     * @param updateRequest - the data to update the user
+     * @param request - the data to update the user
      * @return the updated user in a {@link UserDto}
      */
     @Override
-    public ResponseEntity<ApiResponse<UserDto>> updateUser(Long id, AddEditUserRequest updateRequest) {
-        User userToUpdate = userRepository.findById(id).orElseThrow(
-                () -> new ApiException(UserMessageKey.USER_NOT_FOUND)
-        );
+    public UserDto updateUser(Long id, AddEditUserRequest request) {
+        User updated = update(id, user -> {
 
-        if (!userToUpdate.getEmail().equals(updateRequest.getEmail())) {
-            userToUpdate.setOtcSetupComplete(false);
-            userToUpdate.setTotpSecret(null);
-            userToUpdate.set2faEnabled(false);
-            userToUpdate.setPassword(null);
-        }
+            if (!Objects.equals(user.getEmail(), request.getEmail())) {
+                user.setOtcSetupComplete(false);
+                user.setTotpSecret(null);
+                user.set2faEnabled(false);
+                user.setPassword(null);
+            }
 
-        userToUpdate.setEmail(updateRequest.getEmail());
-        userToUpdate.setUsername(updateRequest.getUsername());
+            user.setEmail(request.getEmail());
+            user.setUsername(request.getUsername());
 
-        try {
-            userToUpdate.setRole(UserRole.valueOf(updateRequest.getRole()));
-        } catch (IllegalArgumentException e) {
-            throw new ApiException(UserMessageKey.INVALID_ROLE);
-        }
+            try {
+                user.setRole(UserRole.valueOf(request.getRole()));
+            } catch (IllegalArgumentException e) {
+                throw new ApiException(UserMessageKey.INVALID_ROLE);
+            }
+        });
 
-        return ResponseEntity.ok(ApiResponse.success(UserMessageKey.UPDATE_SUCCESS, new UserDto(userRepository.save(userToUpdate))));
+        return new UserDto(updated);
     }
 
     private List<UserDto> mapUsersToUserDtos(List<User> users) {
