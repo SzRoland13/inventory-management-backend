@@ -1,5 +1,8 @@
 package dev.roland.inventory_management_backend.messageKey;
 
+import lombok.Getter;
+
+@Getter
 public enum AuthMessageKey implements MessageKey {
 
     LOGIN_SUCCESS("auth.login.success"),
@@ -29,7 +32,4 @@ public enum AuthMessageKey implements MessageKey {
     private final String key;
 
     AuthMessageKey(String key) { this.key = key; }
-
-    @Override
-    public String getKey() { return key; }
 }

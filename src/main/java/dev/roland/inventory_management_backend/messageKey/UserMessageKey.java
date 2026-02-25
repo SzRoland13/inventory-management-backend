@@ -1,5 +1,8 @@
 package dev.roland.inventory_management_backend.messageKey;
 
+import lombok.Getter;
+
+@Getter
 public enum UserMessageKey implements MessageKey {
 
     REGISTRATION_SUCCESSFUL("user.registration-successful"),
@@ -19,7 +22,4 @@ public enum UserMessageKey implements MessageKey {
     private final String key;
 
     UserMessageKey(String key) { this.key = key; }
-
-    @Override
-    public String getKey() { return key; }
 }

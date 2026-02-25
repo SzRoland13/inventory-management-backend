@@ -1,11 +1,12 @@
-package dev.roland.inventory_management_backend.security;
+package dev.roland.inventory_management_backend.service.common;
 
+import dev.roland.inventory_management_backend.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -16,16 +17,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Component
-public class JwtUtil {
-
-    @Value("${jwt_secret}")
-    private String secret;
-
-    @Value("${security.jwt.access-expiration-time}")
-    private long accessTokenExpirationTime;
-
-    @Value("${security.jwt.refresh-expiration-time}")
-    private long refreshTokenExpirationTime;
+@RequiredArgsConstructor
+public class JwtService {
+    private final AppConfiguration appConfiguration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -53,7 +47,7 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(Map<String, Object> extraClaims, User user) {
-        return buildToken(extraClaims, user, accessTokenExpirationTime);
+        return buildToken(extraClaims, user, appConfiguration.getAccessTokenExpirationTime());
     }
 
     public String generateRefreshToken(
@@ -61,7 +55,7 @@ public class JwtUtil {
         return buildToken(
                 extraClaims,
                 user,
-                refreshTokenExpirationTime);
+                appConfiguration.getRefreshTokenExpirationTime());
     }
 
     public String generateRefreshToken(User user) {
@@ -100,7 +94,7 @@ public class JwtUtil {
     }
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        byte[] keyBytes = Decoders.BASE64.decode(appConfiguration.getSecret());
 
         return Keys.hmacShaKeyFor(keyBytes);
     }

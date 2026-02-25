@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.security;
 
+import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
-    private final MyUserDetailsService userDetailsService;
-    private final JwtFilter jwtFilter;
+    private final CustomUserDetailsService userDetailsService;
+    private final AuthenticationFilter authenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,7 +43,7 @@ public class SecurityConfiguration {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))).sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

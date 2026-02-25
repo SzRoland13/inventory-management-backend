@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.facade;
 
+import dev.roland.inventory_management_backend.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.auth.CookieTokens;
 import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
@@ -19,7 +20,7 @@ import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.security.JwtUtil;
+import dev.roland.inventory_management_backend.service.common.JwtService;
 import dev.roland.inventory_management_backend.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import dev.roland.inventory_management_backend.service.UserService;
@@ -30,7 +31,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,20 +49,12 @@ public class AuthFacadeImpl implements AuthFacade {
     private final UserService userService;
     private final EmailService emailService;
     private final OneTimeCodeService oneTimeCodeService;
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
     private final TwoFactorAuthService twoFactorAuthService;
     private final LoginSessionService loginSessionService;
-
-    @Value("${app.security.secure-cookie}")
-    private boolean secureCookie;
-
-    @Value("${security.jwt.access-expiration-time}")
-    private long accessTokenExpirationTime;
-
-    @Value("${security.jwt.refresh-expiration-time}")
-    private long refreshTokenExpirationTime;
+    private final AppConfiguration appConfiguration;
 
     /**
      *  Handles first-time login by verifying credentials and sending a one-time code.
@@ -202,7 +194,7 @@ public class AuthFacadeImpl implements AuthFacade {
                         .findByToken(token)
                         .orElseThrow(() -> new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS));
 
-        if (jwtUtil.isTokenExpired(savedToken.getToken())) {
+        if (jwtService.isTokenExpired(savedToken.getToken())) {
             refreshTokenService.delete(savedToken);
 
             // Clear the refresh token cookie
@@ -210,21 +202,21 @@ public class AuthFacadeImpl implements AuthFacade {
             refresh.setPath("/");
             refresh.setMaxAge(0);
             refresh.setHttpOnly(true);
-            refresh.setSecure(secureCookie);
+            refresh.setSecure(appConfiguration.isSecureCookie());
 
             response.addCookie(refresh);
 
             throw new UnauthorizedException(AuthMessageKey.TOKEN_EXPIRED);
         }
 
-        String newAccessToken = jwtUtil.generateAccessToken(savedToken.getUser());
+        String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
 
         // Set new access token as HTTP-only cookie
         Cookie accessCookie = new Cookie("access_token", newAccessToken);
         accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(secureCookie);
+        accessCookie.setSecure(appConfiguration.isSecureCookie());
         accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (accessTokenExpirationTime / 1000));
+        accessCookie.setMaxAge((int) (appConfiguration.getAccessTokenExpirationTime() / 1000));
 
         response.addCookie(accessCookie);
 
@@ -344,13 +336,13 @@ public class AuthFacadeImpl implements AuthFacade {
      */
     @Transactional
     private CookieTokens generateTokens(User user) {
-        String accessToken = jwtUtil.generateAccessToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
         RefreshToken tokenEntity = new RefreshToken();
         tokenEntity.setToken(refreshToken);
         tokenEntity.setUser(user);
-        tokenEntity.setExpiryDate(LocalDateTime.now().plusSeconds(refreshTokenExpirationTime / 1000));
+        tokenEntity.setExpiryDate(LocalDateTime.now().plusSeconds(appConfiguration.getRefreshTokenExpirationTime() / 1000));
         refreshTokenService.save(tokenEntity);
 
         return new CookieTokens(accessToken, refreshToken);
@@ -366,17 +358,17 @@ public class AuthFacadeImpl implements AuthFacade {
         // Set access token cookie
         Cookie accessCookie = new Cookie("access_token", tokens.getAccessToken());
         accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(secureCookie);
+        accessCookie.setSecure(appConfiguration.isSecureCookie());
         accessCookie.setPath("/");
-        accessCookie.setMaxAge((int) (accessTokenExpirationTime / 1000));
+        accessCookie.setMaxAge((int) (appConfiguration.getAccessTokenExpirationTime() / 1000));
         response.addCookie(accessCookie);
 
         // Set refresh token cookie
         Cookie refreshCookie = new Cookie("refresh_token", tokens.getRefreshToken());
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(secureCookie);
+        refreshCookie.setSecure(appConfiguration.isSecureCookie());
         refreshCookie.setPath("/");
-        refreshCookie.setMaxAge((int) (refreshTokenExpirationTime / 1000));
+        refreshCookie.setMaxAge((int) (appConfiguration.getRefreshTokenExpirationTime() / 1000));
         response.addCookie(refreshCookie);
     }
 
@@ -389,7 +381,7 @@ public class AuthFacadeImpl implements AuthFacade {
         // Clear access token cookie
         Cookie accessCookie = new Cookie("access_token", "");
         accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(secureCookie);
+        accessCookie.setSecure(appConfiguration.isSecureCookie());
         accessCookie.setPath("/");
         accessCookie.setMaxAge(0);
         response.addCookie(accessCookie);
@@ -397,7 +389,7 @@ public class AuthFacadeImpl implements AuthFacade {
         // Clear refresh token cookie
         Cookie refreshCookie = new Cookie("refresh_token", "");
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(secureCookie);
+        refreshCookie.setSecure(appConfiguration.isSecureCookie());
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(0);
         response.addCookie(refreshCookie);

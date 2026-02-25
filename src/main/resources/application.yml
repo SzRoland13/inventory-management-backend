@@ -30,11 +30,11 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       timeout: 2000
-jwt_secret: ${JWT_SECRET}
+#Redis config
 redis:
   session:
     ttl-minutes: ${REDIS_SESSION_TTL_MINUTES:8}
-
+#Logging config
 logging:
   level:
     org:
@@ -42,3 +42,13 @@ logging:
         web: DEBUG
       servlet:
         DispatcherServlet: DEBUG
+#App config
+app:
+  security:
+    secure-cookie: ${SECURE_HTTP}
+#JWT config
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-expiration-time: ${ACCESS_TOKEN_EXPIRY}
+    refresh-expiration-time: ${REFRESH_TOKEN_EXPIRY}

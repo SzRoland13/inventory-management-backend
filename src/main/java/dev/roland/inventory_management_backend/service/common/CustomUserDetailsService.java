@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.security;
+package dev.roland.inventory_management_backend.service.common;
 
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.repository.UserRepository;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class MyUserDetailsService implements UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 

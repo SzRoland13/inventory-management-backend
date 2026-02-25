@@ -1,7 +1,9 @@
 package dev.roland.inventory_management_backend.security;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieService;
+import dev.roland.inventory_management_backend.service.common.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +21,11 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtFilter  extends OncePerRequestFilter {
+public class AuthenticationFilter extends OncePerRequestFilter {
 
     private final HandlerExceptionResolver handlerExceptionResolver;
-    private final MyUserDetailsService userDetailsService;
-    private  final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
+    private  final JwtService jwtService;
     private final HttpOnlyCookieService cookieService;
 
     @Override
@@ -32,10 +34,10 @@ public class JwtFilter  extends OncePerRequestFilter {
 
         if (jwt != null && !jwt.isBlank()) {
             try {
-                String username = jwtUtil.extractUsername(jwt);
+                String username = jwtService.extractUsername(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                if (jwtUtil.isTokenValid(jwt, userDetails)) {
+                if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
