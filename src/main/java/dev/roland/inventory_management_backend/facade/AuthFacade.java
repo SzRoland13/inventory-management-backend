@@ -1,8 +1,14 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.*;
+import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
+import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
+import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
+import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
+import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
+import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 
 public interface AuthFacade {
@@ -40,7 +46,7 @@ public interface AuthFacade {
      * @return new access and the provided refresh token
      * @throws ApiException if token does not exist or the token expired
      */
-    ResponseEntity<ApiResponse<LoginResponse.TokensDetails>> handleTokenRefresh(RefreshRequest request);
+    ResponseEntity<ApiResponse<Void>> handleTokenRefresh(String token, HttpServletResponse response);
 
     /**
      * Initializes Two-Factor Authentication (2FA) setup for a user by generating a TOTP secret.
@@ -59,5 +65,5 @@ public interface AuthFacade {
      * @return ApiResponse containing user details and generated access/refresh tokens
      * @throws ApiException if the user does not exist or the TOTP code is invalid
      */
-    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request);
+    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(TwoFactorVerifyRequest request, HttpServletResponse response);
 }

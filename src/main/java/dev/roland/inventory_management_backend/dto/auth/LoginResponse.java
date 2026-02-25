@@ -10,7 +10,6 @@ import lombok.*;
 public class LoginResponse {
 
     private UserDetails user;
-    private TokensDetails tokens;
     private boolean firstTime2FAEnabled;
 
     @Getter
@@ -21,14 +20,5 @@ public class LoginResponse {
         private String email;
         private String username;
         private UserRole role;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TokensDetails {
-        private String accessToken;
-        private String refreshToken;
     }
 }

@@ -2,12 +2,17 @@ package dev.roland.inventory_management_backend.exception.handler;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.exception.NotFoundException;
+import dev.roland.inventory_management_backend.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -16,7 +21,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFoundExceptions(NotFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.failure(ex.getMessageKey()));
+
+     }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -28,7 +48,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<String>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getAllErrors().getFirst().getDefaultMessage();
-        return ResponseEntity.badRequest().body(ApiResponse.failure(GenericMessageKey.VALIDATION_ERROR, message));
+        Map<String, Object> params = new HashMap<>();
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(error -> params.put(error.getField(), error.getDefaultMessage()));
+
+        return ResponseEntity.badRequest().body(ApiResponse.failure(GenericMessageKey.VALIDATION_ERROR, params));
     }
 }

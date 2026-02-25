@@ -1,12 +1,21 @@
 package dev.roland.inventory_management_backend.controller;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.auth.*;
+import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
+import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
+import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
+import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
+import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
+import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
+import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.facade.AuthFacade;
 import dev.roland.inventory_management_backend.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,8 +56,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    ResponseEntity<ApiResponse<LoginResponse.TokensDetails>> handleTokenRefresh(@Valid @RequestBody RefreshRequest request) {
-        return authFacade.handleTokenRefresh(request);
+    ResponseEntity<ApiResponse<Void>> handleTokenRefresh(@CookieValue(value = "refresh_token", required = false) String refreshToken, HttpServletResponse response) {
+        return authFacade.handleTokenRefresh(refreshToken, response);
     }
 
     @PostMapping("/2fa/setup")
@@ -57,7 +66,7 @@ public class AuthController {
     }
 
     @PostMapping("/2fa/login")
-    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(@Valid @RequestBody TwoFactorVerifyRequest request) {
-        return authFacade.verify2faLogin(request);
+    ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(@Valid @RequestBody TwoFactorVerifyRequest request, HttpServletResponse response) {
+        return authFacade.verify2faLogin(request, response);
     }
 }

@@ -1,19 +1,18 @@
 package dev.roland.inventory_management_backend.security;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.enums.UserRole;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JwtUtil {
@@ -21,39 +20,75 @@ public class JwtUtil {
     @Value("${jwt_secret}")
     private String secret;
 
-    public String generateToken(User user) throws IllegalArgumentException, JWTCreationException {
+    @Value("${security.jwt.access-expiration-time}")
+    private long accessTokenExpirationTime;
 
-        return JWT.create()
-                .withSubject("User Details")
-                .withClaim("username", user.getUsername())
-                .withClaim("role", user.getRole().toString())
-                .withIssuedAt(new Date())
-                .withIssuer("BILLING APPLICATION")
-                .withExpiresAt(Date.from(LocalDateTime.now()
-                        .plusMinutes(15)
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()))
-                .sign(Algorithm.HMAC256(secret));
+    @Value("${security.jwt.refresh-expiration-time}")
+    private long refreshTokenExpirationTime;
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
     }
 
-    public DecodedJWT validateToken(String token) throws JWTVerificationException {
-        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(secret))
-                .withSubject("User Details")
-                .withIssuer("BILLING APPLICATION")
-                .build();
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
 
-        return verifier.verify(token);
+        return claimsResolver.apply(claims);
     }
 
-    public String getUsername(String token) {
-        return validateToken(token).getClaim("username").asString();
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
     }
 
-    public UserRole getRole(String token) {
-        String roleClaim = validateToken(token).getClaim("role").asString();
+    public String generateAccessToken(User user) {
+        return generateAccessToken(new HashMap<>(), user);
+    }
 
-        return UserRole.fromString(roleClaim)
-                .orElseThrow(() -> new RuntimeException("Invalid role: " + roleClaim));
+    public String generateAccessToken(Map<String, Object> extraClaims, User user) {
+        return buildToken(extraClaims, user, accessTokenExpirationTime);
+    }
 
+    public String generateRefreshToken(
+            Map<String, Object> extraClaims, User user) {
+        return buildToken(
+                extraClaims,
+                user,
+                refreshTokenExpirationTime);
+    }
+
+    public String generateRefreshToken(User user) {
+        return generateRefreshToken(new HashMap<>(), user);
+    }
+
+    private String buildToken(
+            Map<String, Object> extraClaims, User user, long expiration) {
+        long now = System.currentTimeMillis();
+
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(user.getUsername())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expiration))
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .compact();
+    }
+
+    public boolean isTokenValid(String token, User user) {
+        final String username = extractUsername(token);
+        return (username.equals(user.getUsername())) && !isTokenExpired(token);
+    }
+
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
