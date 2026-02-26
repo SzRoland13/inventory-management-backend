@@ -1,11 +1,13 @@
 package dev.roland.inventory_management_backend.model;
 
-import dev.roland.inventory_management_backend.model.enums.ContactType;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
-import lombok.*;
+
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import dev.roland.inventory_management_backend.enums.ContactType;
+import lombok.*;
 
 @Entity
 @Table(name = "contacts")
@@ -16,39 +18,39 @@ import java.time.LocalDateTime;
 @Builder
 public class Contact {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id", nullable = false)
-    private Partner partner;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "partner_id", nullable = false)
+  private Partner partner;
 
-    @Column(nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private ContactType type;
+  @Column(nullable = false, length = 50)
+  @Enumerated(EnumType.STRING)
+  private ContactType type;
 
-    @Column(name = "address_line1", nullable = false)
-    private String addressLine1;
+  @Column(name = "address_line1", nullable = false)
+  private String addressLine1;
 
-    @Column(name = "address_line2")
-    private String addressLine2;
+  @Column(name = "address_line2")
+  private String addressLine2;
 
-    @Column(nullable = false, length = 100)
-    private String city;
+  @Column(nullable = false, length = 100)
+  private String city;
 
-    @Column(nullable = false, length = 2)
-    private String country;
+  @Column(nullable = false, length = 2)
+  private String country;
 
-    @Column(length = 50)
-    private String phone;
+  @Column(length = 50)
+  private String phone;
 
-    private String email;
+  private String email;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+  @Column(name = "created_at", updatable = false)
+  private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+  @UpdateTimestamp
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
 }

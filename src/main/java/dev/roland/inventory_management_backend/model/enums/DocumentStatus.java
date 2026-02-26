@@ -1,8 +1,0 @@
-package dev.roland.inventory_management_backend.model.enums;
-
-public enum DocumentStatus {
-    DRAFT,
-    PENDING,
-    COMPLETED,
-    CANCELLED
-}

@@ -1,14 +1,16 @@
 package dev.roland.inventory_management_backend.messageKey;
 
-public enum GenericMessageKey  implements MessageKey {
-    GENERIC_ERROR("error.generic"),
-    VALIDATION_ERROR("error.validation"),
-    REQUEST_SUCCESS("request.success");
+import lombok.Getter;
 
-    private final String key;
+@Getter
+public enum GenericMessageKey implements MessageKey {
+  GENERIC_ERROR("error.generic"),
+  VALIDATION_ERROR("error.validation"),
+  REQUEST_SUCCESS("request.success");
 
-    GenericMessageKey(String key) { this.key = key; }
+  private final String key;
 
-    @Override
-    public String getKey() { return key; }
+  GenericMessageKey(String key) {
+    this.key = key;
+  }
 }

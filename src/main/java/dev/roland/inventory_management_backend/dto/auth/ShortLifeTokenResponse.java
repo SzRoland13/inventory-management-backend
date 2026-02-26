@@ -1,14 +1,15 @@
 package dev.roland.inventory_management_backend.dto.auth;
 
+import java.time.Instant;
+
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.Instant;
 
 @Data
 @Builder
 public class ShortLifeTokenResponse {
 
-    private String shortLifeToken;
-    private Instant expiresAt;
+  private boolean twoFactorEnabled;
+  private String shortLifeToken;
+  private Instant expiresAt;
 }

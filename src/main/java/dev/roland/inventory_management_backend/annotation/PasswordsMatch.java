@@ -1,13 +1,13 @@
 package dev.roland.inventory_management_backend.annotation;
 
-import dev.roland.inventory_management_backend.annotation.validator.PasswordsMatchValidator;
+import java.lang.annotation.*;
+
 import jakarta.validation.Constraint;
 
-import java.lang.annotation.*;
+import dev.roland.inventory_management_backend.annotation.validator.PasswordsMatchValidator;
 
 @Documented
 @Constraint(validatedBy = PasswordsMatchValidator.class)
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PasswordsMatch {
-}
+public @interface PasswordsMatch {}
