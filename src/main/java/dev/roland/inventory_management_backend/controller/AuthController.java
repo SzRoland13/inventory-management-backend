@@ -114,7 +114,7 @@ public class AuthController {
           response,
           result.getAccessToken(),
           appConfiguration.isSecureCookie(),
-          (int) appConfiguration.getAccessTokenExpirationTime());
+          (int) appConfiguration.getAccessTokenExpirationTime() / 1000);
     }
 
     return result.isShouldClearRefreshToken()
@@ -139,12 +139,12 @@ public class AuthController {
         response,
         result.getTokens().getAccessToken(),
         appConfiguration.isSecureCookie(),
-        (int) appConfiguration.getAccessTokenExpirationTime());
+        (int) appConfiguration.getAccessTokenExpirationTime() / 1000);
     cookieService.setRefreshCookie(
         response,
         result.getTokens().getRefreshToken(),
         appConfiguration.isSecureCookie(),
-        (int) appConfiguration.getRefreshTokenExpirationTime());
+        (int) appConfiguration.getRefreshTokenExpirationTime() / 1000);
 
     MessageKey key =
         result.isFirstTime2faEnabled()

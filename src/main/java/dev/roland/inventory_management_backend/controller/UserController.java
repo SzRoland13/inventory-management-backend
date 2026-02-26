@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.controller;
 
+import static dev.roland.inventory_management_backend.controller.UserController.USER_BASE_ENDPOINT;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -23,14 +25,22 @@ import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/user")
+@RequestMapping(USER_BASE_ENDPOINT)
 @RequiredArgsConstructor
 public class UserController {
+  public static final String USER_BASE_ENDPOINT = "api/v1/user";
+  public static final String REGISTER_ENDPOINT = "/register";
+  public static final String ID_PARAM = "/{id}";
+  public static final String ALL_USERS_ENDPOINT = "/all";
+  public static final String RESET_TWO_FA_ENDPOINT = "/reset-2fa" + ID_PARAM;
+  public static final String SUSPEND_ENDPOINT = "/suspend" + ID_PARAM;
+  public static final String ACTIVATE_ENDPOINT = "/activate" + ID_PARAM;
+  public static final String RESET_PASSWORD_ENDPOINT = "/reset-password" + ID_PARAM;
 
   private final UserService userService;
   private final UserFacade userFacade;
 
-  @PostMapping("/register")
+  @PostMapping(REGISTER_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> registerUser(
       @Valid @RequestBody AddEditUserRequest request) {
@@ -39,7 +49,7 @@ public class UserController {
             UserMessageKey.REGISTRATION_SUCCESSFUL, userFacade.registerUser(request)));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping(ID_PARAM)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> updateUser(
       @PathVariable Long id, @RequestBody AddEditUserRequest updateRequest) {
@@ -48,14 +58,14 @@ public class UserController {
             UserMessageKey.UPDATE_SUCCESS, userService.updateUser(id, updateRequest)));
   }
 
-  @GetMapping("/all")
+  @GetMapping(ALL_USERS_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
     return ResponseEntity.ok(
         ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userService.getAllUsers()));
   }
 
-  @PostMapping("/reset-2fa/{id}")
+  @PostMapping(RESET_TWO_FA_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
     userFacade.resetUser2FA(id);
@@ -63,7 +73,7 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.TWO_FA_SETUP_RESET_COMPLETE, null));
   }
 
-  @PostMapping("/suspend/{id}")
+  @PostMapping(SUSPEND_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id) {
     userFacade.suspendUser(id);
@@ -71,7 +81,7 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_SUSPENDED, null));
   }
 
-  @PostMapping("/activate/{id}")
+  @PostMapping(ACTIVATE_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
     userFacade.activateUser(id);
@@ -79,7 +89,7 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_ACTIVATED, null));
   }
 
-  @PostMapping("/reset-password/{id}")
+  @PostMapping(RESET_PASSWORD_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable Long id) {
     userFacade.resetPassword(id);
