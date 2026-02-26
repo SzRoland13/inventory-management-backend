@@ -46,7 +46,6 @@ public class SecurityConfiguration {
         .authorizeHttpRequests(
             auth ->
                 auth
-
                     // Public auth endpoints
                     .requestMatchers(
                         AuthController.AUTH_BASE_ENDPOINT
@@ -56,7 +55,9 @@ public class SecurityConfiguration {
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.SETUP_PASSWORD_ENDPOINT,
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.LOGIN_ENDPOINT,
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_SETUP_ENDPOINT,
-                        AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_LOGIN_ENDPOINT)
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_LOGIN_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.REFRESH_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.LOGOUT_ENDPOINT)
                     .permitAll()
 
                     // Setup-required users allowed
