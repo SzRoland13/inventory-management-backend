@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.controller;
 
+import static dev.roland.inventory_management_backend.controller.AuthController.AUTH_BASE_ENDPOINT;
+
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
@@ -35,16 +37,27 @@ import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieServ
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/auth")
+@RequestMapping(AUTH_BASE_ENDPOINT)
 @RequiredArgsConstructor
 public class AuthController {
+  public static final String AUTH_BASE_ENDPOINT = "api/v1/auth";
+  public static final String CHECK_FIRST_LOGIN_ENDPOINT = "/check-first-login";
+  public static final String SEND_OTC_ENDPOINT = "/send-one-time-code";
+  public static final String VALIDATE_OTC_ENDPOINT = "/validate-one-time-code";
+  public static final String SETUP_PASSWORD_ENDPOINT = "/setup-password";
+  public static final String LOGIN_ENDPOINT = "/login";
+  public static final String REFRESH_ENDPOINT = "/refresh";
+  public static final String TWO_FA_SETUP_ENDPOINT = "/2fa/setup";
+  public static final String TWO_FA_LOGIN_ENDPOINT = "/2fa/login";
+  public static final String CHECK_SESSION_ENDPOINT = "/check-session";
+  public static final String LOGOUT_ENDPOINT = "/logout";
 
   private final AuthService authService;
   private final AuthFacade authFacade;
   private final HttpOnlyCookieService cookieService;
   private final AppConfiguration appConfiguration;
 
-  @PostMapping("/check-first-login")
+  @PostMapping(CHECK_FIRST_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<CheckFirstLoginResponse>> checkIfFirstLogin(
       @Valid @RequestBody EmailRequest request) {
     CheckFirstLoginResponse response = authService.checkIfFirstLogin(request);
@@ -55,7 +68,7 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(messageKey, response));
   }
 
-  @PostMapping("/send-one-time-code")
+  @PostMapping(SEND_OTC_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> sendOneTimeCode(@Valid @RequestBody EmailRequest request) {
     authFacade.sendOneTimeCode(request);
 
@@ -63,7 +76,7 @@ public class AuthController {
         .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
   }
 
-  @PostMapping("/validate-one-time-code")
+  @PostMapping(VALIDATE_OTC_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> validateOneTimeCode(
       @Valid @RequestBody FirstLoginValidationRequest request) {
     authFacade.validateOneTimeCode(request);
@@ -72,7 +85,7 @@ public class AuthController {
         ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, null));
   }
 
-  @PostMapping("/setup-password")
+  @PostMapping(SETUP_PASSWORD_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleSetupOfNewPassword(
       @Valid @RequestBody PasswordSetupRequest request) {
     authService.handleSetupOfNewPassword(request);
@@ -80,14 +93,14 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));
   }
 
-  @PostMapping("/login")
+  @PostMapping(LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(
       @Valid @RequestBody LoginRequest request) {
     return ResponseEntity.ok()
         .body(ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, authFacade.handleLogin(request)));
   }
 
-  @PostMapping("/refresh")
+  @PostMapping(REFRESH_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleTokenRefresh(
       @CookieValue(value = "refresh_token", required = false) String refreshToken,
       HttpServletResponse response) {
@@ -110,13 +123,13 @@ public class AuthController {
         : ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
   }
 
-  @PostMapping("/2fa/setup")
+  @PostMapping(TWO_FA_SETUP_ENDPOINT)
   ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody EmailRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TWO_FA_CODE_GENERATED, authFacade.setup2fa(request)));
   }
 
-  @PostMapping("/2fa/login")
+  @PostMapping(TWO_FA_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(
       @Valid @RequestBody TwoFactorVerifyRequest request, HttpServletResponse response) {
 
@@ -141,13 +154,13 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(key, result.getLoginResponse()));
   }
 
-  @GetMapping("/check-session")
+  @GetMapping(CHECK_SESSION_ENDPOINT)
   public ResponseEntity<ApiResponse<UserDto>> checkSession(Authentication authentication) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TOKEN_VALID, authService.checkSession(authentication)));
   }
 
-  @PostMapping("/logout")
+  @PostMapping(LOGOUT_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleLogout(
       @CookieValue(value = "refresh_token", required = false) String refreshToken,
       HttpServletResponse response) {

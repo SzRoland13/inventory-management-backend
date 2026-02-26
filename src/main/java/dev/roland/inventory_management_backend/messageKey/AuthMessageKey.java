@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum AuthMessageKey implements MessageKey {
+  ACCOUNT_SUSPENDED("auth.account-suspended"),
   LOGIN_SUCCESS("auth.login.success"),
   LOGOUT_SUCCESS("auth.logut.success"),
   INVALID_CREDENTIALS("auth.login.invalid-credentials"),

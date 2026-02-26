@@ -1,7 +1,6 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
+import dev.roland.inventory_management_backend.model.CustomUserDetails;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.service.AuthService;
 import dev.roland.inventory_management_backend.service.UserService;
@@ -74,18 +74,13 @@ public class AuthServiceImpl implements AuthService {
    */
   @Override
   public UserDto checkSession(Authentication authentication) {
+
     if (authentication == null || !authentication.isAuthenticated()) {
       throw new UnauthorizedException(AuthMessageKey.INVALID_TOKEN);
     }
 
-    Object principal = authentication.getPrincipal();
+    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-    if (!(principal instanceof UserDetails userDetails)) {
-      throw new UnauthorizedException(AuthMessageKey.INVALID_TOKEN);
-    }
-
-    User user = userService.findByUsernameOrThrow(userDetails.getUsername());
-
-    return new UserDto(user);
+    return new UserDto(userDetails.getUser());
   }
 }

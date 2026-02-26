@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import dev.roland.inventory_management_backend.controller.AuthController;
+import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 
@@ -34,18 +36,39 @@ public class SecurityConfiguration {
     http.csrf(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .cors(Customizer.withDefaults())
-        .authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated())
-        .userDetailsService(userDetailsService)
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(
-            exceptionHandling ->
-                exceptionHandling.authenticationEntryPoint(
+            exception ->
+                exception.authenticationEntryPoint(
                     (request, response, authException) ->
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")))
-        .sessionManagement(
-            sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        .authorizeHttpRequests(
+            auth ->
+                auth
+
+                    // Public auth endpoints
+                    .requestMatchers(
+                        AuthController.AUTH_BASE_ENDPOINT
+                            + AuthController.CHECK_FIRST_LOGIN_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.SEND_OTC_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.VALIDATE_OTC_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.SETUP_PASSWORD_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.LOGIN_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_SETUP_ENDPOINT,
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_LOGIN_ENDPOINT)
+                    .permitAll()
+
+                    // Setup-required users allowed
+                    .requestMatchers(
+                        AuthController.AUTH_BASE_ENDPOINT + AuthController.CHECK_SESSION_ENDPOINT)
+                    .hasAnyAuthority(
+                        UserStatus.asAuthorities(UserStatus.ACTIVE, UserStatus.SETUP_REQUIRED))
+
+                    // Everything else → only ACTIVE
+                    .anyRequest()
+                    .hasAuthority(UserStatus.ACTIVE.getAsAuthority()))
+        .userDetailsService(userDetailsService);
 
     http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

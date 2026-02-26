@@ -12,12 +12,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import dev.roland.inventory_management_backend.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieService;
 import dev.roland.inventory_management_backend.service.common.JwtService;
-import io.jsonwebtoken.JwtException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthenticationFilter extends OncePerRequestFilter {
 
-  private final HandlerExceptionResolver handlerExceptionResolver;
   private final CustomUserDetailsService userDetailsService;
   private final JwtService jwtService;
   private final HttpOnlyCookieService cookieService;
@@ -38,22 +37,22 @@ public class AuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     String jwt = cookieService.extractAccessTokenFromCookie(request);
 
-    if (jwt != null && !jwt.isBlank()) {
-      try {
-        String username = jwtService.extractUsername(jwt);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    if (jwt != null
+        && !jwt.isBlank()
+        && SecurityContextHolder.getContext().getAuthentication() == null) {
+      String username = jwtService.extractUsername(jwt);
+      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        if (jwtService.isTokenValid(jwt, userDetails)) {
-          UsernamePasswordAuthenticationToken authToken =
-              new UsernamePasswordAuthenticationToken(
-                  userDetails, null, userDetails.getAuthorities());
+      if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+        throw new UnauthorizedException(AuthMessageKey.ACCOUNT_SUSPENDED);
+      }
 
-          if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-          }
-        }
-      } catch (JwtException ex) {
-        handlerExceptionResolver.resolveException(request, response, null, ex);
+      if (jwtService.isTokenValid(jwt, userDetails)) {
+        UsernamePasswordAuthenticationToken authToken =
+            new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authToken);
       }
     }
 
