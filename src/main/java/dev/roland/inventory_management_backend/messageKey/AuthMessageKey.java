@@ -13,6 +13,7 @@ public enum AuthMessageKey implements MessageKey {
   PASSWORD_SETUP_SUCCESS("auth.login.password-setup-success"),
   EMAIL_SEND_FAILED("auth.login.email-send-failed"),
   TOKEN_REFRESHED("auth.token-refreshed"),
+  TOKEN_VALID("auth.token-valid"),
   INVALID_TOKEN("auth.invalid-token"),
   TOKEN_EXPIRED("auth.token-expired"),
   TWO_FA_ALREADY_ENABLED("auth.two-fa-already-enabled"),

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
@@ -13,7 +12,6 @@ import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.NotFoundException;
-import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
@@ -52,25 +50,6 @@ public class UserServiceImpl implements UserService {
   }
 
   /**
-   * Validates the current authenticated user session.
-   *
-   * @param auth the {@link Authentication} object automatically injected by Spring Security,
-   *     representing the currently authenticated user
-   * @throws ApiException if the authentication is missing, invalid, or the principal cannot be
-   *     resolved
-   */
-  @Override
-  public void checkSession(Authentication auth) {
-    if (auth == null || !auth.isAuthenticated()) {
-      throw new ApiException(AuthMessageKey.INVALID_TOKEN);
-    }
-
-    userRepository
-        .findByUsername(auth.getName())
-        .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
-  }
-
-  /**
    * Returns all the saved users.
    *
    * @return a {@link java.util.List} of {@link UserDto}
@@ -80,6 +59,19 @@ public class UserServiceImpl implements UserService {
     List<User> users = findAll();
 
     return new AllUserResponse(mapUsersToUserDtos(users));
+  }
+
+  /**
+   * Retrieves a {@link User} entity from the database that matches the given username.
+   *
+   * @param username the username to look up
+   * @return the found {@link User}, or throws a {@link NotFoundException} if not found
+   */
+  @Override
+  public User findByUsernameOrThrow(String username) {
+    return userRepository
+        .findByUsername(username)
+        .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.USER));
   }
 
   /**

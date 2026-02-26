@@ -1,12 +1,16 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
 import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
 import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.service.AuthService;
@@ -58,5 +62,30 @@ public class AuthServiceImpl implements AuthService {
     user.setOtcSetupComplete(true);
 
     userService.save(user);
+  }
+
+  /**
+   * Validates the current authenticated user session.
+   *
+   * @param authentication the {@link Authentication} object automatically injected by Spring
+   *     Security, representing the currently authenticated user
+   * @throws UnauthorizedException if the authentication is missing, invalid, or the principal
+   *     cannot be resolved
+   */
+  @Override
+  public UserDto checkSession(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      throw new UnauthorizedException(AuthMessageKey.INVALID_TOKEN);
+    }
+
+    Object principal = authentication.getPrincipal();
+
+    if (!(principal instanceof UserDetails userDetails)) {
+      throw new UnauthorizedException(AuthMessageKey.INVALID_TOKEN);
+    }
+
+    User user = userService.findByUsernameOrThrow(userDetails.getUsername());
+
+    return new UserDto(user);
   }
 }

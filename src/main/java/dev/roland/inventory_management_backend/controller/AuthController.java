@@ -5,7 +5,9 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,7 @@ import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
 import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
+import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.facade.AuthFacade;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
@@ -119,8 +122,16 @@ public class AuthController {
 
     LoginFinalizationResult result = authFacade.verify2faLogin(request);
 
-    cookieService.setAccessCookie(response, result.getTokens().getAccessToken(), true, 900);
-    cookieService.setRefreshCookie(response, result.getTokens().getRefreshToken(), true, 604800);
+    cookieService.setAccessCookie(
+        response,
+        result.getTokens().getAccessToken(),
+        appConfiguration.isSecureCookie(),
+        (int) appConfiguration.getAccessTokenExpirationTime());
+    cookieService.setRefreshCookie(
+        response,
+        result.getTokens().getRefreshToken(),
+        appConfiguration.isSecureCookie(),
+        (int) appConfiguration.getRefreshTokenExpirationTime());
 
     MessageKey key =
         result.isFirstTime2faEnabled()
@@ -128,6 +139,12 @@ public class AuthController {
             : AuthMessageKey.LOGIN_SUCCESS;
 
     return ResponseEntity.ok(ApiResponse.success(key, result.getLoginResponse()));
+  }
+
+  @GetMapping("/check-session")
+  public ResponseEntity<ApiResponse<UserDto>> checkSession(Authentication authentication) {
+    return ResponseEntity.ok(
+        ApiResponse.success(AuthMessageKey.TOKEN_VALID, authService.checkSession(authentication)));
   }
 
   @PostMapping("/logout")
@@ -138,11 +155,11 @@ public class AuthController {
     LogoutResult result = authFacade.handleLogout(refreshToken);
 
     if (result.isClearAccessToken()) {
-      cookieService.clearAccessCookie(response, true);
+      cookieService.clearAccessCookie(response, appConfiguration.isSecureCookie());
     }
 
     if (result.isClearRefreshToken()) {
-      cookieService.clearRefreshCookie(response, true);
+      cookieService.clearRefreshCookie(response, appConfiguration.isSecureCookie());
     }
 
     return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.LOGOUT_SUCCESS, null));

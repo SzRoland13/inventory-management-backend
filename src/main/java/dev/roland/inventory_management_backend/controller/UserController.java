@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +17,6 @@ import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.facade.UserFacade;
-import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
 import dev.roland.inventory_management_backend.service.UserService;
@@ -48,13 +46,6 @@ public class UserController {
     return ResponseEntity.ok(
         ApiResponse.success(
             UserMessageKey.UPDATE_SUCCESS, userService.updateUser(id, updateRequest)));
-  }
-
-  @GetMapping("/check-session")
-  public ResponseEntity<ApiResponse<Void>> checkSession(Authentication auth) {
-    userService.checkSession(auth);
-
-    return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
   }
 
   @GetMapping("/all")

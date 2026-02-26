@@ -14,11 +14,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
-
 import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieService;
 import dev.roland.inventory_management_backend.service.common.JwtService;
+import io.jsonwebtoken.JwtException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -53,7 +52,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
           }
         }
-      } catch (JWTVerificationException ex) {
+      } catch (JwtException ex) {
         handlerExceptionResolver.resolveException(request, response, null, ex);
       }
     }

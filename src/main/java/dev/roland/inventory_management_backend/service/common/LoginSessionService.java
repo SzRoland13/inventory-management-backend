@@ -40,11 +40,11 @@ public class LoginSessionService {
    * @return email associated with the token
    */
   public String consumeSessionToken(String token) {
-    String email = redisTemplate.opsForValue().get(token);
-    if (email != null) {
-      redisTemplate.delete(token);
-    }
-    return email;
+    return redisTemplate.opsForValue().get(token);
+  }
+
+  public void deleteToken(String token) {
+    redisTemplate.delete(token);
   }
 
   /** Check if token exists and is still valid. */

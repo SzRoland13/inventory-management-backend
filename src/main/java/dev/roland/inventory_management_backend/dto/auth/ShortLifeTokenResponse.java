@@ -9,7 +9,7 @@ import lombok.Data;
 @Builder
 public class ShortLifeTokenResponse {
 
-  private boolean is2faEnabled;
+  private boolean twoFactorEnabled;
   private String shortLifeToken;
   private Instant expiresAt;
 }
