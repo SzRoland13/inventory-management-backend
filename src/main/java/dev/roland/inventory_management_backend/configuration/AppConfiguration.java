@@ -12,14 +12,29 @@ public class AppConfiguration {
   @Value("${app.security.secure-cookie}")
   private boolean secureCookie;
 
-  @Value("${security.jwt.access-expiration-time}")
+  @Value("${app.security.jwt.access-expiration-time}")
   private long accessTokenExpirationTime;
 
-  @Value("${security.jwt.refresh-expiration-time}")
+  @Value("${app.security.jwt.refresh-expiration-time}")
   private long refreshTokenExpirationTime;
 
-  @Value("${security.jwt.secret}")
+  @Value("${app.security.jwt.secret}")
   private String secret;
+
+  @Value("${app.storage.bucket}")
+  private String S3bucket;
+
+  @Value("${app.storage.endpoint}")
+  private String S3Endpoint;
+
+  @Value("${app.storage.region}")
+  private String S3Region;
+
+  @Value("${app.storage.access-key}")
+  private String S3AccessKey;
+
+  @Value("${app.storage.secret-key}")
+  private String S3SecretKey;
 
   @Value("${redis.session.ttl-minutes}")
   private long sessionTtlMinutes;

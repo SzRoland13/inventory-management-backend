@@ -7,6 +7,9 @@ public enum NotFoundMessageKey implements MessageKey {
   USER("not-found.user"),
   ONE_TIME_CODE("not-found.one-time-code"),
   REFRESH_TOKEN("not-found.refresh-token"),
+  COMPANY("not-found.company"),
+  MEDIA_ASSET("not-found.media-asset"),
+  MEDIA_USAGE("not-found.media-usage"),
   ;
 
   private final String key;
