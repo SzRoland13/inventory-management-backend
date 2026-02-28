@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade;
+package dev.roland.inventory_management_backend.facade.implementation;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -28,6 +28,7 @@ import dev.roland.inventory_management_backend.enums.MailTemplate;
 import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.facade.AuthFacade;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.model.RefreshToken;

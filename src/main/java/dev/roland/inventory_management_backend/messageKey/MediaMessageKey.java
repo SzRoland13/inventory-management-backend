@@ -1,0 +1,16 @@
+package dev.roland.inventory_management_backend.messageKey;
+
+import lombok.Getter;
+
+@Getter
+public enum MediaMessageKey implements MessageKey {
+  URL_GENERATED("media.url-generated"),
+  MEDIA_DELETED("media.deleted"),
+  ;
+
+  private final String key;
+
+  MediaMessageKey(String key) {
+    this.key = key;
+  }
+}

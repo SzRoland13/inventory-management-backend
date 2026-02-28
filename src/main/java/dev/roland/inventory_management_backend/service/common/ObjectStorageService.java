@@ -3,10 +3,12 @@ package dev.roland.inventory_management_backend.service.common;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.configuration.AppConfiguration;
+import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -19,6 +21,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -46,33 +50,67 @@ public class ObjectStorageService {
             .build());
   }
 
-  public String generatePresignedUrl(String objectPath) {
-    try (S3Presigner presigner =
-        S3Presigner.builder()
-            .endpointOverride(URI.create(appConfiguration.getS3Endpoint()))
-            .region(Region.of(appConfiguration.getS3Region()))
-            .credentialsProvider(
-                StaticCredentialsProvider.create(
-                    AwsBasicCredentials.create(
-                        appConfiguration.getS3AccessKey(), appConfiguration.getS3SecretKey())))
-            .serviceConfiguration(
-                software.amazon.awssdk.services.s3.S3Configuration.builder()
-                    .pathStyleAccessEnabled(true)
-                    .build())
-            .build()) {
+  public PresignedUrlData generatePresignedGetUrl(String objectPath) {
+    try (S3Presigner presigner = createPresigner()) {
 
       GetObjectRequest objectRequest =
           GetObjectRequest.builder().bucket(appConfiguration.getS3bucket()).key(objectPath).build();
 
+      Duration duration = Duration.ofHours(2);
+
       GetObjectPresignRequest presignRequest =
           GetObjectPresignRequest.builder()
-              .signatureDuration(Duration.ofHours(2))
+              .signatureDuration(duration)
               .getObjectRequest(objectRequest)
               .build();
 
       PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
 
-      return presignedRequest.url().toExternalForm();
+      return PresignedUrlData.builder()
+          .url(presignedRequest.url().toExternalForm())
+          .expiry(Instant.now().plus(duration))
+          .build();
     }
+  }
+
+  public PresignedUrlData generatePresignedPutUrl(String objectPath, String mimeType) {
+    try (S3Presigner presigner = createPresigner()) {
+      PutObjectRequest objectRequest =
+          PutObjectRequest.builder()
+              .bucket(appConfiguration.getS3bucket())
+              .key(objectPath)
+              .contentType(mimeType)
+              .build();
+
+      Duration duration = Duration.ofMinutes(10);
+
+      PutObjectPresignRequest presignRequest =
+          PutObjectPresignRequest.builder()
+              .signatureDuration(duration)
+              .putObjectRequest(objectRequest)
+              .build();
+
+      PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(presignRequest);
+
+      return PresignedUrlData.builder()
+          .url(presignedRequest.url().toExternalForm())
+          .expiry(Instant.now().plus(duration))
+          .build();
+    }
+  }
+
+  private S3Presigner createPresigner() {
+    return S3Presigner.builder()
+        .endpointOverride(URI.create(appConfiguration.getS3Endpoint()))
+        .region(Region.of(appConfiguration.getS3Region()))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    appConfiguration.getS3AccessKey(), appConfiguration.getS3SecretKey())))
+        .serviceConfiguration(
+            software.amazon.awssdk.services.s3.S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .build())
+        .build();
   }
 }

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade;
+package dev.roland.inventory_management_backend.facade.implementation;
 
 import org.springframework.stereotype.Service;
 
@@ -7,6 +7,7 @@ import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.service.UserService;
