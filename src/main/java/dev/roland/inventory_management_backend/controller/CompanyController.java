@@ -2,12 +2,15 @@ package dev.roland.inventory_management_backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
+import dev.roland.inventory_management_backend.dto.company.CompanyUpdateRequest;
 import dev.roland.inventory_management_backend.facade.CompanyFacade;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +35,14 @@ public class CompanyController {
     return ResponseEntity.ok(
         ApiResponse.success(
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.getExtendedCompanyData()));
+  }
+
+  @PutMapping
+  public ResponseEntity<ApiResponse<CompanyExtendedResponse>> updateCompany(
+      @RequestBody CompanyUpdateRequest request) {
+
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            GenericMessageKey.REQUEST_SUCCESS, companyFacade.updateCompany(request)));
   }
 }

@@ -1,8 +1,12 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.enums.MediaEntityType;
+import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.MediaUsage;
@@ -23,5 +27,16 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.MEDIA_USAGE;
+  }
+
+  @Override
+  public Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
+      MediaEntityType type, Long entityId, MediaUsageType usageType) {
+    return mediaUsageRepository.findByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
+  }
+
+  @Override
+  public Long usageCountByMediaAssetId(Long id) {
+    return mediaUsageRepository.countByMediaAsset_Id(id);
   }
 }
