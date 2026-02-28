@@ -66,7 +66,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   }
 
   private Optional<Company> getCompany() {
-    return companyService.findAll().stream().findFirst();
+    return companyService.findFirstByOrderByIdAsc();
   }
 
   private Company getCompanyOrCreateNew() {

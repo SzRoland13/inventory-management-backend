@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -23,5 +25,10 @@ public class CompanyServiceImpl implements CompanyService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.COMPANY;
+  }
+
+  @Override
+  public Optional<Company> findFirstByOrderByIdAsc() {
+    return companyRepository.findFirstByOrderByIdAsc();
   }
 }
