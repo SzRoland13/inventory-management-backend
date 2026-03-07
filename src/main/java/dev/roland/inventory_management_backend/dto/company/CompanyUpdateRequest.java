@@ -16,5 +16,4 @@ public class CompanyUpdateRequest {
   private String phone;
   private String address;
   private String website;
-  private Long logoMediaAssetId;
 }

@@ -37,6 +37,7 @@ public class UserController {
   public static final String SUSPEND_ENDPOINT = "/suspend" + ID_PARAM;
   public static final String ACTIVATE_ENDPOINT = "/activate" + ID_PARAM;
   public static final String RESET_PASSWORD_ENDPOINT = "/reset-password" + ID_PARAM;
+  public static final String AVATAR_ENDPOINT = ID_PARAM + "/avatar";
 
   private final UserService userService;
   private final UserFacade userFacade;
@@ -98,7 +99,7 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
   }
 
-  @PostMapping("/{id}/avatar")
+  @PostMapping(AVATAR_ENDPOINT)
   public ResponseEntity<ApiResponse<Void>> updateAvatar(
       @PathVariable Long id, @RequestBody AvatarUploadRequest request) {
     userFacade.updateAvatar(id, request.getMediaAssetId());

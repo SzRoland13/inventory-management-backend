@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,7 +12,9 @@ import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyUpdateRequest;
+import dev.roland.inventory_management_backend.dto.company.LogoUpdateRequest;
 import dev.roland.inventory_management_backend.facade.CompanyFacade;
+import dev.roland.inventory_management_backend.messageKey.CompanyMessageKey;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class CompanyController {
   public static final String COMPANY_BASE_ENDPOINT = "api/v1/company";
   public static final String COMPANY_EXTENDED_ENDPOINT = "/extended";
+  public static final String LOGO_ENDPOINT = "/logo";
 
   private final CompanyFacade companyFacade;
 
@@ -44,5 +48,12 @@ public class CompanyController {
     return ResponseEntity.ok(
         ApiResponse.success(
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.updateCompany(request)));
+  }
+
+  @PostMapping(LOGO_ENDPOINT)
+  public ResponseEntity<ApiResponse<Void>> updateLogo(@RequestBody LogoUpdateRequest request) {
+    companyFacade.updateLogo(request.getMediaAssetId());
+
+    return ResponseEntity.ok(ApiResponse.success(CompanyMessageKey.LOGO_UPDATED, null));
   }
 }

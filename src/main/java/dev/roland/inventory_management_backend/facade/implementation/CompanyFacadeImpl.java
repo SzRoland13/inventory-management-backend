@@ -60,9 +60,16 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
     company = companyService.save(company);
 
-    handleLogoUpdate(company, request.getLogoMediaAssetId());
-
     return buildExtendedResponse(company);
+  }
+
+  @Override
+  public void updateLogo(Long mediaAssetId) {
+    Company company = getCompanyOrCreateNew();
+
+    company.setName("Company name");
+
+    handleLogoUpdate(company, mediaAssetId);
   }
 
   private Optional<Company> getCompany() {
@@ -122,6 +129,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
     Optional<MediaUsage> logoUsage = findLogoUsage(company.getId());
 
+    Long id = null;
     String url = null;
     Instant expiry = null;
 
@@ -129,11 +137,12 @@ public class CompanyFacadeImpl implements CompanyFacade {
       MediaPreviewResponse presigned =
           mediaAssetFacade.getPreview(logoUsage.get().getMediaAsset().getId());
 
+      id = presigned.getId();
       url = presigned.getGetUrl();
       expiry = presigned.getExpiry();
     }
 
-    return new CompanyBaseDataResponse(company.getName(), url, expiry, true);
+    return new CompanyBaseDataResponse(company.getId(), company.getName(), id, url, expiry, true);
   }
 
   private CompanyExtendedResponse buildExtendedResponse(Company company) {
@@ -141,7 +150,9 @@ public class CompanyFacadeImpl implements CompanyFacade {
     CompanyBaseDataResponse base = buildBaseResponse(company);
 
     return new CompanyExtendedResponse(
+        company.getId(),
         company.getName(),
+        base.getLogoId(),
         base.getLogoUrl(),
         base.getLogoUrlExpiry(),
         company.getDescription(),

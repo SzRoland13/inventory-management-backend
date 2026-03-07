@@ -12,7 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CompanyBaseDataResponse {
+  private Long id;
   private String name;
+  private Long logoId;
   private String logoUrl;
   private Instant logoUrlExpiry;
   private boolean exists;

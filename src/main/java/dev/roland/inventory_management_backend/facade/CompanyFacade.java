@@ -10,4 +10,6 @@ public interface CompanyFacade {
   CompanyExtendedResponse getExtendedCompanyData();
 
   CompanyExtendedResponse updateCompany(CompanyUpdateRequest request);
+
+  void updateLogo(Long mediaAssetId);
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum CompanyMessageKey implements MessageKey {
+  LOGO_UPDATED("company.logo-updated"),
   ;
 
   private final String key;
