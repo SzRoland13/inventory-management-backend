@@ -17,6 +17,7 @@ public class LoginResponse {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class UserDetails {
+    private Long id;
     private String email;
     private String username;
     private UserRole role;

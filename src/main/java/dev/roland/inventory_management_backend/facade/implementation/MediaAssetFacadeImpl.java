@@ -30,6 +30,7 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
             .objectPath(objectPath)
             .mimeType(request.getMimeType())
             .filename(request.getFilename())
+            .fileSize(request.getFileSize())
             .createdAt(LocalDateTime.now())
             .build();
 

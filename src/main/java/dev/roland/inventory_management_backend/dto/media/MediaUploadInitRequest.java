@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class MediaUploadInitRequest {
   private String filename;
   private String mimeType;
+  private Long fileSize;
 }

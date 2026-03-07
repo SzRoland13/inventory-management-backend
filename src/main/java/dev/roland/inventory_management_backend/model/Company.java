@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
@@ -51,6 +52,7 @@ public class Company implements IdInterface<Long> {
   @Column(name = "website")
   private String website;
 
+  @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 

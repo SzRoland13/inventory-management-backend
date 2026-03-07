@@ -16,6 +16,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -54,6 +56,7 @@ public class MediaAsset implements IdInterface<Long> {
   @JoinColumn(name = "uploaded_by_user_id")
   private User uploadedBy;
 
+  @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 

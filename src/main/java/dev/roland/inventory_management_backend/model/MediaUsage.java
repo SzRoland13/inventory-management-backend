@@ -15,6 +15,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
@@ -59,6 +61,7 @@ public class MediaUsage implements IdInterface<Long> {
   @Column(name = "sort_order")
   private Integer sortOrder = 1;
 
+  @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 }

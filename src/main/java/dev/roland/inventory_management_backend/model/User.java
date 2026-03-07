@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.enums.UserRole;
@@ -67,6 +68,7 @@ public class User implements IdInterface<Long> {
   @Enumerated(EnumType.STRING)
   private UserStatus status;
 
+  @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 

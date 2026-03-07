@@ -254,7 +254,8 @@ public class AuthFacadeImpl implements AuthFacade {
     AuthTokens tokens = generateTokens(user);
 
     LoginResponse.UserDetails userDetails =
-        new LoginResponse.UserDetails(user.getEmail(), user.getUsername(), user.getRole());
+        new LoginResponse.UserDetails(
+            user.getId(), user.getEmail(), user.getUsername(), user.getRole());
 
     LoginResponse response = new LoginResponse(userDetails, firstTime2FAEnabled);
 
