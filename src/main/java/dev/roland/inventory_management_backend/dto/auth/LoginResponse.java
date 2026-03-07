@@ -3,7 +3,11 @@ package dev.roland.inventory_management_backend.dto.auth;
 import java.time.Instant;
 
 import dev.roland.inventory_management_backend.enums.UserRole;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -24,6 +28,7 @@ public class LoginResponse {
     private String email;
     private String username;
     private UserRole role;
+    private Long avatarId;
     private String avatarUrl;
     private Instant avatarUrlExpiry;
   }

@@ -279,6 +279,7 @@ public class AuthFacadeImpl implements AuthFacade {
           objectStorageService.generatePresignedGetUrl(
               mediaUsage.get().getMediaAsset().getObjectPath());
 
+      userDetails.setAvatarId(mediaUsage.get().getMediaAsset().getId());
       userDetails.setAvatarUrl(imageData.getUrl());
       userDetails.setAvatarUrlExpiry(imageData.getExpiry());
     }
