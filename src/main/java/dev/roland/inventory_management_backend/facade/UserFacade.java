@@ -40,4 +40,6 @@ public interface UserFacade {
    * @param id user id to reset password for.
    */
   void resetPassword(Long id);
+
+  void updateAvatar(Long id, Long mediaAssetId);
 }

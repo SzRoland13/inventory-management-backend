@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
+import dev.roland.inventory_management_backend.dto.user.AvatarUploadRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
@@ -95,5 +96,13 @@ public class UserController {
     userFacade.resetPassword(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
+  }
+
+  @PostMapping("/{id}/avatar")
+  public ResponseEntity<ApiResponse<Void>> updateAvatar(
+      @PathVariable Long id, @RequestBody AvatarUploadRequest request) {
+    userFacade.updateAvatar(id, request.getMediaAssetId());
+
+    return ResponseEntity.ok(ApiResponse.success(UserMessageKey.AVATAR_UPDATED, null));
   }
 }
