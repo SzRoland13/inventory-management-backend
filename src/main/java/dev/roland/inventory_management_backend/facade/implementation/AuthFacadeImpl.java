@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.facade.implementation;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.transaction.Transactional;
@@ -24,21 +25,27 @@ import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
 import dev.roland.inventory_management_backend.dto.auth.TokenWithExpiry;
 import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.dto.mail.EmailDetails;
+import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
 import dev.roland.inventory_management_backend.enums.MailTemplate;
+import dev.roland.inventory_management_backend.enums.MediaEntityType;
+import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.facade.AuthFacade;
 import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
+import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.model.User;
+import dev.roland.inventory_management_backend.service.MediaUsageService;
 import dev.roland.inventory_management_backend.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;
 import dev.roland.inventory_management_backend.service.UserService;
 import dev.roland.inventory_management_backend.service.common.EmailService;
 import dev.roland.inventory_management_backend.service.common.JwtService;
 import dev.roland.inventory_management_backend.service.common.LoginSessionService;
+import dev.roland.inventory_management_backend.service.common.ObjectStorageService;
 import dev.roland.inventory_management_backend.service.common.TwoFactorAuthService;
 import lombok.RequiredArgsConstructor;
 
@@ -55,6 +62,8 @@ public class AuthFacadeImpl implements AuthFacade {
   private final TwoFactorAuthService twoFactorAuthService;
   private final LoginSessionService loginSessionService;
   private final AppConfiguration appConfiguration;
+  private final MediaUsageService mediaUsageService;
+  private final ObjectStorageService objectStorageService;
 
   /**
    * Handles first-time login by verifying credentials and sending a one-time code.
@@ -254,8 +263,25 @@ public class AuthFacadeImpl implements AuthFacade {
     AuthTokens tokens = generateTokens(user);
 
     LoginResponse.UserDetails userDetails =
-        new LoginResponse.UserDetails(
-            user.getId(), user.getEmail(), user.getUsername(), user.getRole());
+        LoginResponse.UserDetails.builder()
+            .id(user.getId())
+            .username(user.getUsername())
+            .email(user.getEmail())
+            .role(user.getRole())
+            .build();
+
+    Optional<MediaUsage> mediaUsage =
+        mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
+            MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
+
+    if (mediaUsage.isPresent()) {
+      PresignedUrlData imageData =
+          objectStorageService.generatePresignedGetUrl(
+              mediaUsage.get().getMediaAsset().getObjectPath());
+
+      userDetails.setAvatarUrl(imageData.getUrl());
+      userDetails.setAvatarUrlExpiry(imageData.getExpiry());
+    }
 
     LoginResponse response = new LoginResponse(userDetails, firstTime2FAEnabled);
 
