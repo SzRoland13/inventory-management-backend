@@ -1,7 +1,5 @@
 package dev.roland.inventory_management_backend.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixDto;
 import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesResponse;
+import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesUpdateRequest;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
 import dev.roland.inventory_management_backend.service.DocumentPrefixService;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +31,9 @@ public class DocumentPrefixController {
 
   @PostMapping()
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> update(
-      @RequestBody List<DocumentPrefixDto> prefixes) {
+      @RequestBody DocumentPrefixesUpdateRequest request) {
+    DocumentPrefixesResponse response = documentPrefixService.updatePrefixes(request.getPrefixes());
 
-    DocumentPrefixesResponse response = documentPrefixService.updatePrefixes(prefixes);
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }
 }

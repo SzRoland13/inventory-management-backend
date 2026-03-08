@@ -9,18 +9,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CompanyUpdateRequest {
+public class CompanyBaseDataUpdateRequest {
   private String name;
   private String description;
   private String email;
   private String phone;
   private String address;
   private String website;
-
-  private String taxNumber;
-  private String vatNumber;
-  private String registrationNumber;
-  private String bankAccount;
-  private String iban;
-  private String invoicePrefix;
 }

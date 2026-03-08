@@ -9,12 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CompanyBaseDataResponse {
-  private Long id;
-  private String name;
-  private String description;
-  private String email;
-  private String phone;
-  private String address;
-  private String website;
+public class CompanyBillingDataUpdateRequest {
+  private String taxNumber;
+  private String vatNumber;
+  private String registrationNumber;
+  private String bankAccount;
+  private String iban;
 }

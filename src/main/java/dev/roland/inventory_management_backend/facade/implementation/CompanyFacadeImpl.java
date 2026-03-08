@@ -8,8 +8,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
+import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataUpdateRequest;
+import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataResponse;
+import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
-import dev.roland.inventory_management_backend.dto.company.CompanyUpdateRequest;
+import dev.roland.inventory_management_backend.dto.company.CompanyMinimalResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
@@ -32,10 +35,10 @@ public class CompanyFacadeImpl implements CompanyFacade {
   private final MediaAssetService mediaAssetService;
 
   @Override
-  public CompanyBaseDataResponse getBaseCompanyData() {
+  public CompanyMinimalResponse getMinimalCompanyData() {
     Optional<Company> company = companyService.findFirstByOrderByIdAsc();
 
-    return company.map(this::buildBaseResponse).orElseGet(this::buildEmptyBaseResponse);
+    return company.map(this::buildMinimalResponse).orElseGet(this::buildEmptyMinimalResponse);
   }
 
   @Override
@@ -47,7 +50,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
   @Override
   @Transactional
-  public CompanyExtendedResponse updateCompany(CompanyUpdateRequest request) {
+  public CompanyBaseDataResponse updateCompanyBaseData(CompanyBaseDataUpdateRequest request) {
 
     Company company = companyService.getCompanyOrCreateNew();
 
@@ -57,15 +60,10 @@ public class CompanyFacadeImpl implements CompanyFacade {
     company.setPhone(request.getPhone());
     company.setAddress(request.getAddress());
     company.setWebsite(request.getWebsite());
-    company.setTaxNumber(request.getTaxNumber());
-    company.setVatNumber(request.getVatNumber());
-    company.setRegistrationNumber(request.getRegistrationNumber());
-    company.setBankAccount(request.getBankAccount());
-    company.setIban(request.getIban());
 
     company = companyService.save(company);
 
-    return buildExtendedResponse(company);
+    return buildBaseDataResponse(company);
   }
 
   @Override
@@ -73,6 +71,20 @@ public class CompanyFacadeImpl implements CompanyFacade {
     Company company = companyService.getCompanyOrCreateNew();
 
     handleLogoUpdate(company, mediaAssetId);
+  }
+
+  @Override
+  public CompanyBillingDataResponse updateCompanyBillingData(
+      CompanyBillingDataUpdateRequest request) {
+    Company company = companyService.getCompanyOrCreateNew();
+
+    company.setTaxNumber(request.getTaxNumber());
+    company.setVatNumber(request.getVatNumber());
+    company.setRegistrationNumber(request.getRegistrationNumber());
+    company.setBankAccount(request.getBankAccount());
+    company.setIban(request.getIban());
+
+    return buildCompanyBillingDataResponse(company);
   }
 
   private void handleLogoUpdate(Company company, Long newMediaId) {
@@ -112,15 +124,38 @@ public class CompanyFacadeImpl implements CompanyFacade {
     mediaUsageService.save(usage);
   }
 
-  private CompanyBaseDataResponse buildEmptyBaseResponse() {
-    return CompanyBaseDataResponse.builder().exists(false).build();
+  private CompanyMinimalResponse buildEmptyMinimalResponse() {
+    return CompanyMinimalResponse.builder().exists(false).build();
+  }
+
+  private CompanyBaseDataResponse buildBaseDataResponse(Company company) {
+    return CompanyBaseDataResponse.builder()
+        .id(company.getId())
+        .name(company.getName())
+        .description(company.getDescription())
+        .email(company.getEmail())
+        .phone(company.getPhone())
+        .address(company.getAddress())
+        .website(company.getWebsite())
+        .build();
+  }
+
+  private CompanyBillingDataResponse buildCompanyBillingDataResponse(Company company) {
+    return CompanyBillingDataResponse.builder()
+        .id(company.getId())
+        .taxNumber(company.getTaxNumber())
+        .vatNumber(company.getVatNumber())
+        .registrationNumber(company.getRegistrationNumber())
+        .bankAccount(company.getBankAccount())
+        .iban(company.getIban())
+        .build();
   }
 
   private CompanyExtendedResponse buildEmptyExtendedResponse() {
     return CompanyExtendedResponse.builder().exists(false).build();
   }
 
-  private CompanyBaseDataResponse buildBaseResponse(Company company) {
+  private CompanyMinimalResponse buildMinimalResponse(Company company) {
 
     Optional<MediaUsage> logoUsage = findLogoUsage(company.getId());
 
@@ -137,12 +172,12 @@ public class CompanyFacadeImpl implements CompanyFacade {
       expiry = presigned.getExpiry();
     }
 
-    return new CompanyBaseDataResponse(company.getId(), company.getName(), id, url, expiry, true);
+    return new CompanyMinimalResponse(company.getId(), company.getName(), id, url, expiry, true);
   }
 
   private CompanyExtendedResponse buildExtendedResponse(Company company) {
 
-    CompanyBaseDataResponse base = buildBaseResponse(company);
+    CompanyMinimalResponse base = buildMinimalResponse(company);
 
     return new CompanyExtendedResponse(
         company.getId(),
