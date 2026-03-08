@@ -31,4 +31,9 @@ public class CompanyServiceImpl implements CompanyService {
   public Optional<Company> findFirstByOrderByIdAsc() {
     return companyRepository.findFirstByOrderByIdAsc();
   }
+
+  @Override
+  public Company getCompanyOrCreateNew() {
+    return findFirstByOrderByIdAsc().orElseGet(() -> save(Company.builder().name("").build()));
+  }
 }

@@ -33,14 +33,14 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
   @Override
   public CompanyBaseDataResponse getBaseCompanyData() {
-    Optional<Company> company = getCompany();
+    Optional<Company> company = companyService.findFirstByOrderByIdAsc();
 
     return company.map(this::buildBaseResponse).orElseGet(this::buildEmptyBaseResponse);
   }
 
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
-    Optional<Company> company = getCompany();
+    Optional<Company> company = companyService.findFirstByOrderByIdAsc();
 
     return company.map(this::buildExtendedResponse).orElseGet(this::buildEmptyExtendedResponse);
   }
@@ -49,7 +49,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Transactional
   public CompanyExtendedResponse updateCompany(CompanyUpdateRequest request) {
 
-    Company company = getCompanyOrCreateNew();
+    Company company = companyService.getCompanyOrCreateNew();
 
     company.setName(request.getName());
     company.setDescription(request.getDescription());
@@ -70,19 +70,9 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
   @Override
   public void updateLogo(Long mediaAssetId) {
-    Company company = getCompanyOrCreateNew();
-
-    company.setName("Company name");
+    Company company = companyService.getCompanyOrCreateNew();
 
     handleLogoUpdate(company, mediaAssetId);
-  }
-
-  private Optional<Company> getCompany() {
-    return companyService.findFirstByOrderByIdAsc();
-  }
-
-  private Company getCompanyOrCreateNew() {
-    return getCompany().orElseGet(() -> companyService.save(Company.builder().build()));
   }
 
   private void handleLogoUpdate(Company company, Long newMediaId) {
