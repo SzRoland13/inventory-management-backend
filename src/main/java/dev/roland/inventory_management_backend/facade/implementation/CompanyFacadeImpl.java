@@ -57,6 +57,11 @@ public class CompanyFacadeImpl implements CompanyFacade {
     company.setPhone(request.getPhone());
     company.setAddress(request.getAddress());
     company.setWebsite(request.getWebsite());
+    company.setTaxNumber(request.getTaxNumber());
+    company.setVatNumber(request.getVatNumber());
+    company.setRegistrationNumber(request.getRegistrationNumber());
+    company.setBankAccount(request.getBankAccount());
+    company.setIban(request.getIban());
 
     company = companyService.save(company);
 
@@ -160,6 +165,11 @@ public class CompanyFacadeImpl implements CompanyFacade {
         company.getPhone(),
         company.getAddress(),
         company.getWebsite(),
+        company.getTaxNumber(),
+        company.getVatNumber(),
+        company.getRegistrationNumber(),
+        company.getBankAccount(),
+        company.getIban(),
         true);
   }
 

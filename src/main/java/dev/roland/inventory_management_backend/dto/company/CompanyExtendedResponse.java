@@ -17,10 +17,18 @@ public class CompanyExtendedResponse {
   private Long logoId;
   private String logoUrl;
   private Instant logoUrlExpiry;
+
   private String description;
   private String email;
   private String phone;
   private String address;
   private String website;
+
+  private String taxNumber;
+  private String vatNumber;
+  private String registrationNumber;
+  private String bankAccount;
+  private String iban;
+
   private boolean exists;
 }

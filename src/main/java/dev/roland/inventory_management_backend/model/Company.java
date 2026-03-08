@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,6 +54,25 @@ public class Company implements IdInterface<Long> {
 
   @Column(name = "website")
   private String website;
+
+  @Column(name = "tax_number", length = 100)
+  private String taxNumber;
+
+  @Column(name = "vat_number", length = 100)
+  private String vatNumber;
+
+  @Column(name = "registration_number", length = 100)
+  private String registrationNumber;
+
+  @Column(name = "bank_account")
+  private String bankAccount;
+
+  @Column(name = "iban", length = 100)
+  private String iban;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "preferred_currency_id")
+  private Currency preferredCurrency;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

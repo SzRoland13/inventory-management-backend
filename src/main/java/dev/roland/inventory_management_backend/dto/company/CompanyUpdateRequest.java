@@ -16,4 +16,11 @@ public class CompanyUpdateRequest {
   private String phone;
   private String address;
   private String website;
+
+  private String taxNumber;
+  private String vatNumber;
+  private String registrationNumber;
+  private String bankAccount;
+  private String iban;
+  private String invoicePrefix;
 }
