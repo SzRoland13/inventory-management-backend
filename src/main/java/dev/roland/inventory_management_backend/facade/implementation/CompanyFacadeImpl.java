@@ -24,6 +24,7 @@ import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.service.CompanyService;
 import dev.roland.inventory_management_backend.service.MediaAssetService;
 import dev.roland.inventory_management_backend.service.MediaUsageService;
+import dev.roland.inventory_management_backend.service.common.ObjectStorageService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -33,19 +34,24 @@ public class CompanyFacadeImpl implements CompanyFacade {
   private final MediaUsageService mediaUsageService;
   private final MediaAssetFacade mediaAssetFacade;
   private final MediaAssetService mediaAssetService;
+  private final ObjectStorageService objectStorageService;
 
   @Override
   public CompanyMinimalResponse getMinimalCompanyData() {
-    Optional<Company> company = companyService.findFirstByOrderByIdAsc();
+    Company company = companyService.getCompanyOrCreateNew();
 
-    return company.map(this::buildMinimalResponse).orElseGet(this::buildEmptyMinimalResponse);
+    return buildMinimalResponse(company);
   }
 
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
-    Optional<Company> company = companyService.findFirstByOrderByIdAsc();
+    Company company = companyService.getCompanyOrCreateNew();
 
-    return company.map(this::buildExtendedResponse).orElseGet(this::buildEmptyExtendedResponse);
+    return buildExtendedResponse(company);
+  }
+
+  private Company findOrCreateCompany() {
+    return companyService.getCompanyOrCreateNew();
   }
 
   @Override
@@ -100,7 +106,6 @@ public class CompanyFacadeImpl implements CompanyFacade {
     }
 
     if (existingUsage.isPresent()) {
-
       MediaUsage usage = existingUsage.get();
       MediaAsset oldAsset = usage.getMediaAsset();
 
@@ -113,6 +118,15 @@ public class CompanyFacadeImpl implements CompanyFacade {
 
     MediaAsset newAsset = mediaAssetService.findByIdOrThrow(newMediaId);
 
+    String newPath =
+        objectStorageService.generateSolidObjectPath(
+            newAsset.getFilename(), MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
+
+    objectStorageService.move(newAsset.getObjectPath(), newPath);
+
+    newAsset.setObjectPath(newPath);
+    mediaAssetService.save(newAsset);
+
     MediaUsage usage =
         MediaUsage.builder()
             .mediaAsset(newAsset)
@@ -122,10 +136,6 @@ public class CompanyFacadeImpl implements CompanyFacade {
             .build();
 
     mediaUsageService.save(usage);
-  }
-
-  private CompanyMinimalResponse buildEmptyMinimalResponse() {
-    return CompanyMinimalResponse.builder().exists(false).build();
   }
 
   private CompanyBaseDataResponse buildBaseDataResponse(Company company) {
@@ -151,10 +161,6 @@ public class CompanyFacadeImpl implements CompanyFacade {
         .build();
   }
 
-  private CompanyExtendedResponse buildEmptyExtendedResponse() {
-    return CompanyExtendedResponse.builder().exists(false).build();
-  }
-
   private CompanyMinimalResponse buildMinimalResponse(Company company) {
 
     Optional<MediaUsage> logoUsage = findLogoUsage(company.getId());
@@ -172,7 +178,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
       expiry = presigned.getExpiry();
     }
 
-    return new CompanyMinimalResponse(company.getId(), company.getName(), id, url, expiry, true);
+    return new CompanyMinimalResponse(company.getId(), company.getName(), id, url, expiry);
   }
 
   private CompanyExtendedResponse buildExtendedResponse(Company company) {
@@ -194,8 +200,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
         company.getVatNumber(),
         company.getRegistrationNumber(),
         company.getBankAccount(),
-        company.getIban(),
-        true);
+        company.getIban());
   }
 
   private Optional<MediaUsage> findLogoUsage(Long companyId) {

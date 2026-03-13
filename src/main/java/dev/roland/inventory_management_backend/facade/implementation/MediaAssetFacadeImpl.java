@@ -1,10 +1,10 @@
 package dev.roland.inventory_management_backend.facade.implementation;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.dto.media.GeneratedMediaPathAndName;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
@@ -23,13 +23,14 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
 
   @Override
   public MediaUploadInitResponse getPutRequestForNewMediaAsset(MediaUploadInitRequest request) {
-    String objectPath = generateObjectPath(request.getFilename());
+    GeneratedMediaPathAndName generatedMediaPathAndName =
+        objectStorageService.generateTempObjectPath(request.getFilename());
 
     MediaAsset mediaAsset =
         MediaAsset.builder()
-            .objectPath(objectPath)
+            .objectPath(generatedMediaPathAndName.getObjectPath())
             .mimeType(request.getMimeType())
-            .filename(request.getFilename())
+            .filename(generatedMediaPathAndName.getFilename())
             .fileSize(request.getFileSize())
             .createdAt(LocalDateTime.now())
             .build();
@@ -59,9 +60,5 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
 
     objectStorageService.delete(mediaAsset.getObjectPath());
     mediaAssetService.delete(mediaAsset);
-  }
-
-  private String generateObjectPath(String fileName) {
-    return "media/" + UUID.randomUUID() + "_" + fileName;
   }
 }

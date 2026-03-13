@@ -4,17 +4,23 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.configuration.AppConfiguration;
+import dev.roland.inventory_management_backend.dto.media.GeneratedMediaPathAndName;
 import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
+import dev.roland.inventory_management_backend.enums.MediaEntityType;
+import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -71,6 +77,47 @@ public class ObjectStorageService {
           .expiry(Instant.now().plus(duration))
           .build();
     }
+  }
+
+  public String generateSolidObjectPath(
+      String fileName, MediaEntityType entityType, Long entityId, MediaUsageType usageType) {
+    return entityType.getName().toLowerCase(Locale.ROOT)
+        + "/"
+        + entityId
+        + "/"
+        + usageType.getName().toLowerCase(Locale.ROOT)
+        + "/"
+        + fileName;
+  }
+
+  public GeneratedMediaPathAndName generateTempObjectPath(String originalFilename) {
+    String extension = "";
+
+    int dotIndex = originalFilename.lastIndexOf(".");
+    if (dotIndex != -1) {
+      extension = originalFilename.substring(dotIndex);
+    }
+
+    String newFileName = UUID.randomUUID().toString().replace("-", "") + extension;
+
+    return GeneratedMediaPathAndName.builder()
+        .objectPath("temp/" + newFileName)
+        .filename(newFileName)
+        .build();
+  }
+
+  public void move(String sourceKey, String destinationKey) {
+    CopyObjectRequest copyRequest =
+        CopyObjectRequest.builder()
+            .sourceBucket(appConfiguration.getS3bucket())
+            .sourceKey(sourceKey)
+            .destinationBucket(appConfiguration.getS3bucket())
+            .destinationKey(destinationKey)
+            .build();
+
+    s3Client.copyObject(copyRequest);
+
+    delete(sourceKey);
   }
 
   public PresignedUrlData generatePresignedPutUrl(String objectPath, String mimeType) {

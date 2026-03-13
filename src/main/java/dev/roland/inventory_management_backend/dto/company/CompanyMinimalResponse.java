@@ -17,5 +17,4 @@ public class CompanyMinimalResponse {
   private Long logoId;
   private String logoUrl;
   private Instant logoUrlExpiry;
-  private boolean exists;
 }

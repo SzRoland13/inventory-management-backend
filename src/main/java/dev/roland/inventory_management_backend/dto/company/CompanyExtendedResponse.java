@@ -29,6 +29,4 @@ public class CompanyExtendedResponse {
   private String registrationNumber;
   private String bankAccount;
   private String iban;
-
-  private boolean exists;
 }
