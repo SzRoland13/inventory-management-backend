@@ -15,6 +15,7 @@ import dev.roland.inventory_management_backend.dto.company.CompanyExtendedRespon
 import dev.roland.inventory_management_backend.dto.company.CompanyMinimalResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyPreferredCurrencyUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.UpdatedPreferredCurrencyResponse;
+import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
@@ -74,6 +75,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   }
 
   @Override
+  @Transactional
   public void updateLogo(Long mediaAssetId) {
     Company company = companyService.getCompanyOrCreateNew();
 
@@ -81,6 +83,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   }
 
   @Override
+  @Transactional
   public CompanyBillingDataResponse updateCompanyBillingData(
       CompanyBillingDataUpdateRequest request) {
     Company company = companyService.getCompanyOrCreateNew();
@@ -95,10 +98,11 @@ public class CompanyFacadeImpl implements CompanyFacade {
   }
 
   @Override
+  @Transactional
   public UpdatedPreferredCurrencyResponse updatePreferredCurrency(
       CompanyPreferredCurrencyUpdateRequest request) {
     Company company = companyService.findByIdOrThrow(request.getCompanyId());
-    Currency currency = currencyService.findByIdOrThrow(request.getCompanyId());
+    Currency currency = currencyService.findByIdOrThrow(request.getCurrencyId());
 
     company.setPreferredCurrency(currency);
     companyService.save(company);
@@ -217,7 +221,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
         company.getRegistrationNumber(),
         company.getBankAccount(),
         company.getIban(),
-        company.getPreferredCurrency());
+        CurrencyResponse.toDto(company.getPreferredCurrency()));
   }
 
   private Optional<MediaUsage> findLogoUsage(Long companyId) {

@@ -32,7 +32,7 @@ public class CompanyController {
   public static final String COMPANY_EXTENDED_ENDPOINT = "/extended";
   public static final String LOGO_ENDPOINT = "/logo";
   public static final String BILLING_ENDPOINT = "/billing";
-  public static final String PREFFERED_CURRENCY_ENDPOINT = "/currency";
+  public static final String PREFERRED_CURRENCY_ENDPOINT = "/currency";
 
   private final CompanyFacade companyFacade;
 
@@ -79,7 +79,7 @@ public class CompanyController {
     return ResponseEntity.ok(ApiResponse.success(CompanyMessageKey.LOGO_UPDATED, null));
   }
 
-  @PostMapping(PREFFERED_CURRENCY_ENDPOINT)
+  @PostMapping(PREFERRED_CURRENCY_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UpdatedPreferredCurrencyResponse>> updatePreferredCurrency(
       @RequestBody CompanyPreferredCurrencyUpdateRequest request) {

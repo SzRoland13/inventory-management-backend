@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.currency.CurrenciesResponse;
+import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
 import dev.roland.inventory_management_backend.messageKey.MessageKey;
 import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.Currency;
@@ -32,6 +33,8 @@ public class CurrencyServiceImpl implements CurrencyService {
   public CurrenciesResponse getAll() {
     List<Currency> currencies = findAll();
 
-    return CurrenciesResponse.builder().currencies(currencies).build();
+    return CurrenciesResponse.builder()
+        .currencies(currencies.stream().map(CurrencyResponse::toDto).toList())
+        .build();
   }
 }
