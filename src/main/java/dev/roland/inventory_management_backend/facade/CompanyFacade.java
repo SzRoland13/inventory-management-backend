@@ -6,6 +6,8 @@ import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataRes
 import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyMinimalResponse;
+import dev.roland.inventory_management_backend.dto.company.CompanyPreferredCurrencyUpdateRequest;
+import dev.roland.inventory_management_backend.dto.company.UpdatedPreferredCurrencyResponse;
 
 public interface CompanyFacade {
   CompanyMinimalResponse getMinimalCompanyData();
@@ -17,4 +19,7 @@ public interface CompanyFacade {
   void updateLogo(Long mediaAssetId);
 
   CompanyBillingDataResponse updateCompanyBillingData(CompanyBillingDataUpdateRequest request);
+
+  UpdatedPreferredCurrencyResponse updatePreferredCurrency(
+      CompanyPreferredCurrencyUpdateRequest request);
 }

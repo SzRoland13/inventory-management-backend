@@ -13,15 +13,19 @@ import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataRes
 import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyMinimalResponse;
+import dev.roland.inventory_management_backend.dto.company.CompanyPreferredCurrencyUpdateRequest;
+import dev.roland.inventory_management_backend.dto.company.UpdatedPreferredCurrencyResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.facade.CompanyFacade;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.model.Company;
+import dev.roland.inventory_management_backend.model.Currency;
 import dev.roland.inventory_management_backend.model.MediaAsset;
 import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.service.CompanyService;
+import dev.roland.inventory_management_backend.service.CurrencyService;
 import dev.roland.inventory_management_backend.service.MediaAssetService;
 import dev.roland.inventory_management_backend.service.MediaUsageService;
 import dev.roland.inventory_management_backend.service.common.ObjectStorageService;
@@ -35,6 +39,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   private final MediaAssetFacade mediaAssetFacade;
   private final MediaAssetService mediaAssetService;
   private final ObjectStorageService objectStorageService;
+  private final CurrencyService currencyService;
 
   @Override
   public CompanyMinimalResponse getMinimalCompanyData() {
@@ -48,10 +53,6 @@ public class CompanyFacadeImpl implements CompanyFacade {
     Company company = companyService.getCompanyOrCreateNew();
 
     return buildExtendedResponse(company);
-  }
-
-  private Company findOrCreateCompany() {
-    return companyService.getCompanyOrCreateNew();
   }
 
   @Override
@@ -91,6 +92,21 @@ public class CompanyFacadeImpl implements CompanyFacade {
     company.setIban(request.getIban());
 
     return buildCompanyBillingDataResponse(company);
+  }
+
+  @Override
+  public UpdatedPreferredCurrencyResponse updatePreferredCurrency(
+      CompanyPreferredCurrencyUpdateRequest request) {
+    Company company = companyService.findByIdOrThrow(request.getCompanyId());
+    Currency currency = currencyService.findByIdOrThrow(request.getCompanyId());
+
+    company.setPreferredCurrency(currency);
+    companyService.save(company);
+
+    return UpdatedPreferredCurrencyResponse.builder()
+        .companyId(company.getId())
+        .currency(currency)
+        .build();
   }
 
   private void handleLogoUpdate(Company company, Long newMediaId) {
@@ -200,7 +216,8 @@ public class CompanyFacadeImpl implements CompanyFacade {
         company.getVatNumber(),
         company.getRegistrationNumber(),
         company.getBankAccount(),
-        company.getIban());
+        company.getIban(),
+        company.getPreferredCurrency());
   }
 
   private Optional<MediaUsage> findLogoUsage(Long companyId) {

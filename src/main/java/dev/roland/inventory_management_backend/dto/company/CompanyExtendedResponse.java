@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.dto.company;
 
 import java.time.Instant;
 
+import dev.roland.inventory_management_backend.model.Currency;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,4 +30,5 @@ public class CompanyExtendedResponse {
   private String registrationNumber;
   private String bankAccount;
   private String iban;
+  private Currency prefferedCurrency;
 }

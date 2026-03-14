@@ -33,7 +33,7 @@
         <insert tableName="currencies">
             <column name="code" value="CHF"/>
             <column name="name" value="Swiss Franc"/>
-            <column name="symbol" value="CHF"/>
+            <column name="symbol" value="₣"/>
         </insert>
     </changeSet>
 
