@@ -20,8 +20,8 @@ import dev.roland.inventory_management_backend.dto.company.CompanyPreferredCurre
 import dev.roland.inventory_management_backend.dto.company.LogoUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.UpdatedPreferredCurrencyResponse;
 import dev.roland.inventory_management_backend.facade.CompanyFacade;
-import dev.roland.inventory_management_backend.messageKey.CompanyMessageKey;
-import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
+import dev.roland.inventory_management_backend.message_key.CompanyMessageKey;
+import dev.roland.inventory_management_backend.message_key.GenericMessageKey;
 import lombok.RequiredArgsConstructor;
 
 @RestController

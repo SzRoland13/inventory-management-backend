@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.repository.MediaUsageRepository;
 import dev.roland.inventory_management_backend.service.MediaUsageService;

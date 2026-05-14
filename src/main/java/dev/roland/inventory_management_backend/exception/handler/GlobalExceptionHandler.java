@@ -13,7 +13,7 @@ import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.NotFoundException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
+import dev.roland.inventory_management_backend.message_key.GenericMessageKey;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

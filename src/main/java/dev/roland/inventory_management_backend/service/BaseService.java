@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import dev.roland.inventory_management_backend.exception.NotFoundException;
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
 import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 
 public interface BaseService<T extends IdInterface<ID>, ID extends Serializable> {

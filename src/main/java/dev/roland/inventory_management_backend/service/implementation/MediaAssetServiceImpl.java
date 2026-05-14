@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.MediaAsset;
 import dev.roland.inventory_management_backend.repository.MediaAssetRepository;
 import dev.roland.inventory_management_backend.service.MediaAssetService;

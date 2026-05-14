@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.RefreshToken;
 import dev.roland.inventory_management_backend.repository.RefreshTokenRepository;
 import dev.roland.inventory_management_backend.service.RefreshTokenService;

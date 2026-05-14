@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.currency.CurrenciesResponse;
 import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.Currency;
 import dev.roland.inventory_management_backend.repository.CurrencyRepository;
 import dev.roland.inventory_management_backend.service.CurrencyService;

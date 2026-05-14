@@ -14,7 +14,7 @@ import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
-import dev.roland.inventory_management_backend.messageKey.MediaMessageKey;
+import dev.roland.inventory_management_backend.message_key.MediaMessageKey;
 import lombok.RequiredArgsConstructor;
 
 @RestController

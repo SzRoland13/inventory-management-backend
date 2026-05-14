@@ -16,7 +16,7 @@ import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.facade.UserFacade;
-import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
+import dev.roland.inventory_management_backend.message_key.UserMessageKey;
 import dev.roland.inventory_management_backend.model.MediaAsset;
 import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.model.User;

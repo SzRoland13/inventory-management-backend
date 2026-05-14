@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.messageKey;
+package dev.roland.inventory_management_backend.message_key;
 
 import lombok.Getter;
 
