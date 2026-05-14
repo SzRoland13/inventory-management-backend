@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="001" author="roland">
+
+        <createTable tableName="media_usages">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="media_asset_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="entity_type" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="entity_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="usage_type" type="VARCHAR(80)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="sort_order" type="INT" defaultValueNumeric="1"/>
+
+            <column name="created_at" type="TIMESTAMP"
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="media_usages"
+                baseColumnNames="media_asset_id"
+                constraintName="fk_media_usage_asset"
+                referencedTableName="media_assets"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <createIndex tableName="media_usages"
+                     indexName="idx_media_usage_entity">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

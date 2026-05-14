@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
+import dev.roland.inventory_management_backend.dto.user.AvatarUploadRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
@@ -36,6 +37,7 @@ public class UserController {
   public static final String SUSPEND_ENDPOINT = "/suspend" + ID_PARAM;
   public static final String ACTIVATE_ENDPOINT = "/activate" + ID_PARAM;
   public static final String RESET_PASSWORD_ENDPOINT = "/reset-password" + ID_PARAM;
+  public static final String AVATAR_ENDPOINT = ID_PARAM + "/avatar";
 
   private final UserService userService;
   private final UserFacade userFacade;
@@ -62,7 +64,7 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
     return ResponseEntity.ok(
-        ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userService.getAllUsers()));
+        ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userFacade.getAllUsers()));
   }
 
   @PostMapping(RESET_TWO_FA_ENDPOINT)
@@ -95,5 +97,13 @@ public class UserController {
     userFacade.resetPassword(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
+  }
+
+  @PostMapping(AVATAR_ENDPOINT)
+  public ResponseEntity<ApiResponse<Void>> updateAvatar(
+      @PathVariable Long id, @RequestBody AvatarUploadRequest request) {
+    userFacade.updateAvatar(id, request.getMediaAssetId());
+
+    return ResponseEntity.ok(ApiResponse.success(UserMessageKey.AVATAR_UPDATED, null));
   }
 }

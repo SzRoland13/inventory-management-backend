@@ -1,13 +1,11 @@
 package dev.roland.inventory_management_backend.service.implementation;
 
-import java.util.List;
 import java.util.Objects;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
-import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.exception.ApiException;
@@ -47,18 +45,6 @@ public class UserServiceImpl implements UserService {
     return userRepository
         .findByEmail(email)
         .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.USER));
-  }
-
-  /**
-   * Returns all the saved users.
-   *
-   * @return a {@link java.util.List} of {@link UserDto}
-   */
-  @Override
-  public AllUserResponse getAllUsers() {
-    List<User> users = findAll();
-
-    return new AllUserResponse(mapUsersToUserDtos(users));
   }
 
   /**
@@ -105,9 +91,5 @@ public class UserServiceImpl implements UserService {
             });
 
     return new UserDto(updated);
-  }
-
-  private List<UserDto> mapUsersToUserDtos(List<User> users) {
-    return users.stream().map(UserDto::new).toList();
   }
 }

@@ -16,6 +16,7 @@ public enum UserMessageKey implements MessageKey {
   PASSWORD_RESET_COMPLETE("user.password-reset-complete"),
   TWO_FA_NOT_ENABLED("user.two-fa-not-enabled"),
   PASSWORD_NOT_SET("user.password-not-set"),
+  AVATAR_UPDATED("user.avatar-updated"),
   ;
 
   private final String key;

@@ -1,14 +1,27 @@
-package dev.roland.inventory_management_backend.facade;
+package dev.roland.inventory_management_backend.facade.implementation;
+
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.dto.user.UserDtoWithAvatar;
+import dev.roland.inventory_management_backend.enums.MediaEntityType;
+import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.exception.ApiException;
+import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
+import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
+import dev.roland.inventory_management_backend.model.MediaAsset;
+import dev.roland.inventory_management_backend.model.MediaUsage;
 import dev.roland.inventory_management_backend.model.User;
+import dev.roland.inventory_management_backend.service.MediaAssetService;
+import dev.roland.inventory_management_backend.service.MediaUsageService;
 import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +30,9 @@ import lombok.RequiredArgsConstructor;
 public class UserFacadeImpl implements UserFacade {
 
   private final UserService userService;
+  private final MediaAssetService mediaAssetService;
+  private final MediaUsageService mediaUsageService;
+  private final MediaAssetFacade mediaAssetFacade;
 
   /**
    * Handles new user registration.
@@ -137,5 +153,76 @@ public class UserFacadeImpl implements UserFacade {
       user.setTotpSecret(null);
       user.set2faEnabled(false);
     }
+  }
+
+  @Override
+  public void updateAvatar(Long id, Long mediaAssetId) {
+    User user = userService.findByIdOrThrow(id);
+
+    Optional<MediaUsage> existingUsage =
+        mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
+            MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
+
+    // if same avatar -> do nothing
+    if (existingUsage.isPresent()
+        && existingUsage.get().getMediaAsset().getId().equals(mediaAssetId)) {
+      return;
+    }
+
+    // delete old avatar usage and possibly the asset
+    existingUsage.ifPresent(
+        usage -> {
+          MediaAsset oldAsset = usage.getMediaAsset();
+          mediaUsageService.delete(usage);
+          if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
+            mediaAssetFacade.deleteAsset(oldAsset.getId());
+          }
+        });
+
+    MediaAsset newAsset = mediaAssetService.findByIdOrThrow(mediaAssetId);
+
+    MediaUsage usage =
+        MediaUsage.builder()
+            .mediaAsset(newAsset)
+            .entityType(MediaEntityType.USER)
+            .entityId(user.getId())
+            .usageType(MediaUsageType.AVATAR)
+            .build();
+
+    mediaUsageService.save(usage);
+  }
+
+  /**
+   * Returns all the saved users.
+   *
+   * @return a {@link java.util.List} of {@link UserDto}
+   */
+  @Override
+  public AllUserResponse getAllUsers() {
+    List<User> users = userService.findAll();
+
+    return new AllUserResponse(mapUsersToUserDtos(users));
+  }
+
+  private List<UserDtoWithAvatar> mapUsersToUserDtos(List<User> users) {
+    return users.stream()
+        .map(
+            user -> {
+              Optional<MediaUsage> avatarUsage =
+                  mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
+                      MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
+
+              String avatarUrl =
+                  avatarUsage
+                      .map(
+                          usage ->
+                              mediaAssetFacade
+                                  .getPreview(usage.getMediaAsset().getId())
+                                  .getGetUrl())
+                      .orElse(null);
+
+              return new UserDtoWithAvatar(user, avatarUrl);
+            })
+        .toList();
   }
 }
