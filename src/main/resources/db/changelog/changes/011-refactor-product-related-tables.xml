@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="001" author="roland">
+
+        <createTable tableName="units">
+
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="symbol" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="is_system" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at"
+                    type="TIMESTAMP"
+                    defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+            <column name="updated_at" type="TIMESTAMP" />
+
+            <column name="deleted_at" type="TIMESTAMP" />
+
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="002" author="roland">
+
+        <addColumn tableName="products">
+
+            <column name="ean" type="VARCHAR(20)"/>
+
+            <column name="brand" type="VARCHAR(100)"/>
+
+            <column name="status"
+                    type="VARCHAR(50)"
+                    defaultValue="ACTIVE">
+
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="cost_price"
+                    type="NUMERIC(15,2)"/>
+
+            <column name="currency_id"
+                    type="INTEGER"/>
+
+            <column name="weight"
+                    type="NUMERIC(15,3)"/>
+
+            <column name="width"
+                    type="NUMERIC(15,3)"/>
+
+            <column name="height"
+                    type="NUMERIC(15,3)"/>
+
+            <column name="depth"
+                    type="NUMERIC(15,3)"/>
+
+            <column name="unit_id"
+                    type="INTEGER"/>
+
+
+        </addColumn>
+
+    </changeSet>
+
+    <changeSet id="003" author="roland">
+
+        <addForeignKeyConstraint
+                baseTableName="products"
+                baseColumnNames="unit_id"
+                referencedTableName="units"
+                referencedColumnNames="id"
+                constraintName="fk_products_unit"/>
+
+        <addForeignKeyConstraint
+                baseTableName="products"
+                baseColumnNames="currency_id"
+                referencedTableName="currencies"
+                referencedColumnNames="id"
+                constraintName="fk_products_currency"/>
+
+    </changeSet>
+
+    <changeSet id="004" author="roland">
+
+        <dropColumn
+                tableName="products"
+                columnName="unit"/>
+
+    </changeSet>
+
+</databaseChangeLog>

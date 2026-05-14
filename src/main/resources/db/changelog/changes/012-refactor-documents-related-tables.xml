@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="001" author="roland">
+
+        <addColumn tableName="documents">
+
+            <column name="category" type="VARCHAR(50)"/>
+
+            <column name="document_number" type="INTEGER"/>
+
+            <column name="source_warehouse_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="target_warehouse_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency_id" type="INTEGER"/>
+
+            <column name="exchange_rate"
+                    type="NUMERIC(15,6)"/>
+
+            <column name="reference_number"
+                    type="VARCHAR(100)"/>
+
+            <column name="notes"
+                    type="TEXT"/>
+
+            <column name="internal_notes"
+                    type="TEXT"/>
+
+        </addColumn>
+
+    </changeSet>
+
+    <changeSet id="002" author="roland">
+
+        <addForeignKeyConstraint
+                baseTableName="documents"
+                baseColumnNames="document_number"
+                referencedTableName="document_sequences"
+                referencedColumnNames="id"
+                constraintName="fk_documents_document_number" />
+
+        <addForeignKeyConstraint
+                baseTableName="documents"
+                baseColumnNames="source_warehouse_id"
+                referencedTableName="warehouses"
+                referencedColumnNames="id"
+                constraintName="fk_documents_source_warehouse"/>
+
+        <addForeignKeyConstraint
+                baseTableName="documents"
+                baseColumnNames="target_warehouse_id"
+                referencedTableName="warehouses"
+                referencedColumnNames="id"
+                constraintName="fk_documents_target_warehouse"/>
+
+        <addForeignKeyConstraint
+                baseTableName="documents"
+                baseColumnNames="currency_id"
+                referencedTableName="currencies"
+                referencedColumnNames="id"
+                constraintName="fk_documents_currency"/>
+
+    </changeSet>
+
+    //need to remove the number field that is already there in the document table
+
+    <changeSet id="003" author="roland">
+
+        <addColumn tableName="document_lines">
+
+            <column name="fulfilled_quantity"
+                    type="NUMERIC(15,2)"
+                    defaultValueNumeric="0"/>
+
+            <column name="currency_id"
+                    type="INTEGER"/>
+
+            <column name="product_name_snapshot"
+                    type="VARCHAR(255)"/>
+
+            <column name="product_sku_snapshot"
+                    type="VARCHAR(100)"/>
+
+            <column name="vat_rate_snapshot"
+                    type="NUMERIC(5,3)"/>
+        </addColumn>
+
+    </changeSet>
+
+    <changeSet id="004" author="roland">
+
+        <createTable tableName="document_relations">
+
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true"/>
+            </column>
+
+            <column name="source_warehouse_id" type="INTEGER"/>
+
+            <column name="target_warehouse_id" type="INTEGER"/>
+
+            <column name="relation_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at"
+                    type="TIMESTAMP"
+                    defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="005" author="roland">
+
+        <addForeignKeyConstraint
+                baseTableName="document_relations"
+                baseColumnNames="source_document_id"
+                referencedTableName="documents"
+                referencedColumnNames="id"
+                constraintName="fk_doc_rel_source"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="document_relations"
+                baseColumnNames="target_document_id"
+                referencedTableName="documents"
+                referencedColumnNames="id"
+                constraintName="fk_doc_rel_target"
+                onDelete="CASCADE"/>
+
+    </changeSet>
+
+</databaseChangeLog>
