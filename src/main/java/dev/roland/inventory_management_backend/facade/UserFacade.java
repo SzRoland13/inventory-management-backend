@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.facade;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 
 public interface UserFacade {
@@ -42,4 +43,11 @@ public interface UserFacade {
   void resetPassword(Long id);
 
   void updateAvatar(Long id, Long mediaAssetId);
+
+  /**
+   * Returns all the saved users.
+   *
+   * @return a {@link java.util.List} of {@link UserDto}
+   */
+  AllUserResponse getAllUsers();
 }

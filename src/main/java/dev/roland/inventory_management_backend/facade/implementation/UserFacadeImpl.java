@@ -1,11 +1,14 @@
 package dev.roland.inventory_management_backend.facade.implementation;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
+import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.dto.user.UserDtoWithAvatar;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.enums.UserRole;
@@ -187,5 +190,39 @@ public class UserFacadeImpl implements UserFacade {
             .build();
 
     mediaUsageService.save(usage);
+  }
+
+  /**
+   * Returns all the saved users.
+   *
+   * @return a {@link java.util.List} of {@link UserDto}
+   */
+  @Override
+  public AllUserResponse getAllUsers() {
+    List<User> users = userService.findAll();
+
+    return new AllUserResponse(mapUsersToUserDtos(users));
+  }
+
+  private List<UserDtoWithAvatar> mapUsersToUserDtos(List<User> users) {
+    return users.stream()
+        .map(
+            user -> {
+              Optional<MediaUsage> avatarUsage =
+                  mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
+                      MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
+
+              String avatarUrl =
+                  avatarUsage
+                      .map(
+                          usage ->
+                              mediaAssetFacade
+                                  .getPreview(usage.getMediaAsset().getId())
+                                  .getGetUrl())
+                      .orElse(null);
+
+              return new UserDtoWithAvatar(user, avatarUrl);
+            })
+        .toList();
   }
 }

@@ -12,5 +12,5 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AllUserResponse {
-  private List<UserDto> users;
+  private List<UserDtoWithAvatar> users;
 }

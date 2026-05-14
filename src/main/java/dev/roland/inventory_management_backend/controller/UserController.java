@@ -64,7 +64,7 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
     return ResponseEntity.ok(
-        ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userService.getAllUsers()));
+        ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userFacade.getAllUsers()));
   }
 
   @PostMapping(RESET_TWO_FA_ENDPOINT)

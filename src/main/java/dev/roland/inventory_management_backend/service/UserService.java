@@ -1,7 +1,6 @@
 package dev.roland.inventory_management_backend.service;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
-import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.exception.NotFoundException;
 import dev.roland.inventory_management_backend.model.User;
@@ -15,13 +14,6 @@ public interface UserService extends BaseService<User, Long> {
    * @return the found {@link User}, or throws a {@link NotFoundException} if not found
    */
   User findUserByEmailOrThrow(String email);
-
-  /**
-   * Returns all the saved users.
-   *
-   * @return a {@link java.util.List} of {@link UserDto}
-   */
-  AllUserResponse getAllUsers();
 
   /**
    * Retrieves a {@link User} entity from the database that matches the given username.
