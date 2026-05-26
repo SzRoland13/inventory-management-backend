@@ -15,9 +15,8 @@ public interface AuthService {
    * password)
    *
    * @param request email address of user
+   * @return first-login status for the requested email
    * @throws ApiException if user is not registered
-   * @return success or failure ApiResponse based on if the user is trying to log in first time or
-   *     not
    */
   CheckFirstLoginResponse checkIfFirstLogin(EmailRequest request);
 
@@ -35,6 +34,7 @@ public interface AuthService {
    *
    * @param auth the {@link Authentication} object automatically injected by Spring Security,
    *     representing the currently authenticated user
+   * @return current authenticated user data
    * @throws ApiException if the authentication is missing, invalid, or the principal cannot be
    *     resolved
    */

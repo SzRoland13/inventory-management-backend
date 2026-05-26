@@ -20,6 +20,12 @@ public class MediaCleanupService {
   private final MediaAssetService mediaAssetService;
   private final ObjectStorageService objectStorageService;
 
+  /**
+   * Deletes media assets that were uploaded but never attached to an entity.
+   *
+   * <p>The scheduled cleanup keeps assets newer than 24 hours to avoid racing with in-progress
+   * uploads.
+   */
   @Scheduled(cron = "0 0 2 * * ?") // 2 AM Every day
   @Transactional
   public void cleanupOrphanedMedia() {

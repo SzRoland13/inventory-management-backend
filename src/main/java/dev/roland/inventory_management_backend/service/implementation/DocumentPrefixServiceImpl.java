@@ -26,16 +26,19 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   private final DocumentPrefixRepository documentPrefixRepository;
   private final CompanyService companyService;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<DocumentPrefix, Long> getRepository() {
     return documentPrefixRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_PREFIX;
   }
 
+  /** {@inheritDoc} */
   @Override
   public DocumentPrefixesResponse getAllPrefixes() {
     List<DocumentPrefix> prefixes = findAll();
@@ -59,6 +62,7 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
     return DocumentPrefixesResponse.builder().prefixes(dtos).build();
   }
 
+  /** {@inheritDoc} */
   @Transactional
   @Override
   public DocumentPrefixesResponse updatePrefixes(List<DocumentPrefixDto> dtos) {

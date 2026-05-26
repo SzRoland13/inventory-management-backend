@@ -18,11 +18,13 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
 
   private final OneTimeCodeRepository oneTimeCodeRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<OneTimeCode, Long> getRepository() {
     return oneTimeCodeRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.ONE_TIME_CODE;

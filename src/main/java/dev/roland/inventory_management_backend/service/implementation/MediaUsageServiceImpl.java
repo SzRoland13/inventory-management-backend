@@ -19,22 +19,26 @@ import lombok.RequiredArgsConstructor;
 public class MediaUsageServiceImpl implements MediaUsageService {
   private final MediaUsageRepository mediaUsageRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<MediaUsage, Long> getRepository() {
     return mediaUsageRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.MEDIA_USAGE;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
       MediaEntityType type, Long entityId, MediaUsageType usageType) {
     return mediaUsageRepository.findByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
   }
 
+  /** {@inheritDoc} */
   @Override
   public Long usageCountByMediaAssetId(Long id) {
     return mediaUsageRepository.countByMediaAsset_Id(id);

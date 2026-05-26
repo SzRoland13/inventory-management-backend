@@ -22,8 +22,10 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.enums.DocumentCategory;
 import dev.roland.inventory_management_backend.enums.DocumentStatus;
 import dev.roland.inventory_management_backend.enums.DocumentType;
+import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,40 +39,59 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Document {
+public class Document implements IdInterface<Long> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(name = "category", length = 50)
+  @Enumerated(EnumType.STRING)
+  private DocumentCategory category;
+
   @Column(nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
   private DocumentType type;
 
-  @Column(nullable = false, unique = true, length = 100)
-  private String number;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "document_sequence_id")
+  private DocumentSequence documentSequence;
 
-  @Column(nullable = false)
-  private LocalDate date;
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "partner_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "partner_id")
   private Partner partner;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "source_warehouse_id")
+  private Warehouse sourceWarehouse;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "target_warehouse_id")
+  private Warehouse targetWarehouse;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "created_by_user_id")
   private User createdByUser;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "warehouse_id")
-  private Warehouse warehouse;
+  @JoinColumn(name = "currency_id")
+  private Currency currency;
 
-  @Column(name = "total_amount", precision = 15, scale = 2)
-  private BigDecimal totalAmount = BigDecimal.ZERO;
+  @Column(name = "exchange_rate", precision = 15, scale = 6)
+  private BigDecimal exchangeRate;
 
-  @Column(nullable = false, length = 50)
+  @Column(name = "status", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
   private DocumentStatus status;
+
+  @Column(name = "reference_number", length = 100)
+  private String referenceNumber;
+
+  @Column(name = "notes")
+  private String notes;
+
+  @Column(name = "internal_notes")
+  private String internalNotes;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
@@ -83,9 +104,8 @@ public class Document {
   @Column(name = "completed_at")
   private LocalDateTime completedAt;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "related_document_id")
-  private Document relatedDocument;
+  @Column(name = "document_date", nullable = false)
+  private LocalDate documentDate;
 
   @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<DocumentLine> lines;

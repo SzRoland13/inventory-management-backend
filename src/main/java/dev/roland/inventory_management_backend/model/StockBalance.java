@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import lombok.*;
 
 @Entity
@@ -18,7 +19,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StockBalance {
+public class StockBalance implements IdInterface<Long> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +34,7 @@ public class StockBalance {
   private Product product;
 
   @Column(name = "quantity", precision = 15, scale = 2)
+  @Builder.Default
   private BigDecimal quantity = BigDecimal.ZERO;
 
   @UpdateTimestamp

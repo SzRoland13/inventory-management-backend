@@ -15,4 +15,7 @@
     <include file="db/changelog/changes/008-create-media-usages-table.xml"/>
     <include file="db/changelog/changes/009-add-company-billing-data.xml"/>
     <include file="db/changelog/changes/010-insert-default-currencies.xml"/>
+    <include file="db/changelog/changes/011-refactor-product-related-tables.xml"/>
+    <include file="db/changelog/changes/012-refactor-documents-related-tables.xml"/>
+    <include file="db/changelog/changes/013-add-stock-movement-table.xml"/>
 </databaseChangeLog>

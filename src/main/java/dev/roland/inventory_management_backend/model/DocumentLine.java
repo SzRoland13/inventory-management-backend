@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,7 +30,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DocumentLine {
+public class DocumentLine implements IdInterface<Long> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,11 +47,28 @@ public class DocumentLine {
   @Column(nullable = false, precision = 15, scale = 2)
   private BigDecimal quantity;
 
+  @Column(name = "fulfilled_quantity", nullable = false, precision = 15, scale = 2)
+  @Builder.Default
+  private BigDecimal fulfilledQuantity = BigDecimal.ZERO;
+
   @Column(name = "unit_price", nullable = false, precision = 15, scale = 2)
   private BigDecimal unitPrice;
 
   @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
   private BigDecimal totalPrice;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "currency_id")
+  private Currency currency;
+
+  @Column(name = "product_name_snapshot")
+  private String productNameSnapshot;
+
+  @Column(name = "product_sku_snapshot", length = 100)
+  private String productSkuSnapshot;
+
+  @Column(name = "vat_rate_snapshot", precision = 5, scale = 3)
+  private BigDecimal vatRateSnapshot;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

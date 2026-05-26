@@ -24,11 +24,13 @@ public class UserServiceImpl implements UserService {
 
   private final UserRepository userRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<User, Long> getRepository() {
     return userRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.USER;

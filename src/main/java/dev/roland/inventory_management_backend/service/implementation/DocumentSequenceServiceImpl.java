@@ -15,11 +15,13 @@ import lombok.RequiredArgsConstructor;
 public class DocumentSequenceServiceImpl implements DocumentSequenceService {
   private final DocumentSequenceRepository documentSequenceRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<DocumentSequence, Long> getRepository() {
     return documentSequenceRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_SEQUENCE;

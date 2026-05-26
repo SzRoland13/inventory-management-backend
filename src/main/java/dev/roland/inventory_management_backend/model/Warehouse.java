@@ -58,5 +58,6 @@ public class Warehouse {
 
   @OneToMany(mappedBy = "warehouse")
   @MapKey(name = "product")
+  @Builder.Default
   private Map<Product, StockBalance> stockBalances = new HashMap<>();
 }

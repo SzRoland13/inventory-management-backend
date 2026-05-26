@@ -19,16 +19,19 @@ import lombok.AllArgsConstructor;
 public class CurrencyServiceImpl implements CurrencyService {
   private final CurrencyRepository currencyRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<Currency, Long> getRepository() {
     return currencyRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.CURRENCY;
   }
 
+  /** {@inheritDoc} */
   @Override
   public CurrenciesResponse getAll() {
     List<Currency> currencies = findAll();

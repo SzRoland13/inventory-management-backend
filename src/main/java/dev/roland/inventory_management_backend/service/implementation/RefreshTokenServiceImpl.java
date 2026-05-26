@@ -18,11 +18,13 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
   private final RefreshTokenRepository refreshTokenRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<RefreshToken, Long> getRepository() {
     return refreshTokenRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.REFRESH_TOKEN;

@@ -18,16 +18,19 @@ import lombok.RequiredArgsConstructor;
 public class MediaAssetServiceImpl implements MediaAssetService {
   private final MediaAssetRepository mediaAssetRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<MediaAsset, Long> getRepository() {
     return mediaAssetRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.MEDIA_ASSET;
   }
 
+  /** {@inheritDoc} */
   @Override
   public List<MediaAsset> findOrphanAssetsOlderThan(LocalDateTime threshold) {
     return mediaAssetRepository.findOrphanAssetsOlderThan(threshold);

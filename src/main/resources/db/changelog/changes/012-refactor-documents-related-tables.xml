@@ -6,138 +6,112 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
 
     <changeSet id="001" author="roland">
-
         <addColumn tableName="documents">
-
             <column name="category" type="VARCHAR(50)"/>
-
-            <column name="document_number" type="INTEGER"/>
-
-            <column name="source_warehouse_id" type="INTEGER">
-                <constraints nullable="false"/>
-            </column>
-
-            <column name="target_warehouse_id" type="INTEGER">
-                <constraints nullable="false"/>
-            </column>
-
+            <column name="document_sequence_id" type="INTEGER"/>
+            <column name="source_warehouse_id" type="INTEGER"/>
+            <column name="target_warehouse_id" type="INTEGER"/>
             <column name="currency_id" type="INTEGER"/>
-
-            <column name="exchange_rate"
-                    type="NUMERIC(15,6)"/>
-
-            <column name="reference_number"
-                    type="VARCHAR(100)"/>
-
-            <column name="notes"
-                    type="TEXT"/>
-
-            <column name="internal_notes"
-                    type="TEXT"/>
-
+            <column name="exchange_rate" type="NUMERIC(15,6)"/>
+            <column name="reference_number" type="VARCHAR(100)"/>
+            <column name="notes" type="TEXT"/>
+            <column name="internal_notes" type="TEXT"/>
+            <column name="document_date" type="DATE"/>
         </addColumn>
-
     </changeSet>
 
     <changeSet id="002" author="roland">
-
-        <addForeignKeyConstraint
-                baseTableName="documents"
-                baseColumnNames="document_number"
-                referencedTableName="document_sequences"
-                referencedColumnNames="id"
-                constraintName="fk_documents_document_number" />
-
-        <addForeignKeyConstraint
-                baseTableName="documents"
-                baseColumnNames="source_warehouse_id"
-                referencedTableName="warehouses"
-                referencedColumnNames="id"
-                constraintName="fk_documents_source_warehouse"/>
-
-        <addForeignKeyConstraint
-                baseTableName="documents"
-                baseColumnNames="target_warehouse_id"
-                referencedTableName="warehouses"
-                referencedColumnNames="id"
-                constraintName="fk_documents_target_warehouse"/>
-
-        <addForeignKeyConstraint
-                baseTableName="documents"
-                baseColumnNames="currency_id"
-                referencedTableName="currencies"
-                referencedColumnNames="id"
-                constraintName="fk_documents_currency"/>
-
+        <dropNotNullConstraint tableName="documents" columnName="partner_id" columnDataType="INTEGER"/>
+        <sql>UPDATE documents SET document_date = "date" WHERE document_date IS NULL</sql>
+        <sql>UPDATE documents SET status = 'SENT' WHERE status = 'PENDING'</sql>
+        <addNotNullConstraint tableName="documents" columnName="document_date" columnDataType="DATE"/>
+        <dropColumn tableName="documents" columnName="total_amount"/>
+        <dropColumn tableName="documents" columnName="number"/>
+        <dropColumn tableName="documents" columnName="date"/>
     </changeSet>
 
-    //need to remove the number field that is already there in the document table
-
     <changeSet id="003" author="roland">
-
-        <addColumn tableName="document_lines">
-
-            <column name="fulfilled_quantity"
-                    type="NUMERIC(15,2)"
-                    defaultValueNumeric="0"/>
-
-            <column name="currency_id"
-                    type="INTEGER"/>
-
-            <column name="product_name_snapshot"
-                    type="VARCHAR(255)"/>
-
-            <column name="product_sku_snapshot"
-                    type="VARCHAR(100)"/>
-
-            <column name="vat_rate_snapshot"
-                    type="NUMERIC(5,3)"/>
-        </addColumn>
-
+        <dropIndex tableName="documents" indexName="idx_documents_warehouse_id"/>
+        <dropIndex tableName="documents" indexName="idx_documents_related_document_id"/>
+        <dropForeignKeyConstraint baseTableName="documents" constraintName="fk_documents_warehouse"/>
+        <dropForeignKeyConstraint baseTableName="documents" constraintName="fk_documents_related"/>
+        <dropColumn tableName="documents" columnName="warehouse_id"/>
+        <dropColumn tableName="documents" columnName="related_document_id"/>
     </changeSet>
 
     <changeSet id="004" author="roland">
-
-        <createTable tableName="document_relations">
-
-            <column name="id" type="SERIAL">
-                <constraints primaryKey="true"/>
-            </column>
-
-            <column name="source_warehouse_id" type="INTEGER"/>
-
-            <column name="target_warehouse_id" type="INTEGER"/>
-
-            <column name="relation_type" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-
-            <column name="created_at"
-                    type="TIMESTAMP"
-                    defaultValueComputed="CURRENT_TIMESTAMP"/>
-
-        </createTable>
-
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="document_sequence_id"
+                                 referencedTableName="document_sequences" referencedColumnNames="id"
+                                 constraintName="fk_documents_document_sequence"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="source_warehouse_id"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 constraintName="fk_documents_source_warehouse"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="target_warehouse_id"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 constraintName="fk_documents_target_warehouse"/>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="currency_id"
+                                 referencedTableName="currencies" referencedColumnNames="id"
+                                 constraintName="fk_documents_currency"/>
     </changeSet>
 
     <changeSet id="005" author="roland">
+        <addColumn tableName="document_lines">
+            <column name="fulfilled_quantity" type="NUMERIC(15,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency_id" type="INTEGER"/>
+            <column name="product_name_snapshot" type="VARCHAR(255)"/>
+            <column name="product_sku_snapshot" type="VARCHAR(100)"/>
+            <column name="vat_rate_snapshot" type="NUMERIC(5,3)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="document_lines" baseColumnNames="currency_id"
+                                 referencedTableName="currencies" referencedColumnNames="id"
+                                 constraintName="fk_document_lines_currency"/>
+    </changeSet>
 
-        <addForeignKeyConstraint
-                baseTableName="document_relations"
-                baseColumnNames="source_document_id"
-                referencedTableName="documents"
-                referencedColumnNames="id"
-                constraintName="fk_doc_rel_source"
-                onDelete="CASCADE"/>
+    <changeSet id="006" author="roland">
+        <createTable tableName="document_relations">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="source_document_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_document_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="relation_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_relations" baseColumnNames="source_document_id"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 constraintName="fk_doc_rel_source"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="document_relations" baseColumnNames="target_document_id"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 constraintName="fk_doc_rel_target"
+                                 onDelete="CASCADE"/>
+        <addUniqueConstraint tableName="document_relations" columnNames="source_document_id, target_document_id, relation_type" constraintName="uq_document_relations_source_target_type"/>
+    </changeSet>
 
-        <addForeignKeyConstraint
-                baseTableName="document_relations"
-                baseColumnNames="target_document_id"
-                referencedTableName="documents"
-                referencedColumnNames="id"
-                constraintName="fk_doc_rel_target"
-                onDelete="CASCADE"/>
-
+    <changeSet id="007" author="roland">
+        <createIndex indexName="idx_documents_document_sequence_id" tableName="documents">
+            <column name="document_sequence_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_source_warehouse_id" tableName="documents">
+            <column name="source_warehouse_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_target_warehouse_id" tableName="documents">
+            <column name="target_warehouse_id"/>
+        </createIndex>
+        <createIndex indexName="idx_document_relations_source_document_id" tableName="document_relations">
+            <column name="source_document_id"/>
+        </createIndex>
+        <createIndex indexName="idx_document_relations_target_document_id" tableName="document_relations">
+            <column name="target_document_id"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>

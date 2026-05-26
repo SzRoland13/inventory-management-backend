@@ -5,83 +5,59 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
 
-<changeSet id="001" author="roland">
+    <changeSet id="001" author="roland">
+        <createTable tableName="stock_movements">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="document_id" type="INTEGER"/>
+            <column name="document_line_id" type="INTEGER"/>
+            <column name="warehouse_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity_change" type="NUMERIC(15,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="movement_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="now()"/>
+            <column name="created_by_user_id" type="INTEGER"/>
+        </createTable>
+    </changeSet>
 
-    <createTable tableName="stock_movements">
+    <changeSet id="002" author="roland">
+        <addForeignKeyConstraint baseTableName="stock_movements" baseColumnNames="document_id"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 constraintName="fk_stock_movements_document"/>
+        <addForeignKeyConstraint baseTableName="stock_movements" baseColumnNames="document_line_id"
+                                 referencedTableName="document_lines" referencedColumnNames="id"
+                                 constraintName="fk_stock_movements_document_line"/>
+        <addForeignKeyConstraint baseTableName="stock_movements" baseColumnNames="warehouse_id"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 constraintName="fk_stock_movements_warehouse"/>
+        <addForeignKeyConstraint baseTableName="stock_movements" baseColumnNames="product_id"
+                                 referencedTableName="products" referencedColumnNames="id"
+                                 constraintName="fk_stock_movements_product"/>
+        <addForeignKeyConstraint baseTableName="stock_movements" baseColumnNames="created_by_user_id"
+                                 referencedTableName="users" referencedColumnNames="id"
+                                 constraintName="fk_stock_movement_created_by_user"/>
+    </changeSet>
 
-        <column name="id" type="SERIAL">
-            <constraints primaryKey="true"/>
-        </column>
-
-        <column name="document_id" type="INTEGER"/>
-
-        <column name="document_line_id" type="INTEGER"/>
-
-        <column name="warehouse_id" type="INTEGER">
-            <constraints nullable="false"/>
-        </column>
-
-        <column name="product_id" type="INTEGER">
-            <constraints nullable="false"/>
-        </column>
-
-        <column name="quantity_change"
-                type="NUMERIC(15,2)">
-            <constraints nullable="false"/>
-        </column>
-
-        <column name="movement_type"
-                type="VARCHAR(50)">
-            <constraints nullable="false"/>
-        </column>
-
-        <column name="created_at"
-                type="TIMESTAMP"
-                defaultValueComputed="CURRENT_TIMESTAMP"/>
-
-        <column name="created_by_user_id" type="INTEGER"/>
-
-    </createTable>
-
-</changeSet>
-
-<changeSet id="002" author="roland">
-
-    <addForeignKeyConstraint
-            baseTableName="stock_movements"
-            baseColumnNames="document_id"
-            referencedTableName="documents"
-            referencedColumnNames="id"
-            constraintName="fk_stock_movements_document"/>
-
-    <addForeignKeyConstraint
-            baseTableName="stock_movements"
-            baseColumnNames="document_line_id"
-            referencedTableName="document_lines"
-            referencedColumnNames="id"
-            constraintName="fk_stock_movements_document_line"/>
-
-    <addForeignKeyConstraint
-            baseTableName="stock_movements"
-            baseColumnNames="warehouse_id"
-            referencedTableName="warehouses"
-            referencedColumnNames="id"
-            constraintName="fk_stock_movements_warehouse"/>
-
-    <addForeignKeyConstraint
-            baseTableName="stock_movements"
-            baseColumnNames="product_id"
-            referencedTableName="products"
-            referencedColumnNames="id"
-            constraintName="fk_stock_movements_product"/>
-
-    <addForeignKeyConstraint
-            baseTableName="stock_movements"
-            baseColumnNames="created_by_user_id"
-            constraintName="fk_stock_movement_created_by_user"
-            referencedTableName="users"
-            referencedColumnNames="id"/>
-
-</changeSet>
+    <changeSet id="003" author="roland">
+        <createIndex indexName="idx_stock_movements_document_id" tableName="stock_movements">
+            <column name="document_id"/>
+        </createIndex>
+        <createIndex indexName="idx_stock_movements_document_line_id" tableName="stock_movements">
+            <column name="document_line_id"/>
+        </createIndex>
+        <createIndex indexName="idx_stock_movements_warehouse_product" tableName="stock_movements">
+            <column name="warehouse_id"/>
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>
