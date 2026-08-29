@@ -7,17 +7,17 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.enums.StockMovementType;
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.model.DocumentLine;
-import dev.roland.inventory_management_backend.model.StockBalance;
-import dev.roland.inventory_management_backend.model.StockMovement;
-import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.model.Warehouse;
-import dev.roland.inventory_management_backend.repository.StockBalanceRepository;
-import dev.roland.inventory_management_backend.repository.StockMovementRepository;
-import dev.roland.inventory_management_backend.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
+import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
+import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
+import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.repository.StockMovementRepository;
+import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.RequiredArgsConstructor;
 
 @Service

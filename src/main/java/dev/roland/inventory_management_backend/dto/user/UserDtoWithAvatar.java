@@ -1,6 +1,6 @@
 package dev.roland.inventory_management_backend.dto.user;
 
-import dev.roland.inventory_management_backend.model.User;
+import dev.roland.inventory_management_backend.features.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

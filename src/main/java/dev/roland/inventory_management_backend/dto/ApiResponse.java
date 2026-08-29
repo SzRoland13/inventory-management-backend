@@ -3,7 +3,7 @@ package dev.roland.inventory_management_backend.dto;
 import java.time.Instant;
 import java.util.Map;
 
-import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.common.message.MessageKey;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

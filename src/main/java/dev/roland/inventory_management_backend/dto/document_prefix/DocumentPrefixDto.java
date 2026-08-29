@@ -1,7 +1,7 @@
 package dev.roland.inventory_management_backend.dto.document_prefix;
 
 import dev.roland.inventory_management_backend.enums.DocumentType;
-import dev.roland.inventory_management_backend.model.DocumentPrefix;
+import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import lombok.Builder;
 import lombok.Data;
 

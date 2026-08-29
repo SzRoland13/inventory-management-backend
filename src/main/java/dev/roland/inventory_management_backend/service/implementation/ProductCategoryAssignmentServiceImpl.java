@@ -4,14 +4,14 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.model.Product;
-import dev.roland.inventory_management_backend.model.ProductCategory;
-import dev.roland.inventory_management_backend.model.ProductCategoryAssignment;
-import dev.roland.inventory_management_backend.model.ProductCategoryAssignmentId;
-import dev.roland.inventory_management_backend.repository.ProductCategoryAssignmentRepository;
-import dev.roland.inventory_management_backend.service.ProductCategoryAssignmentService;
-import dev.roland.inventory_management_backend.service.ProductCategoryService;
-import dev.roland.inventory_management_backend.service.ProductService;
+import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.service.ProductService;
+import dev.roland.inventory_management_backend.features.product_category.ProductCategory;
+import dev.roland.inventory_management_backend.features.product_category.service.ProductCategoryService;
+import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignment;
+import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignmentId;
+import dev.roland.inventory_management_backend.features.product_category_assignment.repository.ProductCategoryAssignmentRepository;
+import dev.roland.inventory_management_backend.features.product_category_assignment.service.ProductCategoryAssignmentService;
 import lombok.RequiredArgsConstructor;
 
 @Service

@@ -2,7 +2,7 @@ package dev.roland.inventory_management_backend.dto.user;
 
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
-import dev.roland.inventory_management_backend.model.User;
+import dev.roland.inventory_management_backend.features.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

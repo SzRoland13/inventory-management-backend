@@ -3,8 +3,8 @@ package dev.roland.inventory_management_backend.dto.auth;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-import dev.roland.inventory_management_backend.annotation.PasswordsMatch;
-import dev.roland.inventory_management_backend.annotation.ValidPassword;
+import dev.roland.inventory_management_backend.common.annotation.PasswordsMatch;
+import dev.roland.inventory_management_backend.common.annotation.ValidPassword;
 import lombok.Data;
 
 @Data

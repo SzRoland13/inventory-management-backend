@@ -5,13 +5,13 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.dto.currency.CurrenciesResponse;
 import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.model.Currency;
-import dev.roland.inventory_management_backend.repository.CurrencyRepository;
-import dev.roland.inventory_management_backend.service.CurrencyService;
+import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.currency.repository.CurrencyRepository;
+import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import lombok.AllArgsConstructor;
 
 @Service

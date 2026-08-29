@@ -5,11 +5,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.model.RefreshToken;
-import dev.roland.inventory_management_backend.repository.RefreshTokenRepository;
-import dev.roland.inventory_management_backend.service.RefreshTokenService;
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
+import dev.roland.inventory_management_backend.features.refresh_token.repository.RefreshTokenRepository;
+import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 
 @Service

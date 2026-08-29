@@ -3,11 +3,11 @@ package dev.roland.inventory_management_backend.service.implementation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.model.Document;
-import dev.roland.inventory_management_backend.repository.DocumentRepository;
-import dev.roland.inventory_management_backend.service.DocumentService;
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
+import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 
 @Service

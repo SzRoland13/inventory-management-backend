@@ -9,12 +9,12 @@ import org.springframework.stereotype.Service;
 import dev.roland.inventory_management_backend.enums.DocumentStatus;
 import dev.roland.inventory_management_backend.enums.DocumentType;
 import dev.roland.inventory_management_backend.enums.StockMovementType;
-import dev.roland.inventory_management_backend.model.Document;
-import dev.roland.inventory_management_backend.model.DocumentLine;
-import dev.roland.inventory_management_backend.model.Warehouse;
-import dev.roland.inventory_management_backend.service.DocumentPostingService;
-import dev.roland.inventory_management_backend.service.DocumentService;
-import dev.roland.inventory_management_backend.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
+import dev.roland.inventory_management_backend.features.document.service.DocumentService;
+import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
+import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.RequiredArgsConstructor;
 
 @Service

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
@@ -13,16 +14,15 @@ import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
-import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.facade.UserFacade;
-import dev.roland.inventory_management_backend.message_key.UserMessageKey;
-import dev.roland.inventory_management_backend.model.MediaAsset;
-import dev.roland.inventory_management_backend.model.MediaUsage;
-import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.service.MediaAssetService;
-import dev.roland.inventory_management_backend.service.MediaUsageService;
-import dev.roland.inventory_management_backend.service.UserService;
+import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
+import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
+import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @Service

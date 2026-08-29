@@ -4,15 +4,15 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.dto.media.GeneratedMediaPathAndName;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
 import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
-import dev.roland.inventory_management_backend.model.MediaAsset;
-import dev.roland.inventory_management_backend.service.MediaAssetService;
-import dev.roland.inventory_management_backend.service.common.ObjectStorageService;
+import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import lombok.RequiredArgsConstructor;
 
 @Service

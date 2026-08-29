@@ -1,0 +1,63 @@
+package dev.roland.inventory_management_backend.features.partner;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import dev.roland.inventory_management_backend.enums.PartnerType;
+import dev.roland.inventory_management_backend.features.contact.Contact;
+import dev.roland.inventory_management_backend.features.document.Document;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Represents a business partner that participates in procurement or sales processes.
+ *
+ * <p>A partner may be a customer, supplier, or both. {@link Contact} records store the partner's
+ * billing, shipping, and other contact information, while {@link Document} may reference the
+ * partner involved in a transaction.
+ */
+@Entity
+@Table(name = "partners")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Partner {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(name = "name", nullable = false)
+  private String name;
+
+  @Column(name = "type", nullable = false, length = 50)
+  @Enumerated(EnumType.STRING)
+  private PartnerType type;
+
+  @Column(name = "tax_number", length = 50)
+  private String taxNumber;
+
+  @CreationTimestamp
+  @Column(name = "created_at", updatable = false)
+  private LocalDateTime createdAt;
+
+  @UpdateTimestamp
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
+}

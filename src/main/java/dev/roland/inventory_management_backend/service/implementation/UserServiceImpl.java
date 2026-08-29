@@ -5,17 +5,17 @@ import java.util.Objects;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.enums.UserRole;
-import dev.roland.inventory_management_backend.exception.ApiException;
-import dev.roland.inventory_management_backend.exception.NotFoundException;
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.message_key.UserMessageKey;
-import dev.roland.inventory_management_backend.model.User;
-import dev.roland.inventory_management_backend.repository.UserRepository;
-import dev.roland.inventory_management_backend.service.UserService;
+import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
+import dev.roland.inventory_management_backend.features.user.repository.UserRepository;
+import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @Service

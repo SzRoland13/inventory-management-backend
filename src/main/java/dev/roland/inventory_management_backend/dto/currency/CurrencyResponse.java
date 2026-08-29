@@ -1,6 +1,6 @@
 package dev.roland.inventory_management_backend.dto.currency;
 
-import dev.roland.inventory_management_backend.model.Currency;
+import dev.roland.inventory_management_backend.features.currency.Currency;
 import lombok.Builder;
 import lombok.Data;
 

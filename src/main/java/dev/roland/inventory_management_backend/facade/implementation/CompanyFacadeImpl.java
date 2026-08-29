@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataResponse;
@@ -19,17 +20,16 @@ import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
-import dev.roland.inventory_management_backend.facade.CompanyFacade;
 import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
-import dev.roland.inventory_management_backend.model.Company;
-import dev.roland.inventory_management_backend.model.Currency;
-import dev.roland.inventory_management_backend.model.MediaAsset;
-import dev.roland.inventory_management_backend.model.MediaUsage;
-import dev.roland.inventory_management_backend.service.CompanyService;
-import dev.roland.inventory_management_backend.service.CurrencyService;
-import dev.roland.inventory_management_backend.service.MediaAssetService;
-import dev.roland.inventory_management_backend.service.MediaUsageService;
-import dev.roland.inventory_management_backend.service.common.ObjectStorageService;
+import dev.roland.inventory_management_backend.features.company.Company;
+import dev.roland.inventory_management_backend.features.company.facade.CompanyFacade;
+import dev.roland.inventory_management_backend.features.company.service.CompanyService;
+import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
+import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
+import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import lombok.RequiredArgsConstructor;
 
 @Service

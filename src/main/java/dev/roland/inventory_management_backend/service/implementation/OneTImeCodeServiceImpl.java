@@ -5,11 +5,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.message_key.MessageKey;
-import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.model.OneTimeCode;
-import dev.roland.inventory_management_backend.repository.OneTimeCodeRepository;
-import dev.roland.inventory_management_backend.service.OneTimeCodeService;
+import dev.roland.inventory_management_backend.common.message.MessageKey;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
+import dev.roland.inventory_management_backend.features.one_time_code.repository.OneTimeCodeRepository;
+import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import lombok.RequiredArgsConstructor;
 
 @Service
