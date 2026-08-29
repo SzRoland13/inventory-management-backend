@@ -28,6 +28,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Represents an application user and the user's authentication state.
+ *
+ * <p>The entity stores identity, role, onboarding status, password, and TOTP configuration. Other
+ * models reference users as creators or owners of warehouses, documents, media assets, stock
+ * movements, one-time codes, and refresh tokens. The warehouse collection is the only explicit
+ * inverse association currently mapped on this entity.
+ */
 @Entity
 @Table(name = "users")
 @Getter

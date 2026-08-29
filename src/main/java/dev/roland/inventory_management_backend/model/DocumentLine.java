@@ -23,6 +23,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents one product line belonging to a {@link Document}.
+ *
+ * <p>The line stores ordered quantity, fulfilled quantity, pricing, currency, and snapshots of
+ * product information so a document can retain historical values after the product changes. It
+ * references exactly one document and one {@link Product}; completed lines may also be referenced
+ * by {@link StockMovement} records.
+ */
 @Entity
 @Table(name = "document_lines")
 @Getter

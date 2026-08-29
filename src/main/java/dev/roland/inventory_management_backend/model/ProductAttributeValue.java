@@ -25,6 +25,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Stores the value of one configurable attribute for one {@link Product}.
+ *
+ * <p>The value references both the product and its {@link ProductAttributeDefinition}. Depending on
+ * the definition type, exactly one of the typed columns or the optional {@link
+ * ProductAttributeOption} reference is expected to contain the value. A product-definition pair is
+ * unique.
+ */
 @Entity
 @Table(
     name = "product_attribute_values",

@@ -22,6 +22,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents one selectable value for a fixed-choice {@link ProductAttributeDefinition}.
+ *
+ * <p>Options belong to exactly one attribute definition and can be referenced by product-specific
+ * {@link ProductAttributeValue} rows. The definition and option value form a unique combination.
+ */
 @Entity
 @Table(
     name = "product_attribute_options",

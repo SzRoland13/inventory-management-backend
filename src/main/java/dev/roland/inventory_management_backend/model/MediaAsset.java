@@ -26,6 +26,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Represents a file stored in S3-compatible object storage.
+ *
+ * <p>The entity stores object metadata and optionally the {@link User} who uploaded it. One asset
+ * can be associated with multiple {@link MediaUsage} records, allowing the same stored object to be
+ * used by different domain entities.
+ */
 @Entity
 @Table(name = "media_assets")
 @Getter

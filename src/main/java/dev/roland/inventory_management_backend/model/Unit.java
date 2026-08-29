@@ -23,6 +23,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a configurable measurement or packaging unit for products.
+ *
+ * <p>Units may be shared system records or associated with a {@link Company}. Products reference a
+ * unit to describe quantities such as pieces, kilograms, or boxes; the company-code combination is
+ * unique.
+ */
 @Entity
 @Table(name = "units", uniqueConstraints = @UniqueConstraint(columnNames = {"company_id", "code"}))
 @Getter

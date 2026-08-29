@@ -23,6 +23,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a hierarchical product category.
+ *
+ * <p>A category may belong to a {@link Company} and may reference another category as its parent.
+ * Products are associated with categories through {@link ProductCategoryAssignment}, allowing a
+ * product to belong to multiple categories.
+ */
 @Entity
 @Table(
     name = "product_categories",

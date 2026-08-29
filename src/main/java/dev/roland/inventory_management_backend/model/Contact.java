@@ -24,6 +24,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Stores a business contact address and communication details for a {@link Partner}.
+ *
+ * <p>Each contact belongs to exactly one partner through {@code partner_id}. The contact type
+ * distinguishes billing, shipping, both, and other contact purposes.
+ */
 @Entity
 @Table(name = "contacts")
 @Getter

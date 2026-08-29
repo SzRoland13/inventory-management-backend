@@ -20,6 +20,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Stores a short-lived one-time code used during user onboarding.
+ *
+ * <p>Each code belongs to one {@link User} through {@code user_id} and contains its expiry time.
+ * The code is consumed and deleted after successful validation; it is not a permanent credential.
+ */
 @Entity
 @Table(name = "one_time_codes")
 @Getter

@@ -26,6 +26,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Defines a configurable attribute that can be assigned to products.
+ *
+ * <p>An attribute definition may belong to a {@link Company} and declares the value type, such as
+ * text, number, date, boolean, or fixed option. Its values are stored in {@link
+ * ProductAttributeValue}, and fixed choices are stored in {@link ProductAttributeOption}.
+ */
 @Entity
 @Table(
     name = "product_attribute_definitions",

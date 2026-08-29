@@ -24,6 +24,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a physical or logical storage location where inventory is held.
+ *
+ * <p>A warehouse references a {@link WarehouseLocation} and optionally the {@link User} who created
+ * it. Its stock balances map provides a warehouse-side view of the one-to-many relationship between
+ * warehouses and {@link StockBalance} rows; products are the other side of each balance.
+ */
 @Entity
 @Table(name = "warehouses")
 @Getter

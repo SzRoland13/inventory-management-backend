@@ -25,6 +25,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Links two documents in a business-process chain.
+ *
+ * <p>The source and target columns both reference {@link Document}; the relation type describes
+ * whether the target was created from, fulfills, or cancels the source. The database prevents
+ * duplicate source-target-type combinations.
+ */
 @Entity
 @Table(
     name = "document_relations",

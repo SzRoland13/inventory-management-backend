@@ -18,6 +18,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Persists a refresh token that can be used to obtain a new access token.
+ *
+ * <p>Each token belongs to one {@link User} and stores its expiration timestamp. Deleting the row
+ * invalidates the token, which supports logout and expired-token cleanup.
+ */
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

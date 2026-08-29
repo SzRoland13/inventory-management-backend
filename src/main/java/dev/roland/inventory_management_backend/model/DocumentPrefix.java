@@ -26,6 +26,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Defines the textual prefix used when numbering one document type for a {@link Company}.
+ *
+ * <p>A prefix belongs to one company and document type. It is referenced by {@link
+ * DocumentSequence}, which maintains the yearly counter used to generate document numbers.
+ */
 @Entity
 @Table(
     name = "document_prefixes",

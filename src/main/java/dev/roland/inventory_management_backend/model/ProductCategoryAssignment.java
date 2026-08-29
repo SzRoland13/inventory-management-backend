@@ -19,6 +19,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Join entity associating a {@link Product} with a {@link ProductCategory}.
+ *
+ * <p>The pair of foreign keys is represented by {@link ProductCategoryAssignmentId} and forms the
+ * composite primary key. This model exists so the product-category relationship can carry its own
+ * creation timestamp.
+ */
 @Entity
 @Table(name = "product_category_assignments")
 @Getter

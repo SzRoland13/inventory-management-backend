@@ -23,6 +23,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Stores a yearly numbering counter for a company's document prefix.
+ *
+ * <p>Each sequence belongs to one {@link Company} and one {@link DocumentPrefix}. The unique
+ * company-prefix-year combination ensures that document numbers can be generated consistently for
+ * each business year. {@link Document} references the sequence used for its number.
+ */
 @Entity
 @Table(
     name = "document_sequences",

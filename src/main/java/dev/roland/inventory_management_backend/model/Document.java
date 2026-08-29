@@ -32,6 +32,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a business document in a procurement, sales, or internal warehouse workflow.
+ *
+ * <p>A document may reference a {@link DocumentSequence}, {@link Partner}, source and target {@link
+ * Warehouse} records, the creating {@link User}, and a {@link Currency}. Its lines are stored in
+ * {@link DocumentLine} and cascade with the document. Documents can be linked to other documents
+ * through {@link DocumentRelation} and may generate {@link StockMovement} records when completed.
+ */
 @Entity
 @Table(name = "documents")
 @Getter

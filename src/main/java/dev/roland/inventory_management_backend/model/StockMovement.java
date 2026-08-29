@@ -25,6 +25,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents an inventory quantity change recorded in the stock ledger.
+ *
+ * <p>A movement references the affected {@link Warehouse} and {@link Product}, and may reference
+ * the originating {@link Document} and {@link DocumentLine}. It also records the movement type,
+ * signed quantity change, timestamp, and optionally the {@link User} who created it. The movement
+ * history is the audit source used to explain stock balances.
+ */
 @Entity
 @Table(name = "stock_movements")
 @Getter

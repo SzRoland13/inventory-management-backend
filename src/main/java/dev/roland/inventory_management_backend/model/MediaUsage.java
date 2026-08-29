@@ -27,6 +27,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Describes how a {@link MediaAsset} is used by a domain entity.
+ *
+ * <p>Because media can belong to users, companies, products, or future entity types, this table
+ * stores the target entity type and identifier rather than a foreign key to one specific table. The
+ * usage type identifies roles such as avatar, logo, or product image.
+ */
 @Entity
 @Table(
     name = "media_usages",

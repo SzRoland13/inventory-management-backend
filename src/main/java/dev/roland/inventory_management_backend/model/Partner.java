@@ -21,6 +21,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a business partner that participates in procurement or sales processes.
+ *
+ * <p>A partner may be a customer, supplier, or both. {@link Contact} records store the partner's
+ * billing, shipping, and other contact information, while {@link Document} may reference the
+ * partner involved in a transaction.
+ */
 @Entity
 @Table(name = "partners")
 @Getter

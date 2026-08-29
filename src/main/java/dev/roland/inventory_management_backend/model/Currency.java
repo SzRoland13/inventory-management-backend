@@ -15,6 +15,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Represents a supported currency used for company preferences, products, and documents.
+ *
+ * <p>The {@code currencies} table is referenced by {@link Company}, {@link Product}, {@link
+ * Document}, and {@link DocumentLine}. Currency rows are shared reference data rather than
+ * company-owned records.
+ */
 @Entity
 @Table(name = "currencies")
 @Getter

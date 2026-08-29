@@ -30,6 +30,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents an item managed in the product catalog and inventory system.
+ *
+ * <p>A product references a mandatory {@link Unit}, and may reference a {@link Currency} and {@link
+ * Company}. It is referenced by document lines, warehouse-specific {@link StockBalance} rows,
+ * {@link StockMovement} rows, product attributes, and product-category assignments.
+ */
 @Entity
 @Table(name = "products")
 @Getter
