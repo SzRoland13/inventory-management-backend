@@ -3,7 +3,8 @@ package dev.roland.inventory_management_backend.dto.mail;
 import java.util.Map;
 
 import dev.roland.inventory_management_backend.enums.MailTemplate;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
 @Builder

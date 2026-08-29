@@ -83,7 +83,7 @@ Will include:
 
 ## Authentication Flow
 
-The application uses a multi-step secure authentication process with **JWT, refresh tokens, and TOTP-based 2FA.**
+The application uses a multistep secure authentication process with **JWT, refresh tokens, and TOTP-based 2FA.**
 
 ### Flow Overview
 1. **Admin Registration**
