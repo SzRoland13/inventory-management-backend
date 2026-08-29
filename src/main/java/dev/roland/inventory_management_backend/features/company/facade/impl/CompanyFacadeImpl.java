@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade.implementation;
+package dev.roland.inventory_management_backend.features.company.facade.impl;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -20,13 +20,13 @@ import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
-import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.facade.CompanyFacade;
 import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.company.facade.impl;
+package dev.roland.inventory_management_backend.features.auth.facade.impl;
 
 import java.time.LocalDateTime;
 import java.util.Map;

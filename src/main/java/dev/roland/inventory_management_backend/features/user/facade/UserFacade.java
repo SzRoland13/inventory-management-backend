@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade;
+package dev.roland.inventory_management_backend.features.user.facade;
 
 import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;

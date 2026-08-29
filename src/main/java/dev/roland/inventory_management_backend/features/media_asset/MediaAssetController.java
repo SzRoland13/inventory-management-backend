@@ -13,7 +13,7 @@ import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
-import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
+import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.message.MediaMessageKey;
 import lombok.RequiredArgsConstructor;
 

@@ -20,7 +20,7 @@ import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.AvatarUploadRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
-import dev.roland.inventory_management_backend.facade.UserFacade;
+import dev.roland.inventory_management_backend.features.user.facade.UserFacade;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;

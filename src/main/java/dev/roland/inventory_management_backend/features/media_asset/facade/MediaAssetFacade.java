@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade;
+package dev.roland.inventory_management_backend.features.media_asset.facade;
 
 import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;

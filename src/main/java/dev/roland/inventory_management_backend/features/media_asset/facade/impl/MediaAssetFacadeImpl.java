@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade.implementation;
+package dev.roland.inventory_management_backend.features.media_asset.facade.impl;
 
 import java.time.LocalDateTime;
 
@@ -10,8 +10,8 @@ import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
 import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
-import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import lombok.RequiredArgsConstructor;
 

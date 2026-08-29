@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.facade.implementation;
+package dev.roland.inventory_management_backend.features.user.facade.impl;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,13 +14,13 @@ import dev.roland.inventory_management_backend.enums.MediaEntityType;
 import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.enums.UserRole;
 import dev.roland.inventory_management_backend.enums.UserStatus;
-import dev.roland.inventory_management_backend.facade.MediaAssetFacade;
-import dev.roland.inventory_management_backend.facade.UserFacade;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.facade.UserFacade;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
