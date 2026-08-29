@@ -46,7 +46,8 @@ public interface UserFacade {
   /**
    * Associates a media asset with a user as the user's avatar.
    *
-   * <p>id user identifier mediaAssetId media asset identifier
+   * @param id user identifier
+   * @param mediaAssetId media asset identifier
    */
   void updateAvatar(Long id, Long mediaAssetId);
 

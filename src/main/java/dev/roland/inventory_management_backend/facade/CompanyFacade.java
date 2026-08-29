@@ -14,42 +14,45 @@ public interface CompanyFacade {
   /**
    * Returns the company data needed for minimal application views.
    *
-   * <p>minimal company data
+   * @return minimal company data
    */
   CompanyMinimalResponse getMinimalCompanyData();
 
   /**
    * Returns the complete company profile and billing data.
    *
-   * <p>extended company data
+   * @return extended company data
    */
   CompanyExtendedResponse getExtendedCompanyData();
 
   /**
    * Updates the company's base profile data.
    *
-   * <p>request updated base company data updated base company data
+   * @param request updated base company data
+   * @return updated base company data
    */
   CompanyBaseDataResponse updateCompanyBaseData(CompanyBaseDataUpdateRequest request);
 
   /**
    * Associates a media asset with the company as its logo.
    *
-   * <p>mediaAssetId identifier of the media asset
+   * @param mediaAssetId identifier of the media asset
    */
   void updateLogo(Long mediaAssetId);
 
   /**
    * Updates the company's billing data.
    *
-   * <p>request updated billing data updated billing data
+   * @param request updated billing data
+   * @return updated billing data
    */
   CompanyBillingDataResponse updateCompanyBillingData(CompanyBillingDataUpdateRequest request);
 
   /**
    * Updates the company's preferred currency.
    *
-   * <p>request preferred-currency update request updated preferred-currency data
+   * @param request preferred-currency update request
+   * @return updated preferred-currency data
    */
   UpdatedPreferredCurrencyResponse updatePreferredCurrency(
       CompanyPreferredCurrencyUpdateRequest request);

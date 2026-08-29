@@ -4,7 +4,6 @@ import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
 import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.dto.auth.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
-import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
 import dev.roland.inventory_management_backend.dto.auth.LogoutResult;
 import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
@@ -43,7 +42,7 @@ public interface AuthFacade {
    * Handles token refresh by validating token validity and expiry
    *
    * @param token refresh token
-   * @return new access and the provided refresh token
+   * @return token refresh result containing the new access token
    * @throws ApiException if token does not exist or the token expired
    */
   TokenRefreshResult handleTokenRefresh(String token);
@@ -61,7 +60,7 @@ public interface AuthFacade {
    * Validates a user's TOTP code during the login flow.
    *
    * @param request contains the user's email and the TOTP code
-   * @return {@link LoginResponse} containing user details
+   * @return {@link LoginFinalizationResult} containing user details
    * @throws ApiException if the user does not exist or the TOTP code is invalid
    */
   LoginFinalizationResult verify2faLogin(TwoFactorVerifyRequest request);
@@ -70,7 +69,7 @@ public interface AuthFacade {
    * Handles user logout by clearing auth cookies.
    *
    * @param refreshToken the refresh token from cookie
-   * @return success response
+   * @return logout result describing which authentication cookies to clear
    */
   LogoutResult handleLogout(String refreshToken);
 }

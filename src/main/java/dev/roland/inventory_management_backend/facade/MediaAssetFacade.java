@@ -9,21 +9,23 @@ public interface MediaAssetFacade {
   /**
    * Initializes an upload and returns a presigned media upload request.
    *
-   * <p>request upload metadata and file information initialized upload details and presigned URL
+   * @param request upload metadata and file information
+   * @return initialized upload details and presigned URL
    */
   MediaUploadInitResponse getPutRequestForNewMediaAsset(MediaUploadInitRequest request);
 
   /**
    * Returns a preview URL for the media asset with the given identifier.
    *
-   * <p>id media asset identifier media preview details
+   * @param id media asset identifier
+   * @return media preview details
    */
   MediaPreviewResponse getPreview(Long id);
 
   /**
    * Deletes the media asset with the given identifier when it is no longer in use.
    *
-   * <p>id media asset identifier
+   * @param id media asset identifier
    */
   void deleteAsset(Long id);
 }
