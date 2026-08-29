@@ -23,6 +23,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Represents a tenant company in the inventory-management system.
+ *
+ * <p>A company owns business configuration and identifies the organization whose products,
+ * categories, units, documents, and warehouses are managed. It optionally references a preferred
+ * {@link Currency} through {@code preferred_currency_id}. Other company-scoped entities reference
+ * the company through their own foreign keys.
+ */
 @Entity
 @Table(name = "companies")
 @Getter

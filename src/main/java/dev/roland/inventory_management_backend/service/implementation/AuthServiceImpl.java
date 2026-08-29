@@ -10,7 +10,7 @@ import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.exception.ApiException;
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
+import dev.roland.inventory_management_backend.message_key.AuthMessageKey;
 import dev.roland.inventory_management_backend.model.CustomUserDetails;
 import dev.roland.inventory_management_backend.model.User;
 import dev.roland.inventory_management_backend.service.AuthService;

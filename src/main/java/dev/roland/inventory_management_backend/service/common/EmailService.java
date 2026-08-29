@@ -30,6 +30,12 @@ public class EmailService {
   @Value("${spring.mail.username}")
   private String sender;
 
+  /**
+   * Sends a plain text email.
+   *
+   * @param details recipient, subject, and body of the email
+   * @return true when the mail sender accepts the message, otherwise false
+   */
   public boolean sendSimpleMail(EmailDetails details) {
     try {
       SimpleMailMessage mailMessage = new SimpleMailMessage();

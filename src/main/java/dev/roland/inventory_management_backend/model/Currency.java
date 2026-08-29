@@ -1,6 +1,11 @@
 package dev.roland.inventory_management_backend.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import dev.roland.inventory_management_backend.model.interfaces.IdInterface;
 import lombok.AllArgsConstructor;
@@ -10,6 +15,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Represents a supported currency used for company preferences, products, and documents.
+ *
+ * <p>The {@code currencies} table is referenced by {@link Company}, {@link Product}, {@link
+ * Document}, and {@link DocumentLine}. Currency rows are shared reference data rather than
+ * company-owned records.
+ */
 @Entity
 @Table(name = "currencies")
 @Getter

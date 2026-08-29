@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixDto;
 import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesResponse;
 import dev.roland.inventory_management_backend.enums.DocumentType;
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.Company;
 import dev.roland.inventory_management_backend.model.DocumentPrefix;
 import dev.roland.inventory_management_backend.repository.DocumentPrefixRepository;
@@ -26,16 +26,19 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   private final DocumentPrefixRepository documentPrefixRepository;
   private final CompanyService companyService;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<DocumentPrefix, Long> getRepository() {
     return documentPrefixRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_PREFIX;
   }
 
+  /** {@inheritDoc} */
   @Override
   public DocumentPrefixesResponse getAllPrefixes() {
     List<DocumentPrefix> prefixes = findAll();
@@ -59,6 +62,7 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
     return DocumentPrefixesResponse.builder().prefixes(dtos).build();
   }
 
+  /** {@inheritDoc} */
   @Transactional
   @Override
   public DocumentPrefixesResponse updatePrefixes(List<DocumentPrefixDto> dtos) {

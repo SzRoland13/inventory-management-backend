@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.currency.CurrenciesResponse;
-import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
+import dev.roland.inventory_management_backend.message_key.GenericMessageKey;
 import dev.roland.inventory_management_backend.service.CurrencyService;
 import lombok.RequiredArgsConstructor;
 

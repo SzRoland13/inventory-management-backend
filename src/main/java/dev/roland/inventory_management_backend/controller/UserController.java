@@ -20,8 +20,8 @@ import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.AvatarUploadRequest;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.facade.UserFacade;
-import dev.roland.inventory_management_backend.messageKey.GenericMessageKey;
-import dev.roland.inventory_management_backend.messageKey.UserMessageKey;
+import dev.roland.inventory_management_backend.message_key.GenericMessageKey;
+import dev.roland.inventory_management_backend.message_key.UserMessageKey;
 import dev.roland.inventory_management_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 

@@ -42,6 +42,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   private final ObjectStorageService objectStorageService;
   private final CurrencyService currencyService;
 
+  /** {@inheritDoc} */
   @Override
   public CompanyMinimalResponse getMinimalCompanyData() {
     Company company = companyService.getCompanyOrCreateNew();
@@ -49,6 +50,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildMinimalResponse(company);
   }
 
+  /** {@inheritDoc} */
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
     Company company = companyService.getCompanyOrCreateNew();
@@ -56,6 +58,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildExtendedResponse(company);
   }
 
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public CompanyBaseDataResponse updateCompanyBaseData(CompanyBaseDataUpdateRequest request) {
@@ -74,6 +77,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildBaseDataResponse(company);
   }
 
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public void updateLogo(Long mediaAssetId) {
@@ -82,6 +86,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
     handleLogoUpdate(company, mediaAssetId);
   }
 
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public CompanyBillingDataResponse updateCompanyBillingData(
@@ -97,6 +102,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildCompanyBillingDataResponse(company);
   }
 
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public UpdatedPreferredCurrencyResponse updatePreferredCurrency(

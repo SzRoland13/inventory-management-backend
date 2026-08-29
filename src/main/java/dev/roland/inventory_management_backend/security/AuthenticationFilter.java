@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import dev.roland.inventory_management_backend.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.messageKey.AuthMessageKey;
+import dev.roland.inventory_management_backend.message_key.AuthMessageKey;
 import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
 import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieService;
 import dev.roland.inventory_management_backend.service.common.JwtService;

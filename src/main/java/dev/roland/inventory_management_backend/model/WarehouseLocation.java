@@ -22,6 +22,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Stores the postal and contact details of a warehouse location.
+ *
+ * <p>A location can be shared by one or more {@link Warehouse} records through their {@code
+ * location_id} foreign key. The mapped collection is cascade- and orphan-removal-enabled, so its
+ * lifecycle is managed with the associated warehouses.
+ */
 @Entity
 @Table(name = "warehouse_locations")
 @Getter

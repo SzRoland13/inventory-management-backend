@@ -10,6 +10,13 @@ import dev.roland.inventory_management_backend.enums.UserStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Adapts a persisted {@link User} to Spring Security's {@code UserDetails} contract.
+ *
+ * <p>This is not a database entity. It exposes the user's username, password, role, and account
+ * status to authentication and authorization infrastructure. A suspended user is considered both
+ * disabled and locked.
+ */
 @Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
@@ -32,18 +39,8 @@ public class CustomUserDetails implements UserDetails {
   }
 
   @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
-
-  @Override
   public boolean isAccountNonLocked() {
     return user.getStatus() != UserStatus.SUSPENDED;
-  }
-
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
   }
 
   @Override

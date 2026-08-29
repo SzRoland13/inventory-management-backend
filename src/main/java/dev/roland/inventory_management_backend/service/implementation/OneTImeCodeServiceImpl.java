@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import dev.roland.inventory_management_backend.messageKey.MessageKey;
-import dev.roland.inventory_management_backend.messageKey.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.message_key.MessageKey;
+import dev.roland.inventory_management_backend.message_key.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.model.OneTimeCode;
 import dev.roland.inventory_management_backend.repository.OneTimeCodeRepository;
 import dev.roland.inventory_management_backend.service.OneTimeCodeService;
@@ -18,11 +18,13 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
 
   private final OneTimeCodeRepository oneTimeCodeRepository;
 
+  /** {@inheritDoc} */
   @Override
   public JpaRepository<OneTimeCode, Long> getRepository() {
     return oneTimeCodeRepository;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.ONE_TIME_CODE;

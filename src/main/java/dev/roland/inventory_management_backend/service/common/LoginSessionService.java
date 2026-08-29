@@ -22,7 +22,7 @@ public class LoginSessionService {
    * Generate and store a short-life login session token.
    *
    * @param email user email
-   * @return generated token
+   * @return generated token with its expiry timestamp
    */
   public TokenWithExpiry createTemporarySessionWithExpiry(String email) {
     String token = UUID.randomUUID().toString();
@@ -37,17 +37,27 @@ public class LoginSessionService {
    * Validate and consume a temporary session token.
    *
    * @param token the short-life token
-   * @return email associated with the token
+   * @return email associated with the token, or null when the token is missing or expired
    */
   public String consumeSessionToken(String token) {
     return redisTemplate.opsForValue().get(token);
   }
 
+  /**
+   * Deletes a temporary login session token from Redis.
+   *
+   * @param token token to delete
+   */
   public void deleteToken(String token) {
     redisTemplate.delete(token);
   }
 
-  /** Check if token exists and is still valid. */
+  /**
+   * Checks whether a temporary login session token exists and is still valid.
+   *
+   * @param token token to validate
+   * @return true when Redis still contains the token
+   */
   public boolean isValid(String token) {
     return Boolean.TRUE.equals(redisTemplate.hasKey(token));
   }

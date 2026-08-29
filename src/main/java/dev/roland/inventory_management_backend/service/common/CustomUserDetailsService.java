@@ -16,6 +16,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
   private final UserService userService;
 
+  /**
+   * Loads Spring Security user details by username.
+   *
+   * @param username username to look up
+   * @return Spring Security user details for the matching user
+   * @throws UsernameNotFoundException when the user cannot be resolved
+   */
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 

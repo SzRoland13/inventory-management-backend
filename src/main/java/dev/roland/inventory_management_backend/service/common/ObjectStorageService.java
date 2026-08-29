@@ -36,6 +36,14 @@ public class ObjectStorageService {
   private final S3Client s3Client;
   private final AppConfiguration appConfiguration;
 
+  /**
+   * Uploads an object to the configured S3-compatible bucket.
+   *
+   * @param objectPath object key to write
+   * @param contentLength number of bytes in the input stream
+   * @param contentType MIME type to store with the object
+   * @param inputStream object content stream
+   */
   public void upload(
       String objectPath, long contentLength, String contentType, InputStream inputStream) {
     PutObjectRequest request =
@@ -48,6 +56,11 @@ public class ObjectStorageService {
     s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
   }
 
+  /**
+   * Deletes an object from the configured S3-compatible bucket.
+   *
+   * @param objectPath object key to delete
+   */
   public void delete(String objectPath) {
     s3Client.deleteObject(
         DeleteObjectRequest.builder()
@@ -56,6 +69,12 @@ public class ObjectStorageService {
             .build());
   }
 
+  /**
+   * Generates a temporary URL for reading an object.
+   *
+   * @param objectPath object key to expose
+   * @return presigned GET URL and expiry timestamp
+   */
   public PresignedUrlData generatePresignedGetUrl(String objectPath) {
     try (S3Presigner presigner = createPresigner()) {
 
@@ -79,6 +98,15 @@ public class ObjectStorageService {
     }
   }
 
+  /**
+   * Builds the permanent object path for media attached to a domain entity.
+   *
+   * @param fileName stored filename
+   * @param entityType entity type that owns the media
+   * @param entityId owning entity id
+   * @param usageType usage role of the media
+   * @return permanent object key
+   */
   public String generateSolidObjectPath(
       String fileName, MediaEntityType entityType, Long entityId, MediaUsageType usageType) {
     return entityType.getName().toLowerCase(Locale.ROOT)
@@ -90,6 +118,12 @@ public class ObjectStorageService {
         + fileName;
   }
 
+  /**
+   * Generates a temporary object path and sanitized generated filename for an upload.
+   *
+   * @param originalFilename filename supplied by the client
+   * @return generated temporary object path and filename
+   */
   public GeneratedMediaPathAndName generateTempObjectPath(String originalFilename) {
     String extension = "";
 
@@ -106,6 +140,12 @@ public class ObjectStorageService {
         .build();
   }
 
+  /**
+   * Moves an object by copying it to a new key and deleting the source key.
+   *
+   * @param sourceKey existing object key
+   * @param destinationKey target object key
+   */
   public void move(String sourceKey, String destinationKey) {
     CopyObjectRequest copyRequest =
         CopyObjectRequest.builder()
@@ -120,6 +160,13 @@ public class ObjectStorageService {
     delete(sourceKey);
   }
 
+  /**
+   * Generates a temporary URL for uploading an object directly to storage.
+   *
+   * @param objectPath object key to write
+   * @param mimeType expected MIME type for the upload
+   * @return presigned PUT URL and expiry timestamp
+   */
   public PresignedUrlData generatePresignedPutUrl(String objectPath, String mimeType) {
     try (S3Presigner presigner = createPresigner()) {
       PutObjectRequest objectRequest =
