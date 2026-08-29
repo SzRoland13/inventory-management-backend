@@ -65,12 +65,7 @@ public class AuthFacadeImpl implements AuthFacade {
   private final MediaUsageService mediaUsageService;
   private final ObjectStorageService objectStorageService;
 
-  /**
-   * Handles first-time login by verifying credentials and sending a one-time code.
-   *
-   * @param request user's email address
-   * @throws ApiException if user does not exist or is not a first-time login
-   */
+  /** {@inheritDoc} */
   @Transactional
   @Override
   public void sendOneTimeCode(EmailRequest request) {
@@ -93,12 +88,7 @@ public class AuthFacadeImpl implements AuthFacade {
     }
   }
 
-  /**
-   * Validates user's first login one time code
-   *
-   * @param request user's email and one time code
-   * @throws ApiException if user does not exist or one time code invalid
-   */
+  /** {@inheritDoc} */
   @Override
   public void validateOneTimeCode(FirstLoginValidationRequest request) {
     OneTimeCode oneTimeCode =
@@ -139,13 +129,7 @@ public class AuthFacadeImpl implements AuthFacade {
     return emailService.sendMailWithTemplate(emailDetails);
   }
 
-  /**
-   * Handles login by verifying credentials and generating auth tokens
-   *
-   * @param request user's email address and password
-   * @return void
-   * @throws ApiException if user does not exist or provided credentials are invalid
-   */
+  /** {@inheritDoc} */
   @Override
   public ShortLifeTokenResponse handleLogin(LoginRequest request) {
     User user = userService.findUserByEmailOrThrow(request.getEmail());
@@ -168,13 +152,7 @@ public class AuthFacadeImpl implements AuthFacade {
         .build();
   }
 
-  /**
-   * Handles refresh token validation and access token regeneration.
-   *
-   * @param token contains refresh token
-   * @return new access and the provided refresh token
-   * @throws ApiException if refresh token invalid or expired
-   */
+  /** {@inheritDoc} */
   @Override
   public TokenRefreshResult handleTokenRefresh(String token) {
 
@@ -197,13 +175,7 @@ public class AuthFacadeImpl implements AuthFacade {
     return new TokenRefreshResult(newAccessToken, false);
   }
 
-  /**
-   * Initializes Two-Factor Authentication (2FA) setup for a user.
-   *
-   * @param request contains the user's email
-   * @return ApiResponse with the generated QR code image (Base64 data URI)
-   * @throws ApiException if user does not exist or already has 2FA enabled
-   */
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public String setup2fa(EmailRequest request) {
@@ -225,14 +197,7 @@ public class AuthFacadeImpl implements AuthFacade {
     return twoFactorAuthService.generateQrCodeImage(secret, user.getEmail());
   }
 
-  /**
-   * Verifies the 2FA TOTP code provided by the user during login. Sets HTTP-only cookies for access
-   * and refresh tokens.
-   *
-   * @param request contains the user's email and the TOTP verification code
-   * @return ApiResponse user data and access tokens
-   * @throws ApiException if user not found or code is invalid
-   */
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public LoginFinalizationResult verify2faLogin(TwoFactorVerifyRequest request) {
@@ -291,12 +256,7 @@ public class AuthFacadeImpl implements AuthFacade {
     return new LoginFinalizationResult(response, tokens, firstTime2FAEnabled);
   }
 
-  /**
-   * Handles user logout by clearing auth cookies.
-   *
-   * @param refreshToken the refresh token from cookie
-   * @return success response
-   */
+  /** {@inheritDoc} */
   @Override
   @Transactional
   public LogoutResult handleLogout(String refreshToken) {
@@ -308,12 +268,7 @@ public class AuthFacadeImpl implements AuthFacade {
     return new LogoutResult(true, true);
   }
 
-  /**
-   * Generates new access and refresh tokens for the given user.
-   *
-   * @param user {@link User} entity to generate tokens for
-   * @return access and refresh tokens
-   */
+  /** {@inheritDoc} */
   @Transactional
   private AuthTokens generateTokens(User user) {
     String accessToken = jwtService.generateAccessToken(user);

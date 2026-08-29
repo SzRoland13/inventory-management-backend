@@ -34,12 +34,7 @@ public class UserFacadeImpl implements UserFacade {
   private final MediaUsageService mediaUsageService;
   private final MediaAssetFacade mediaAssetFacade;
 
-  /**
-   * Handles new user registration.
-   *
-   * @param request user details for registration.
-   * @return created user entity.
-   */
+  /** {@inheritDoc} */
   @Override
   public UserDto registerUser(AddEditUserRequest request) {
     User user =
@@ -60,11 +55,7 @@ public class UserFacadeImpl implements UserFacade {
     return new UserDto(newUser);
   }
 
-  /**
-   * Handles 2FA reset for a single user.
-   *
-   * @param id user id to reset the 2fa for.
-   */
+  /** {@inheritDoc} */
   @Override
   public void resetUser2FA(Long id) {
     User user = userService.findByIdOrThrow(id);
@@ -78,12 +69,7 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /**
-   * Suspends a user and resets their password and 2FA. Can suspend users in any status
-   * (SETUP_REQUIRED, ACTIVE).
-   *
-   * @param id user id to suspend.
-   */
+  /** {@inheritDoc} */
   @Override
   public void suspendUser(Long id) {
     User user = userService.findByIdOrThrow(id);
@@ -98,12 +84,7 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /**
-   * Activates a suspended user. Always returns user to SETUP_REQUIRED status so they must set up
-   * their account again.
-   *
-   * @param id user id to activate.
-   */
+  /** {@inheritDoc} */
   @Override
   public void activateUser(Long id) {
     User user = userService.findByIdOrThrow(id);
@@ -118,11 +99,7 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /**
-   * Resets a user's password and 2FA. Only works if user has completed initial setup.
-   *
-   * @param id user id to reset password for.
-   */
+  /** {@inheritDoc} */
   @Override
   public void resetPassword(Long id) {
     User user = userService.findByIdOrThrow(id);
@@ -137,12 +114,7 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /**
-   * Helper method to reset user password and authentication. Sets password to null so user must
-   * request new one-time password. Resets 2FA setup completely (only if it exists).
-   *
-   * @param user the user to reset.
-   */
+  /** {@inheritDoc} */
   private void resetUserPasswordAndAuth(User user) {
     // Reset password - set to null so user must request new one-time password
     user.setPassword(null);
@@ -155,6 +127,7 @@ public class UserFacadeImpl implements UserFacade {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void updateAvatar(Long id, Long mediaAssetId) {
     User user = userService.findByIdOrThrow(id);
@@ -192,11 +165,7 @@ public class UserFacadeImpl implements UserFacade {
     mediaUsageService.save(usage);
   }
 
-  /**
-   * Returns all the saved users.
-   *
-   * @return a {@link java.util.List} of {@link UserDto}
-   */
+  /** {@inheritDoc} */
   @Override
   public AllUserResponse getAllUsers() {
     List<User> users = userService.findAll();

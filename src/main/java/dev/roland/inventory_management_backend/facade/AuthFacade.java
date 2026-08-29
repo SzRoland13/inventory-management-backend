@@ -11,6 +11,7 @@ import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
 import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.exception.ApiException;
 
+/** Coordinates authentication flows that span multiple authentication services. */
 public interface AuthFacade {
 
   /**

@@ -2,9 +2,12 @@ package dev.roland.inventory_management_backend.message_key;
 
 import lombok.Getter;
 
+/** Message keys for company-related operations. */
 @Getter
 public enum CompanyMessageKey implements MessageKey {
+  /** Message key for logo updated. */
   LOGO_UPDATED("company.logo-updated"),
+  /** Message key for currency updated. */
   CURRENCY_UPDATED("company.currency-updated"),
   ;
 

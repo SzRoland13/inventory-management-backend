@@ -21,6 +21,7 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
   private final MediaAssetService mediaAssetService;
   private final ObjectStorageService objectStorageService;
 
+  /** {@inheritDoc} */
   @Override
   public MediaUploadInitResponse getPutRequestForNewMediaAsset(MediaUploadInitRequest request) {
     GeneratedMediaPathAndName generatedMediaPathAndName =
@@ -45,6 +46,7 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
         mediaAsset.getId(), presigned.getUrl(), presigned.getExpiry());
   }
 
+  /** {@inheritDoc} */
   @Override
   public MediaPreviewResponse getPreview(Long id) {
     MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);
@@ -54,6 +56,7 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
     return new MediaPreviewResponse(mediaAsset.getId(), presigned.getUrl(), presigned.getExpiry());
   }
 
+  /** {@inheritDoc} */
   @Override
   public void deleteAsset(Long id) {
     MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);

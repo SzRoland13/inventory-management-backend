@@ -4,6 +4,7 @@ import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
 import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
 import dev.roland.inventory_management_backend.dto.user.UserDto;
 
+/** Coordinates user administration and profile operations. */
 public interface UserFacade {
 
   /**
@@ -42,6 +43,11 @@ public interface UserFacade {
    */
   void resetPassword(Long id);
 
+  /**
+   * Associates a media asset with a user as the user's avatar.
+   *
+   * <p>id user identifier mediaAssetId media asset identifier
+   */
   void updateAvatar(Long id, Long mediaAssetId);
 
   /**
