@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.5</version>
+		<version>3.5.16</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.roland</groupId>
@@ -28,6 +28,22 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<checkstyle.version>14.1.0</checkstyle.version>
+		<findsecbugs.version>1.14.0</findsecbugs.version>
+		<jacoco.version>0.8.15</jacoco.version>
+		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+		<maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
+		<spotbugs-maven-plugin.version>4.10.3.0</spotbugs-maven-plugin.version>
+
+		<!-- Security patches released after Spring Boot 3.5.16's dependency BOM. -->
+		<commons-lang3.version>3.18.0</commons-lang3.version>
+		<jackson-bom.version>2.21.5</jackson-bom.version>
+		<log4j2.version>2.25.5</log4j2.version>
+		<netty.version>4.1.137.Final</netty.version>
+		<postgresql.version>42.7.12</postgresql.version>
+
+		<coverage.line.minimum>0.70</coverage.line.minimum>
+		<coverage.branch.minimum>0.60</coverage.branch.minimum>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -65,14 +81,9 @@
 			<artifactId>liquibase-core</artifactId>
 		</dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.38</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -86,32 +97,25 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.3</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
-        <!-- Source: https://mvnrepository.com/artifact/software.amazon.awssdk/s3 -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
-            <version>2.42.3</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mustache</artifactId>
+            <version>2.54.10</version>
         </dependency>
         <dependency>
             <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
-            <version>0.9.10</version>
+            <version>0.9.14</version>
         </dependency>
         <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-            <version>3.1.1</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.samstevens.totp</groupId>
@@ -119,24 +123,10 @@
             <version>1.7.1</version>
         </dependency>
         <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>1.82</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-redis</artifactId>
-            <version>4.0.0-M6</version>
-        </dependency>
-        <dependency>
             <groupId>me.paulschwarz</groupId>
-            <artifactId>spring-dotenv</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-            <version>6.8.1.RELEASE</version>
+            <artifactId>springboot3-dotenv</artifactId>
+            <version>5.1.0</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -207,6 +197,135 @@
                     </execution>
                 </executions>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>${maven-checkstyle-plugin.version}</version>
+				<configuration>
+					<cacheFile>${project.build.directory}/checkstyle-cachefile</cacheFile>
+					<consoleOutput>true</consoleOutput>
+					<failOnViolation>true</failOnViolation>
+					<includeTestSourceDirectory>false</includeTestSourceDirectory>
+					<violationSeverity>warning</violationSeverity>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>${checkstyle.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<id>google-checkstyle</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<configLocation>google_checks.xml</configLocation>
+						</configuration>
+					</execution>
+					<execution>
+						<id>project-checkstyle</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<cacheFile>${project.build.directory}/project-checkstyle-cachefile</cacheFile>
+							<configLocation>${project.basedir}/config/checkstyle.xml</configLocation>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>${maven-pmd-plugin.version}</version>
+				<configuration>
+					<analysisCache>true</analysisCache>
+					<failOnViolation>true</failOnViolation>
+					<linkXRef>false</linkXRef>
+					<printFailingErrors>true</printFailingErrors>
+				</configuration>
+				<executions>
+					<execution>
+						<id>pmd-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs-maven-plugin.version}</version>
+				<configuration>
+					<effort>Max</effort>
+					<failOnError>true</failOnError>
+					<threshold>Medium</threshold>
+					<xmlOutput>true</xmlOutput>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.h3xstream.findsecbugs</groupId>
+						<artifactId>findsecbugs-plugin</artifactId>
+						<version>${findsecbugs.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<id>spotbugs-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>jacoco-prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-report-and-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>${coverage.line.minimum}</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>${coverage.branch.minimum}</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
         </plugins>
     </build>
 

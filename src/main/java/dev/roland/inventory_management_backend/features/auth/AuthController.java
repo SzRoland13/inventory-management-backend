@@ -97,7 +97,8 @@ public class AuthController {
   ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(
       @Valid @RequestBody LoginRequest request) {
     return ResponseEntity.ok()
-        .body(ApiResponse.success(AuthMessageKey.LOGIN_SUCCESS, authFacade.handleLogin(request)));
+        .body(
+            ApiResponse.success(AuthMessageKey.VALID_CREDENTIALS, authFacade.handleLogin(request)));
   }
 
   @PostMapping(REFRESH_ENDPOINT)

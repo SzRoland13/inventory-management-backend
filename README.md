@@ -157,6 +157,26 @@ Public REST controllers currently exist for auth, company, currency, document pr
 | **Build Tool**       | Maven                            |
 | **Containerization** | Docker, Docker Compose           |
 
+### Quality Gates
+
+Run the complete build and all quality gates with:
+
+```bash
+./mvnw verify
+```
+
+The `verify` phase runs:
+
+- Spotless formatting checks.
+- Checkstyle's Google rules, excluding mechanical formatting already owned by Spotless.
+- Project Checkstyle rules requiring Javadocs and `final` parameters/local variables.
+- PMD's maintained default Java ruleset.
+- SpotBugs with FindSecBugs security detectors.
+- JaCoCo report generation and bundle-level minimums of 70% line coverage and 60% branch coverage.
+
+The JaCoCo HTML report is generated at `target/site/jacoco/index.html`. Coverage thresholds can
+be adjusted with the `coverage.line.minimum` and `coverage.branch.minimum` Maven properties.
+
 ### License
 
 This project is licensed under the MIT License — free to use and modify.
