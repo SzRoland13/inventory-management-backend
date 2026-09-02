@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.document.enumeration;
 
 public enum DocumentStatus {
   /** Represents the draft value. */

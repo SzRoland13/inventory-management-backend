@@ -2,7 +2,7 @@ package dev.roland.inventory_management_backend.features.auth.dto;
 
 import java.time.Instant;
 
-import dev.roland.inventory_management_backend.enums.UserRole;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

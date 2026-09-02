@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
-import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
-import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
-import dev.roland.inventory_management_backend.dto.user.AvatarUploadRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
+import dev.roland.inventory_management_backend.features.user.dto.AllUserResponse;
+import dev.roland.inventory_management_backend.features.user.dto.AvatarUploadRequest;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import dev.roland.inventory_management_backend.features.user.facade.UserFacade;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;

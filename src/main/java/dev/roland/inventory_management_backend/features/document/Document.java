@@ -23,10 +23,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.DocumentCategory;
-import dev.roland.inventory_management_backend.enums.DocumentStatus;
-import dev.roland.inventory_management_backend.enums.DocumentType;
 import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;

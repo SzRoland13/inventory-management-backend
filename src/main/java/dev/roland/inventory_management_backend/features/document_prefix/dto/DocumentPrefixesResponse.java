@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.document_prefix;
+package dev.roland.inventory_management_backend.features.document_prefix.dto;
 
 import java.util.List;
 

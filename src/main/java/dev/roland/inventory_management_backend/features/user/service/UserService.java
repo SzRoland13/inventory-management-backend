@@ -2,9 +2,9 @@ package dev.roland.inventory_management_backend.features.user.service;
 
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.service.BaseService;
-import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
 public interface UserService extends BaseService<User, Long> {
 

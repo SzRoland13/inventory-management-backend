@@ -3,10 +3,10 @@ package dev.roland.inventory_management_backend.features.auth.service;
 import org.springframework.security.core.Authentication;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
-import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
 public interface AuthService {
 

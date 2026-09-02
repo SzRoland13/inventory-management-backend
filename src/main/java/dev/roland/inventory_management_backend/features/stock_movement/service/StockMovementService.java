@@ -3,9 +3,9 @@ package dev.roland.inventory_management_backend.features.stock_movement.service;
 import java.math.BigDecimal;
 
 import dev.roland.inventory_management_backend.common.service.BaseService;
-import dev.roland.inventory_management_backend.enums.StockMovementType;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 

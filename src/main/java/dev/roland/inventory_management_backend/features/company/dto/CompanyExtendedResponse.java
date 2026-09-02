@@ -1,8 +1,8 @@
-package dev.roland.inventory_management_backend.dto.company;
+package dev.roland.inventory_management_backend.features.company.dto;
 
 import java.time.Instant;
 
-import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
+import dev.roland.inventory_management_backend.features.currency.dto.CurrencyResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

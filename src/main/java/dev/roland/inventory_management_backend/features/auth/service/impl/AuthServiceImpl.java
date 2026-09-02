@@ -6,14 +6,14 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
-import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
+import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.auth.service.AuthService;
 import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 

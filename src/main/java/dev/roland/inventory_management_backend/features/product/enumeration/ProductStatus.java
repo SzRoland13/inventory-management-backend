@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.product.enumeration;
 
 public enum ProductStatus {
   /** Represents the active value. */

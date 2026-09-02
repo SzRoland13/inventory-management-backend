@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.stock_movement.service.impl;
 
 import java.math.BigDecimal;
 
@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.enums.StockMovementType;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.stock_movement.repository.StockMovementRepository;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.user.User;

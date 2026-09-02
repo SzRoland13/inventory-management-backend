@@ -8,7 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
-import dev.roland.inventory_management_backend.dto.auth.TokenWithExpiry;
+import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
 import lombok.RequiredArgsConstructor;
 
 @Service

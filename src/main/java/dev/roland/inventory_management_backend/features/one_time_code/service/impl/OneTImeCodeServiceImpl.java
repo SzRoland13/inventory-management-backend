@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.one_time_code.service.impl;
 
 import java.util.Optional;
 

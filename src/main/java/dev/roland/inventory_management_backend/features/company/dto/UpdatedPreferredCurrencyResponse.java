@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.company;
+package dev.roland.inventory_management_backend.features.company.dto;
 
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import lombok.Builder;

@@ -18,8 +18,8 @@ import jakarta.persistence.UniqueConstraint;
 import org.hibernate.annotations.CreationTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.DocumentType;
 import dev.roland.inventory_management_backend.features.company.Company;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

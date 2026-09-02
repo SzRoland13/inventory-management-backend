@@ -1,8 +1,8 @@
 package dev.roland.inventory_management_backend.features.media_asset.facade;
 
-import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
-import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
-import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaPreviewResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitResponse;
 
 /** Coordinates media upload, preview, and deletion operations. */
 public interface MediaAssetFacade {

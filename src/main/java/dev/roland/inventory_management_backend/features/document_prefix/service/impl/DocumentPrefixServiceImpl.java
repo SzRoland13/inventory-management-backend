@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.document_prefix.service.impl;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixDto;
-import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesResponse;
-import dev.roland.inventory_management_backend.enums.DocumentType;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.service.CompanyService;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
+import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixDto;
+import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixesResponse;
 import dev.roland.inventory_management_backend.features.document_prefix.repository.DocumentPrefixRepository;
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
 import lombok.RequiredArgsConstructor;

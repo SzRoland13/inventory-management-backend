@@ -14,9 +14,9 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import dev.roland.inventory_management_backend.enums.PartnerType;
 import dev.roland.inventory_management_backend.features.contact.Contact;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.partner.enumeration.PartnerType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -18,10 +18,10 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.StockMovementType;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.AllArgsConstructor;

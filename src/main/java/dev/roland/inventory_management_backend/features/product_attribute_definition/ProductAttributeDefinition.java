@@ -19,10 +19,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.ProductAttributeValueType;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.product_attribute_option.ProductAttributeOption;
 import dev.roland.inventory_management_backend.features.product_attribute_value.ProductAttributeValue;
+import dev.roland.inventory_management_backend.features.product_attribute_value.enumeration.ProductAttributeValueType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -3,9 +3,9 @@ package dev.roland.inventory_management_backend.features.media_usage.service;
 import java.util.Optional;
 
 import dev.roland.inventory_management_backend.common.service.BaseService;
-import dev.roland.inventory_management_backend.enums.MediaEntityType;
-import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 
 public interface MediaUsageService extends BaseService<MediaUsage, Long> {
   /**

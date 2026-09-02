@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import dev.roland.inventory_management_backend.enums.MediaEntityType;
-import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 
 @Repository
 public interface MediaUsageRepository extends JpaRepository<MediaUsage, Long> {

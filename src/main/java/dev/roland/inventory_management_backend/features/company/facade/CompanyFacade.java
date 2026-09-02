@@ -1,13 +1,13 @@
 package dev.roland.inventory_management_backend.features.company.facade;
 
-import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
-import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataUpdateRequest;
-import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataResponse;
-import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataUpdateRequest;
-import dev.roland.inventory_management_backend.dto.company.CompanyExtendedResponse;
-import dev.roland.inventory_management_backend.dto.company.CompanyMinimalResponse;
-import dev.roland.inventory_management_backend.dto.company.CompanyPreferredCurrencyUpdateRequest;
-import dev.roland.inventory_management_backend.dto.company.UpdatedPreferredCurrencyResponse;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyBaseDataResponse;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyBaseDataUpdateRequest;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyBillingDataResponse;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyBillingDataUpdateRequest;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyExtendedResponse;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyMinimalResponse;
+import dev.roland.inventory_management_backend.features.company.dto.CompanyPreferredCurrencyUpdateRequest;
+import dev.roland.inventory_management_backend.features.company.dto.UpdatedPreferredCurrencyResponse;
 
 /** Coordinates company data, logo, and preferred-currency operations. */
 public interface CompanyFacade {

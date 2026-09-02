@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.currency;
+package dev.roland.inventory_management_backend.features.currency.dto;
 
 import java.util.List;
 

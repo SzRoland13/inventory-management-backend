@@ -19,21 +19,21 @@ import dev.roland.inventory_management_backend.common.configuration.AppConfigura
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.service.HttpOnlyCookieService;
-import dev.roland.inventory_management_backend.dto.auth.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
-import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
-import dev.roland.inventory_management_backend.dto.auth.LoginFinalizationResult;
-import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
-import dev.roland.inventory_management_backend.dto.auth.LoginResponse;
-import dev.roland.inventory_management_backend.dto.auth.LogoutResult;
-import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
-import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
-import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
-import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
+import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.facade.AuthFacade;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.auth.service.AuthService;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 
 @RestController

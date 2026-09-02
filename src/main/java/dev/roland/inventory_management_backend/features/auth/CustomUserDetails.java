@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import dev.roland.inventory_management_backend.enums.UserStatus;
 import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

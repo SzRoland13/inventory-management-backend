@@ -18,9 +18,9 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.MediaEntityType;
-import dev.roland.inventory_management_backend.enums.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

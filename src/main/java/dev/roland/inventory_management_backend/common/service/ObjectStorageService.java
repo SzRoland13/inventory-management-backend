@@ -10,10 +10,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
-import dev.roland.inventory_management_backend.dto.media.GeneratedMediaPathAndName;
-import dev.roland.inventory_management_backend.dto.media.PresignedUrlData;
-import dev.roland.inventory_management_backend.enums.MediaEntityType;
-import dev.roland.inventory_management_backend.enums.MediaUsageType;
+import dev.roland.inventory_management_backend.features.media_asset.dto.GeneratedMediaPathAndName;
+import dev.roland.inventory_management_backend.features.media_asset.dto.PresignedUrlData;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import lombok.RequiredArgsConstructor;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;

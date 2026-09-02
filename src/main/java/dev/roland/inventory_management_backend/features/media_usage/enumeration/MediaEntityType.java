@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.media_usage.enumeration;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

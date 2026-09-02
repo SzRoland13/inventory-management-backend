@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.media_asset.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.currency.service.impl;
 
 import java.util.List;
 
@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
-import dev.roland.inventory_management_backend.dto.currency.CurrenciesResponse;
-import dev.roland.inventory_management_backend.dto.currency.CurrencyResponse;
 import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.currency.dto.CurrenciesResponse;
+import dev.roland.inventory_management_backend.features.currency.dto.CurrencyResponse;
 import dev.roland.inventory_management_backend.features.currency.repository.CurrencyRepository;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import lombok.AllArgsConstructor;

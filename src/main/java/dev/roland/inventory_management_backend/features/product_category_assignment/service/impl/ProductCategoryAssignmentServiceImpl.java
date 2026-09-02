@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.service.implementation;
+package dev.roland.inventory_management_backend.features.product_category_assignment.service.impl;
 
 import jakarta.transaction.Transactional;
 

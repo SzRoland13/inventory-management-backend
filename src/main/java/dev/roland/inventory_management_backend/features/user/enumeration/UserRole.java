@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.user.enumeration;
 
 import java.util.Arrays;
 import java.util.Optional;

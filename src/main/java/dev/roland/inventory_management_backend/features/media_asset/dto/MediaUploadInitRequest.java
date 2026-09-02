@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.media;
+package dev.roland.inventory_management_backend.features.media_asset.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

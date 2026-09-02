@@ -19,8 +19,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
-import dev.roland.inventory_management_backend.enums.UserRole;
-import dev.roland.inventory_management_backend.enums.UserStatus;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

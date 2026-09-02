@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 import dev.roland.inventory_management_backend.common.annotation.PasswordsMatch;
-import dev.roland.inventory_management_backend.dto.auth.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 
 public class PasswordsMatchValidator
     implements ConstraintValidator<PasswordsMatch, PasswordSetupRequest> {

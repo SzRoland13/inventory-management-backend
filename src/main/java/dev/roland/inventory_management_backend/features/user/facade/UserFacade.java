@@ -1,8 +1,8 @@
 package dev.roland.inventory_management_backend.features.user.facade;
 
-import dev.roland.inventory_management_backend.dto.user.AddEditUserRequest;
-import dev.roland.inventory_management_backend.dto.user.AllUserResponse;
-import dev.roland.inventory_management_backend.dto.user.UserDto;
+import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
+import dev.roland.inventory_management_backend.features.user.dto.AllUserResponse;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
 /** Coordinates user administration and profile operations. */
 public interface UserFacade {

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.user;
+package dev.roland.inventory_management_backend.features.user.dto;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.stock_movement.enumeration;
 
 public enum StockMovementType {
   /** Represents the purchase inbound value. */

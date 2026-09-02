@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.product_attribute_value.enumeration;
 
 public enum ProductAttributeValueType {
   /** Represents the fixed value. */

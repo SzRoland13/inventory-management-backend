@@ -3,9 +3,9 @@ package dev.roland.inventory_management_backend.features.document_prefix.service
 import java.util.List;
 
 import dev.roland.inventory_management_backend.common.service.BaseService;
-import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixDto;
-import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesResponse;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
+import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixDto;
+import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixesResponse;
 
 public interface DocumentPrefixService extends BaseService<DocumentPrefix, Long> {
   /**

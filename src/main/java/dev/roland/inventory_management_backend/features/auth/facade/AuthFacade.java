@@ -1,14 +1,14 @@
 package dev.roland.inventory_management_backend.features.auth.facade;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.dto.auth.EmailRequest;
-import dev.roland.inventory_management_backend.dto.auth.FirstLoginValidationRequest;
-import dev.roland.inventory_management_backend.dto.auth.LoginFinalizationResult;
-import dev.roland.inventory_management_backend.dto.auth.LoginRequest;
-import dev.roland.inventory_management_backend.dto.auth.LogoutResult;
-import dev.roland.inventory_management_backend.dto.auth.ShortLifeTokenResponse;
-import dev.roland.inventory_management_backend.dto.auth.TokenRefreshResult;
-import dev.roland.inventory_management_backend.dto.auth.TwoFactorVerifyRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
+import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
+import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
+import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 
 /** Coordinates authentication flows that span multiple authentication services. */
 public interface AuthFacade {

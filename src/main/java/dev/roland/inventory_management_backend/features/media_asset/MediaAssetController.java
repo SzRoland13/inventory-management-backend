@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
-import dev.roland.inventory_management_backend.dto.media.MediaPreviewResponse;
-import dev.roland.inventory_management_backend.dto.media.MediaUploadInitRequest;
-import dev.roland.inventory_management_backend.dto.media.MediaUploadInitResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaPreviewResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitResponse;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.message.MediaMessageKey;
 import lombok.RequiredArgsConstructor;

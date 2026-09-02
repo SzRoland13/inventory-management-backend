@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.features.contact.enumeration;
 
 public enum ContactType {
   /** Represents the billing value. */
