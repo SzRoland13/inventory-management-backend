@@ -13,11 +13,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import dev.roland.inventory_management_backend.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.message_key.AuthMessageKey;
-import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
-import dev.roland.inventory_management_backend.service.common.HttpOnlyCookieService;
-import dev.roland.inventory_management_backend.service.common.JwtService;
+import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.common.service.CustomUserDetailsService;
+import dev.roland.inventory_management_backend.common.service.HttpOnlyCookieService;
+import dev.roland.inventory_management_backend.common.service.JwtService;
+import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 

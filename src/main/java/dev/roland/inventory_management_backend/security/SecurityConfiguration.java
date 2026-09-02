@@ -17,9 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import dev.roland.inventory_management_backend.controller.AuthController;
-import dev.roland.inventory_management_backend.enums.UserStatus;
-import dev.roland.inventory_management_backend.service.common.CustomUserDetailsService;
+import dev.roland.inventory_management_backend.common.service.CustomUserDetailsService;
+import dev.roland.inventory_management_backend.features.auth.AuthController;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import lombok.RequiredArgsConstructor;
 
 @Configuration

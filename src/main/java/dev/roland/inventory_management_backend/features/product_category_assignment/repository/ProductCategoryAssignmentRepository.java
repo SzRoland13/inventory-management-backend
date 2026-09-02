@@ -1,0 +1,9 @@
+package dev.roland.inventory_management_backend.features.product_category_assignment.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignment;
+import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignmentId;
+
+public interface ProductCategoryAssignmentRepository
+    extends JpaRepository<ProductCategoryAssignment, ProductCategoryAssignmentId> {}
