@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.enums;
+package dev.roland.inventory_management_backend.common.enumeration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

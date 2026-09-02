@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataResponse;
 import dev.roland.inventory_management_backend.dto.company.CompanyBaseDataUpdateRequest;
 import dev.roland.inventory_management_backend.dto.company.CompanyBillingDataResponse;

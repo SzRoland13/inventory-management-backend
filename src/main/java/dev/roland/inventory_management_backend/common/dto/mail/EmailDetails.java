@@ -1,8 +1,8 @@
-package dev.roland.inventory_management_backend.dto.mail;
+package dev.roland.inventory_management_backend.common.dto.mail;
 
 import java.util.Map;
 
-import dev.roland.inventory_management_backend.enums.MailTemplate;
+import dev.roland.inventory_management_backend.common.enumeration.MailTemplate;
 import lombok.Builder;
 import lombok.Data;
 

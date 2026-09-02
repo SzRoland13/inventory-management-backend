@@ -9,11 +9,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 
 /** Converts domain and validation exceptions into consistent API responses. */
 @RestControllerAdvice

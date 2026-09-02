@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto.auth;
+package dev.roland.inventory_management_backend.features.auth.dto;
 
 import java.time.Instant;
 

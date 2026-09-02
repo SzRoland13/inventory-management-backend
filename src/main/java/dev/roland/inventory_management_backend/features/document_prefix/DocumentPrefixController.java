@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
-import dev.roland.inventory_management_backend.dto.ApiResponse;
 import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesResponse;
 import dev.roland.inventory_management_backend.dto.document_prefix.DocumentPrefixesUpdateRequest;
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;

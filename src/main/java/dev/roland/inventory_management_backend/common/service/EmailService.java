@@ -18,7 +18,7 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
-import dev.roland.inventory_management_backend.dto.mail.EmailDetails;
+import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
 import lombok.RequiredArgsConstructor;
 
 @Service

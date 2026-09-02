@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.dto;
+package dev.roland.inventory_management_backend.common.dto;
 
 import java.time.Instant;
 import java.util.Map;
