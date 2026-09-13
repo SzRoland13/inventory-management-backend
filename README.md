@@ -2,7 +2,7 @@
 
 This is the **backend service** for the Inventory Management System: a Spring Boot application providing REST APIs and persistence for user authentication, product catalog data, warehouse stock tracking, document workflows, media storage, and administrative management.
 
-The backend is designed with **modularity**, **scalability**, and **security** in mind, using **Spring Boot 3**, **PostgreSQL**, **Redis**, **Liquibase**, **MinIO/S3-compatible storage**, and **Docker**.
+The backend is designed with **modularity**, **scalability**, and **security** in mind, using **Spring Boot 3**, **PostgreSQL**, **Redis**, **Liquibase**, **SeaweedFS/S3-compatible storage**, and **Docker**.
 
 ---
 
@@ -41,7 +41,7 @@ Before running the project, make sure you have:
 - **Docker & Docker Compose**
 - **PostgreSQL** (automatically set up via Docker)
 - **Redis** (automatically set up via Docker)
-- **MinIO** (automatically set up via Docker for S3-compatible object storage)
+- **SeaweedFS** (automatically set up via Docker for S3-compatible object storage)
 - (Optional) **Mail server credentials** for sending verification emails
 
 ---
@@ -58,7 +58,7 @@ Before running the project, make sure you have:
    cp .env-example .env
    ```
    Fill in JWT, mail, Redis, and storage values in `.env`.
-3. **Start PostgreSQL, Redis, and MinIO**
+3. **Start PostgreSQL, Redis, and SeaweedFS**
    ```bash
    docker compose up -d
    ```
@@ -152,10 +152,30 @@ Public REST controllers currently exist for auth, company, currency, document pr
 | **Cache**            | Redis 7                          |
 | **Auth**             | JWT, TOTP (2FA), Spring Security |
 | **Migrations**       | Liquibase                        |
-| **Object Storage**   | MinIO / S3-compatible storage    |
+| **Object Storage**   | SeaweedFS / S3-compatible storage |
 | **Testing**          | JUnit 5, Mockito                 |
 | **Build Tool**       | Maven                            |
 | **Containerization** | Docker, Docker Compose           |
+
+### Quality Gates
+
+Run the complete build and all quality gates with:
+
+```bash
+./mvnw verify
+```
+
+The `verify` phase runs:
+
+- Spotless formatting checks.
+- Checkstyle's Google rules, excluding mechanical formatting already owned by Spotless.
+- Project Checkstyle rules requiring Javadocs and `final` parameters/local variables.
+- PMD's maintained default Java ruleset.
+- SpotBugs with FindSecBugs security detectors.
+- JaCoCo report generation and bundle-level minimums of 70% line coverage and 60% branch coverage.
+
+The JaCoCo HTML report is generated at `target/site/jacoco/index.html`. Coverage thresholds can
+be adjusted with the `coverage.line.minimum` and `coverage.branch.minimum` Maven properties.
 
 ### License
 

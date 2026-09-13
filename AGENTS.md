@@ -30,7 +30,7 @@ Run these from `inventory-management-backend/`.
 docker compose up -d
 ```
 
-`docker-compose.yml` starts PostgreSQL 16, Redis 7, MinIO, and a MinIO bucket initialization container.
+`docker-compose.yml` starts PostgreSQL 16, Redis 7, SeaweedFS, and a bucket initialization container.
 
 The app is configured for PostgreSQL at `localhost:5432/inventory_db` with username/password `postgres` / `postgres`.
 
@@ -163,7 +163,7 @@ Migrations `011`, `012`, and `013` are still recent product/document/stock schem
 
 Media upload/preview/delete lives under `api/v1/media`.
 
-`ObjectStorageService` uses the AWS SDK S3 client and presigner, configured for path-style access and an endpoint override. This supports MinIO locally through `docker-compose.yml`.
+`ObjectStorageService` uses the AWS SDK S3 client and presigner, configured for path-style access and an endpoint override. This supports SeaweedFS locally through `docker-compose.yml`.
 
 Media object paths are generated under either:
 
