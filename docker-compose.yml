@@ -22,42 +22,44 @@ services:
     volumes:
       - redis_data:/data
 
-  minio:
-    image: minio/minio:latest
-    container_name: ims-minio
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: ims-seaweedfs
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
     entrypoint: >
       /bin/sh -c "
-      echo 'Waiting for MinIO...' &&
-      until mc alias set local http://minio:9000 ${STORAGE_ACCESS_KEY} ${STORAGE_SECRET_KEY}; do
+      mkdir -p /etc/seaweedfs &&
+      printf '{\"identities\":[{\"name\":\"admin\",\"credentials\":[{\"accessKey\":\"%s\",\"secretKey\":\"%s\"}],\"actions\":[\"Admin\",\"Read\",\"Write\"]}]}' \"$$STORAGE_ACCESS_KEY\" \"$$STORAGE_SECRET_KEY\" > /etc/seaweedfs/s3.json &&
+      weed server -ip=seaweedfs -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json -s3.port=8333
+      "
+    volumes:
+      - seaweedfs_data:/data
+    ports:
+      - "8333:8333"
+      - "9333:9333"
+      - "8888:8888"
+
+  seaweedfs-init:
+    image: chrislusf/seaweedfs:latest
+    container_name: ims-seaweedfs-init
+    environment:
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+    depends_on:
+      - seaweedfs
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for SeaweedFS...' &&
+      until echo 's3.bucket.list' | weed shell -master=seaweedfs:9333 > /dev/null 2>&1; do
         sleep 2;
       done &&
-      mc mb --ignore-existing local/${STORAGE_BUCKET} &&
-      mc anonymous set none local/${STORAGE_BUCKET} &&
-      echo 'MinIO bucket ready.'
+      echo \"s3.bucket.create -name $$STORAGE_BUCKET\" | weed shell -master=seaweedfs:9333 &&
+      echo 'SeaweedFS bucket ready.'
       "
 
 volumes:
   postgres_data:
   redis_data:
-  minio_data:
+  seaweedfs_data:
