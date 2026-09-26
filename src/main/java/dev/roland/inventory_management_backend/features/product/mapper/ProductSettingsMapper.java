@@ -53,7 +53,7 @@ public interface ProductSettingsMapper {
    * Maps an attribute definition and its already-loaded options.
    *
    * @param definition definition to map
-   * @param options already-mapped options
+   * @param options loaded attribute options
    * @return mapped attribute definition response
    */
   @BeanMapping(ignoreByDefault = true)
@@ -64,7 +64,7 @@ public interface ProductSettingsMapper {
   @Mapping(target = "required", source = "definition.required")
   @Mapping(target = "options", source = "options")
   AttributeDefinitionResponse toAttributeDefinitionResponse(
-      ProductAttributeDefinition definition, List<AttributeOptionResponse> options);
+      ProductAttributeDefinition definition, List<ProductAttributeOption> options);
 
   /**
    * Maps an attribute option to its response representation.

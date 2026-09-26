@@ -60,9 +60,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Transactional
   @Override
   public UnitResponse createUnit(final UnitRequest request) {
-    validateText(request.code(), 50);
-    validateText(request.name(), 100);
-    validateText(request.symbol(), 20);
     if (unitService.existsByCompanyIdAndCode(company().getId(), request.code().trim())) {
       throw invalid();
     }
@@ -81,9 +78,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Override
   public UnitResponse updateUnit(final Long id, final UnitRequest request) {
     final Unit unit = findCompanyUnit(id);
-    validateText(request.code(), 50);
-    validateText(request.name(), 100);
-    validateText(request.symbol(), 20);
     if (!unit.getCode().equals(request.code().trim())
         && unitService.existsByCompanyIdAndCode(company().getId(), request.code().trim())) {
       throw invalid();
@@ -115,8 +109,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Transactional
   @Override
   public CategoryResponse createCategory(final CategoryRequest request) {
-    validateText(request.code(), 100);
-    validateText(request.name(), 150);
     if (categoryService.existsByCompanyIdAndCode(company().getId(), request.code().trim())) {
       throw invalid();
     }
@@ -136,8 +128,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Override
   public CategoryResponse updateCategory(final Long id, final CategoryRequest request) {
     final ProductCategory category = findCategory(id);
-    validateText(request.code(), 100);
-    validateText(request.name(), 150);
     if (!category.getCode().equals(request.code().trim())
         && categoryService.existsByCompanyIdAndCode(company().getId(), request.code().trim())) {
       throw invalid();
@@ -178,8 +168,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Transactional
   @Override
   public AttributeDefinitionResponse createDefinition(final AttributeDefinitionRequest request) {
-    validateText(request.code(), 100);
-    validateText(request.name(), 150);
     final ProductAttributeValueType valueType = request.valueType();
     if (definitionService.existsByCompanyIdAndCode(company().getId(), request.code().trim())) {
       throw invalid();
@@ -200,8 +188,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   public AttributeDefinitionResponse updateDefinition(
       final Long id, final AttributeDefinitionRequest request) {
     final ProductAttributeDefinition definition = findDefinition(id);
-    validateText(request.code(), 100);
-    validateText(request.name(), 150);
     final ProductAttributeValueType valueType = request.valueType();
     if (definition.getValueType() != valueType
         && (optionService.existsByDefinitionId(id) || valueService.existsByDefinitionId(id))) {
@@ -232,7 +218,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     if (definition.getValueType() != ProductAttributeValueType.FIXED) {
       throw invalid();
     }
-    validateText(request.value(), 150);
     if (optionService.existsByDefinitionIdAndValue(definitionId, request.value().trim())) {
       throw invalid();
     }
@@ -254,7 +239,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
         optionService
             .findByIdAndDefinitionId(optionId, definition.getId())
             .orElseThrow(this::invalid);
-    validateText(request.value(), 150);
     if (optionService.existsByDefinitionIdAndValueAndIdNot(
         definitionId, request.value().trim(), optionId)) {
       throw invalid();
@@ -304,12 +288,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     return definitionService.findByIdAndCompanyId(id, company().getId()).orElseThrow(this::invalid);
   }
 
-  private void validateText(final String value, final int maxLength) {
-    if (value == null || value.isBlank() || value.length() > maxLength) {
-      throw invalid();
-    }
-  }
-
   private ApiException invalid() {
     return new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
   }
@@ -317,9 +295,6 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   private AttributeDefinitionResponse definitionResponse(
       final ProductAttributeDefinition definition) {
     return productSettingsMapper.toAttributeDefinitionResponse(
-        definition,
-        optionService.findAllByDefinitionId(definition.getId()).stream()
-            .map(productSettingsMapper::toAttributeOptionResponse)
-            .toList());
+        definition, optionService.findAllByDefinitionId(definition.getId()));
   }
 }
