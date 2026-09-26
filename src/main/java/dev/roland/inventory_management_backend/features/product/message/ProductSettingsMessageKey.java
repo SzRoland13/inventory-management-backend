@@ -1,8 +1,12 @@
 package dev.roland.inventory_management_backend.features.product.message;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /** Success message keys for product settings operations. */
+@Getter
+@RequiredArgsConstructor
 public enum ProductSettingsMessageKey implements MessageKey {
   UNITS_RETRIEVED("product.settings.units.retrieved"),
   UNIT_CREATED("product.settings.unit.created"),
@@ -21,13 +25,4 @@ public enum ProductSettingsMessageKey implements MessageKey {
   ATTRIBUTE_OPTION_DELETED("product.settings.attribute_option.deleted");
 
   private final String key;
-
-  ProductSettingsMessageKey(final String key) {
-    this.key = key;
-  }
-
-  @Override
-  public String getKey() {
-    return key;
-  }
 }

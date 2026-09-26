@@ -1,8 +1,12 @@
 package dev.roland.inventory_management_backend.features.product.message;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /** Message keys for product validation and lifecycle operations. */
+@Getter
+@RequiredArgsConstructor
 public enum ProductMessageKey implements MessageKey {
   PRODUCTS_RETRIEVED("product.list.retrieved"),
   PRODUCT_RETRIEVED("product.retrieved"),
@@ -26,13 +30,4 @@ public enum ProductMessageKey implements MessageKey {
   PRODUCT_UNIT_IN_USE("product.error.unit_in_use");
 
   private final String key;
-
-  ProductMessageKey(final String key) {
-    this.key = key;
-  }
-
-  @Override
-  public String getKey() {
-    return key;
-  }
 }
