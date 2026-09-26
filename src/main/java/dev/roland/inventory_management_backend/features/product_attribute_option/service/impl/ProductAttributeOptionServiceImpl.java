@@ -33,30 +33,31 @@ public class ProductAttributeOptionServiceImpl implements ProductAttributeOption
   }
 
   @Override
-  public java.util.List<ProductAttributeOption> findAllByDefinitionId(Long id) {
+  public java.util.List<ProductAttributeOption> findAllByDefinitionId(final Long id) {
     return productAttributeOptionRepository.findAllByDefinitionId(id);
   }
 
   @Override
   public java.util.Optional<ProductAttributeOption> findByIdAndDefinitionId(
-      Long id, Long definitionId) {
+      final Long id, final Long definitionId) {
     return productAttributeOptionRepository
         .findById(id)
         .filter(option -> option.getDefinition().getId().equals(definitionId));
   }
 
   @Override
-  public boolean existsByDefinitionId(Long id) {
+  public boolean existsByDefinitionId(final Long id) {
     return productAttributeOptionRepository.existsByDefinitionId(id);
   }
 
   @Override
-  public boolean existsByDefinitionIdAndValue(Long id, String value) {
+  public boolean existsByDefinitionIdAndValue(final Long id, final String value) {
     return productAttributeOptionRepository.existsByDefinitionIdAndValue(id, value);
   }
 
   @Override
-  public boolean existsByDefinitionIdAndValueAndIdNot(Long id, String value, Long optionId) {
+  public boolean existsByDefinitionIdAndValueAndIdNot(
+      final Long id, final String value, final Long optionId) {
     return productAttributeOptionRepository.existsByDefinitionIdAndValueAndIdNot(
         id, value, optionId);
   }

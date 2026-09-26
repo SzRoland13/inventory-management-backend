@@ -86,7 +86,7 @@ public class StockMovementServiceImpl implements StockMovementService {
   }
 
   @Override
-  public boolean existsByProductId(Long id) {
+  public boolean existsByProductId(final Long id) {
     return stockMovementRepository.existsByProductId(id);
   }
 }

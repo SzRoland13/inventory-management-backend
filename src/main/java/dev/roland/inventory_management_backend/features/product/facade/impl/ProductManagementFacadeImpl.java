@@ -77,26 +77,29 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     final Company company = companyService.getCompanyOrCreateNew();
     final Page<Product> products = productService.search(company.getId(), includeArchived, request);
     final List<Long> productIds = products.getContent().stream().map(Product::getId).toList();
+    final Page<ProductResponse> responsePage;
     if (productIds.isEmpty()) {
-      return PageResponse.from(products.map(this::toResponse));
+      responsePage = products.map(this::toResponse);
+    } else {
+      final Map<Long, List<ProductCategoryAssignment>> assignmentsByProduct =
+          assignmentService.findAllByProductIdIn(productIds).stream()
+              .collect(Collectors.groupingBy(assignment -> assignment.getProduct().getId()));
+      final Map<Long, List<ProductAttributeValue>> valuesByProduct =
+          valueService.findAllByProductIdIn(productIds).stream()
+              .collect(Collectors.groupingBy(value -> value.getProduct().getId()));
+      final Map<Long, List<StockBalance>> balancesByProduct =
+          stockBalanceService.findAllByProductIdIn(productIds).stream()
+              .collect(Collectors.groupingBy(balance -> balance.getProduct().getId()));
+      responsePage =
+          products.map(
+              product ->
+                  toResponse(
+                      product,
+                      assignmentsByProduct.getOrDefault(product.getId(), List.of()),
+                      valuesByProduct.getOrDefault(product.getId(), List.of()),
+                      balancesByProduct.getOrDefault(product.getId(), List.of())));
     }
-    final Map<Long, List<ProductCategoryAssignment>> assignmentsByProduct =
-        assignmentService.findAllByProductIdIn(productIds).stream()
-            .collect(Collectors.groupingBy(assignment -> assignment.getProduct().getId()));
-    final Map<Long, List<ProductAttributeValue>> valuesByProduct =
-        valueService.findAllByProductIdIn(productIds).stream()
-            .collect(Collectors.groupingBy(value -> value.getProduct().getId()));
-    final Map<Long, List<StockBalance>> balancesByProduct =
-        stockBalanceService.findAllByProductIdIn(productIds).stream()
-            .collect(Collectors.groupingBy(balance -> balance.getProduct().getId()));
-    return PageResponse.from(
-        products.map(
-            product ->
-                toResponse(
-                    product,
-                    assignmentsByProduct.getOrDefault(product.getId(), List.of()),
-                    valuesByProduct.getOrDefault(product.getId(), List.of()),
-                    balancesByProduct.getOrDefault(product.getId(), List.of()))));
+    return PageResponse.from(responsePage);
   }
 
   @Transactional
@@ -411,24 +414,29 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   private ProductStockResponse stockResponse(final Product product, final StockBalance balance) {
     final BigDecimal quantity =
         balance.getQuantity() == null ? BigDecimal.ZERO : balance.getQuantity();
+    final ProductStockResponse.Quantity stockQuantity;
+    final ProductStockResponse.StockBreakdown displayQuantity;
     if (product.getSecondaryUnit() == null) {
-      return new ProductStockResponse(
-          balance.getWarehouse().getId(),
-          balance.getWarehouse().getName(),
-          new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit())),
+      stockQuantity = new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit()));
+      displayQuantity =
           new ProductStockResponse.StockBreakdown(
-              new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit())), null));
+              new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit())), null);
+    } else {
+      final BigDecimal conversion = product.getSecondaryUnitsPerMainUnit();
+      stockQuantity =
+          new ProductStockResponse.Quantity(quantity, unitResponse(product.getSecondaryUnit()));
+      displayQuantity =
+          new ProductStockResponse.StockBreakdown(
+              new ProductStockResponse.Quantity(
+                  quantity.divideToIntegralValue(conversion), unitResponse(product.getUnit())),
+              new ProductStockResponse.Quantity(
+                  quantity.remainder(conversion), unitResponse(product.getSecondaryUnit())));
     }
-    final BigDecimal conversion = product.getSecondaryUnitsPerMainUnit();
     return new ProductStockResponse(
         balance.getWarehouse().getId(),
         balance.getWarehouse().getName(),
-        new ProductStockResponse.Quantity(quantity, unitResponse(product.getSecondaryUnit())),
-        new ProductStockResponse.StockBreakdown(
-            new ProductStockResponse.Quantity(
-                quantity.divideToIntegralValue(conversion), unitResponse(product.getUnit())),
-            new ProductStockResponse.Quantity(
-                quantity.remainder(conversion), unitResponse(product.getSecondaryUnit()))));
+        stockQuantity,
+        displayQuantity);
   }
 
   private Long idOf(final Unit unit) {

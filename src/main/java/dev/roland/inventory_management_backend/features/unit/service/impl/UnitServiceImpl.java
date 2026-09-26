@@ -33,22 +33,22 @@ public class UnitServiceImpl implements UnitService {
   }
 
   @Override
-  public java.util.List<Unit> findSelectableUnits(Long companyId) {
+  public java.util.List<Unit> findSelectableUnits(final Long companyId) {
     return unitRepository.findSelectableUnits(companyId);
   }
 
   @Override
-  public java.util.Optional<Unit> findById(Long id) {
+  public java.util.Optional<Unit> findById(final Long id) {
     return unitRepository.findById(id);
   }
 
   @Override
-  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+  public boolean existsByCompanyIdAndCode(final Long companyId, final String code) {
     return unitRepository.existsByCompanyIdAndCode(companyId, code);
   }
 
   @Override
-  public boolean existsBySystemTrueAndCode(String code) {
+  public boolean existsBySystemTrueAndCode(final String code) {
     return unitRepository.existsBySystemTrueAndCode(code);
   }
 }

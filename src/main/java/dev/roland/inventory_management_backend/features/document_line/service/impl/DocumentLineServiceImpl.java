@@ -33,7 +33,7 @@ public class DocumentLineServiceImpl implements DocumentLineService {
   }
 
   @Override
-  public boolean existsByUnitSnapshotId(Long id) {
+  public boolean existsByUnitSnapshotId(final Long id) {
     return documentLineRepository.existsByUnitSnapshotId(id);
   }
 }

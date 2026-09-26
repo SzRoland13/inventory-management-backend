@@ -10,7 +10,19 @@ import dev.roland.inventory_management_backend.features.product.enumeration.Prod
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.product.message.ProductValidationMessage;
 
-/** Paging, sorting, searching, and filter controls for product catalog listing. */
+/**
+ * Paging, sorting, searching, and filter controls for product catalog listing.
+ *
+ * @param brand brand value
+ * @param categoryId category id value
+ * @param page pagination metadata
+ * @param search search value
+ * @param size requested page size
+ * @param sortBy sort by value
+ * @param sortDirection sort direction value
+ * @param status product status
+ * @param unitId unit id value
+ */
 public record ProductListRequest(
     @Min(value = 0, message = ProductValidationMessage.NON_NEGATIVE) Integer page,
     @Min(value = 1, message = ProductValidationMessage.POSITIVE)
@@ -24,9 +36,10 @@ public record ProductListRequest(
     ProductSortField sortBy,
     ProductSortDirection sortDirection) {
 
+  /** Applies default values to unspecified product-list filters. */
   public ProductListRequest {
-    page = page == null ? 0 : page;
-    size = size == null ? 25 : size;
+    page = page == null ? Integer.valueOf(0) : page;
+    size = size == null ? Integer.valueOf(25) : size;
     sortBy = sortBy == null ? ProductSortField.NAME : sortBy;
     sortDirection = sortDirection == null ? ProductSortDirection.ASC : sortDirection;
   }

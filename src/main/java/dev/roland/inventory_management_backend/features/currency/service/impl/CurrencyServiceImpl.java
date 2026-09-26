@@ -47,7 +47,7 @@ public class CurrencyServiceImpl implements CurrencyService {
   }
 
   @Override
-  public java.util.Optional<Currency> findById(Long id) {
+  public java.util.Optional<Currency> findById(final Long id) {
     return currencyRepository.findById(id);
   }
 }

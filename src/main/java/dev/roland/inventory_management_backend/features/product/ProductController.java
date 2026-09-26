@@ -35,6 +35,12 @@ public class ProductController {
 
   private final ProductManagementFacade productManagementFacade;
 
+  /**
+   * Lists the requested resources.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> list(
       @Valid @ModelAttribute final ProductListRequest request) {
@@ -43,6 +49,12 @@ public class ProductController {
             ProductMessageKey.PRODUCTS_RETRIEVED, productManagementFacade.list(false, request)));
   }
 
+  /**
+   * Retrieves the requested resource.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @GetMapping(ID_PATH)
   public ResponseEntity<ApiResponse<ProductResponse>> get(@PathVariable final Long id) {
     return ResponseEntity.ok(
@@ -50,6 +62,12 @@ public class ProductController {
             ProductMessageKey.PRODUCT_RETRIEVED, productManagementFacade.get(id, false)));
   }
 
+  /**
+   * Creates the requested resource.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @PostMapping
   @AdminOrManager
   public ResponseEntity<ApiResponse<ProductResponse>> create(
@@ -59,6 +77,13 @@ public class ProductController {
             ProductMessageKey.PRODUCT_CREATED, productManagementFacade.create(request)));
   }
 
+  /**
+   * Updates the requested resource.
+   *
+   * @param id the resource identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PutMapping(ID_PATH)
   @AdminOrManager
   public ResponseEntity<ApiResponse<ProductResponse>> update(
@@ -68,6 +93,12 @@ public class ProductController {
             ProductMessageKey.PRODUCT_UPDATED, productManagementFacade.update(id, request)));
   }
 
+  /**
+   * Archives the requested resource.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @DeleteMapping(ID_PATH)
   @AdminOrManager
   public ResponseEntity<ApiResponse<Void>> archive(@PathVariable final Long id) {
@@ -75,6 +106,12 @@ public class ProductController {
     return ResponseEntity.ok(ApiResponse.success(ProductMessageKey.PRODUCT_ARCHIVED, null));
   }
 
+  /**
+   * Restores the requested resource.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @PostMapping(RESTORE_PATH)
   @AdminOrManager
   public ResponseEntity<ApiResponse<ProductResponse>> restore(@PathVariable final Long id) {
@@ -83,6 +120,12 @@ public class ProductController {
             ProductMessageKey.PRODUCT_RESTORED, productManagementFacade.restore(id)));
   }
 
+  /**
+   * Lists the requested resources.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @GetMapping(ARCHIVED_PATH)
   @AdminOrManager
   public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listArchived(

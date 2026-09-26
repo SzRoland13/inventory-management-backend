@@ -33,18 +33,18 @@ public class ProductAttributeDefinitionServiceImpl implements ProductAttributeDe
   }
 
   @Override
-  public java.util.List<ProductAttributeDefinition> findAllByCompanyId(Long id) {
+  public java.util.List<ProductAttributeDefinition> findAllByCompanyId(final Long id) {
     return productAttributeDefinitionRepository.findAllByCompanyId(id);
   }
 
   @Override
   public java.util.Optional<ProductAttributeDefinition> findByIdAndCompanyId(
-      Long id, Long companyId) {
+      final Long id, final Long companyId) {
     return productAttributeDefinitionRepository.findByIdAndCompanyId(id, companyId);
   }
 
   @Override
-  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+  public boolean existsByCompanyIdAndCode(final Long companyId, final String code) {
     return productAttributeDefinitionRepository.existsByCompanyIdAndCode(companyId, code);
   }
 }

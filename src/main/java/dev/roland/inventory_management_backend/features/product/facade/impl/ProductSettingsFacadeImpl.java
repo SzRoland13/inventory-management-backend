@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.product.facade.impl;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.transaction.Transactional;
 
@@ -124,7 +125,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
             .code(request.code().trim())
             .name(request.name().trim())
             .description(request.description())
-            .sortOrder(request.sortOrder() == null ? 0 : request.sortOrder())
+            .sortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)))
             .build();
     return categoryResponse(categoryService.save(category));
   }
@@ -154,7 +155,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     category.setCode(request.code().trim());
     category.setName(request.name().trim());
     category.setDescription(request.description());
-    category.setSortOrder(request.sortOrder() == null ? 0 : request.sortOrder());
+    category.setSortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)));
     return categoryResponse(categoryService.save(category));
   }
 
@@ -237,7 +238,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
         ProductAttributeOption.builder()
             .definition(definition)
             .value(request.value().trim())
-            .sortOrder(request.sortOrder() == null ? 0 : request.sortOrder())
+            .sortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)))
             .build();
     return optionResponse(optionService.save(option));
   }
@@ -257,7 +258,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
       throw invalid();
     }
     option.setValue(request.value().trim());
-    option.setSortOrder(request.sortOrder() == null ? 0 : request.sortOrder());
+    option.setSortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)));
     return optionResponse(optionService.save(option));
   }
 

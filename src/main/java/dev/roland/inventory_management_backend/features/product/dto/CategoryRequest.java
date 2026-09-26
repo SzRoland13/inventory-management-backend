@@ -7,7 +7,15 @@ import jakarta.validation.constraints.Size;
 
 import dev.roland.inventory_management_backend.features.product.message.ProductValidationMessage;
 
-/** Creates or updates a product category. */
+/**
+ * Creates or updates a product category.
+ *
+ * @param code unit or entity code
+ * @param description descriptive text
+ * @param name display name
+ * @param parentId parent category identifier
+ * @param sortOrder display order
+ */
 public record CategoryRequest(
     @Positive(message = ProductValidationMessage.POSITIVE) Long parentId,
     @NotBlank(message = ProductValidationMessage.REQUIRED)

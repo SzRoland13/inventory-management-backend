@@ -80,7 +80,12 @@ public class GlobalExceptionHandler {
     return validationResponse(ex);
   }
 
-  /** Converts model-attribute validation failures into field-level message keys. */
+  /**
+   * Converts model-attribute validation failures into field-level message keys.
+   *
+   * @param ex binding exception containing the rejected request fields
+   * @return bad-request response with field-specific validation messages
+   */
   @ExceptionHandler(BindException.class)
   public ResponseEntity<ApiResponse<String>> handleBindingErrors(final BindException ex) {
     return validationResponse(ex);

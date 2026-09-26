@@ -107,7 +107,11 @@ public class DocumentLine implements IdInterface<Long> {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  /** Captures the selected unit label and factor when a new document line is first persisted. */
+  /**
+   * Captures the selected unit label and factor when a new document line is first persisted.
+   *
+   * @throws ApiException if the product or unit configuration is invalid
+   */
   @PrePersist
   void initializeUnitSnapshot() {
     if (product == null) {

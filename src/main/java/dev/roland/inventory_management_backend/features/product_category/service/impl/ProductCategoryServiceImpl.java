@@ -33,17 +33,18 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
   }
 
   @Override
-  public java.util.List<ProductCategory> findAllByCompanyId(Long id) {
+  public java.util.List<ProductCategory> findAllByCompanyId(final Long id) {
     return productCategoryRepository.findAllByCompanyId(id);
   }
 
   @Override
-  public java.util.Optional<ProductCategory> findByIdAndCompanyId(Long id, Long companyId) {
+  public java.util.Optional<ProductCategory> findByIdAndCompanyId(
+      final Long id, final Long companyId) {
     return productCategoryRepository.findByIdAndCompanyId(id, companyId);
   }
 
   @Override
-  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+  public boolean existsByCompanyIdAndCode(final Long companyId, final String code) {
     return productCategoryRepository.existsByCompanyIdAndCode(companyId, code);
   }
 }

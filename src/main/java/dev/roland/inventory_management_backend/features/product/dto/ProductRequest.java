@@ -1,6 +1,8 @@
 package dev.roland.inventory_management_backend.features.product.dto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -15,7 +17,21 @@ import jakarta.validation.constraints.Size;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.product.message.ProductValidationMessage;
 
-/** Product create and update payload. Company ownership comes from the current company context. */
+/**
+ * Product create and update payload. Company ownership comes from the current company context.
+ *
+ * @param attributes attribute values
+ * @param brand brand value
+ * @param categoryIds associated category identifiers
+ * @param description descriptive text
+ * @param dimensions physical dimensions
+ * @param ean product European Article Number
+ * @param name display name
+ * @param pricing product pricing configuration
+ * @param sku product stock keeping unit
+ * @param status product status
+ * @param units product unit configuration
+ */
 public record ProductRequest(
     @NotBlank(message = ProductValidationMessage.REQUIRED)
         @Size(max = 100, message = ProductValidationMessage.TOO_LONG)
@@ -33,7 +49,43 @@ public record ProductRequest(
     List<@Positive(message = ProductValidationMessage.POSITIVE) Long> categoryIds,
     List<@Valid ProductAttributeValueRequest> attributes) {
 
-  /** Main and optional secondary unit configuration. */
+  /** Copies request collections while preserving their optional null state. */
+  public ProductRequest {
+    categoryIds = immutableCopy(categoryIds);
+    attributes = immutableCopy(attributes);
+  }
+
+  /**
+   * Returns a defensive copy of the category identifiers.
+   *
+   * @return immutable category identifier list, or null when omitted
+   */
+  @Override
+  public List<Long> categoryIds() {
+    return categoryIds == null ? null : Collections.unmodifiableList(new ArrayList<>(categoryIds));
+  }
+
+  /**
+   * Returns a defensive copy of the attribute values.
+   *
+   * @return immutable attribute list, or null when omitted
+   */
+  @Override
+  public List<ProductAttributeValueRequest> attributes() {
+    return attributes == null ? null : Collections.unmodifiableList(new ArrayList<>(attributes));
+  }
+
+  private static <T> List<T> immutableCopy(final List<T> values) {
+    return values == null ? null : Collections.unmodifiableList(new ArrayList<>(values));
+  }
+
+  /**
+   * Main and optional secondary unit configuration.
+   *
+   * @param mainUnitId main unit identifier
+   * @param secondaryUnitId optional secondary unit identifier
+   * @param secondaryUnitsPerMainUnit number of secondary units in one main unit
+   */
   public record Units(
       @NotNull(message = ProductValidationMessage.REQUIRED)
           @Positive(message = ProductValidationMessage.POSITIVE)
@@ -43,6 +95,11 @@ public record ProductRequest(
           @Digits(integer = 16, fraction = 8, message = ProductValidationMessage.DECIMAL_PRECISION)
           BigDecimal secondaryUnitsPerMainUnit) {
 
+    /**
+     * Checks whether the supplied values meet the required condition.
+     *
+     * @return true if a matching record exists
+     */
     @AssertTrue(message = ProductValidationMessage.INVALID_UNIT_CONFIGURATION)
     public boolean isConfigurationValid() {
       return (secondaryUnitId == null && secondaryUnitsPerMainUnit == null)
@@ -54,7 +111,14 @@ public record ProductRequest(
     }
   }
 
-  /** Product prices and tax rate. */
+  /**
+   * Product prices and tax rate.
+   *
+   * @param costPrice product cost price
+   * @param currencyId currency identifier
+   * @param netPrice net price per main unit
+   * @param vatRate value added tax rate
+   */
   public record Pricing(
       @Positive(message = ProductValidationMessage.POSITIVE) Long currencyId,
       @NotNull(message = ProductValidationMessage.REQUIRED)
@@ -69,7 +133,14 @@ public record ProductRequest(
           @Digits(integer = 2, fraction = 3, message = ProductValidationMessage.DECIMAL_PRECISION)
           BigDecimal vatRate) {}
 
-  /** Optional physical product measurements. */
+  /**
+   * Optional physical product measurements.
+   *
+   * @param depth product depth
+   * @param height product height
+   * @param weight product weight
+   * @param width product width
+   */
   public record Dimensions(
       @DecimalMin(value = "0", message = ProductValidationMessage.NON_NEGATIVE)
           @Digits(integer = 12, fraction = 3, message = ProductValidationMessage.DECIMAL_PRECISION)

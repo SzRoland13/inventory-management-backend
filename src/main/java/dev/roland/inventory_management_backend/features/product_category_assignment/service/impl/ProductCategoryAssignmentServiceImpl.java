@@ -51,7 +51,7 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
   }
 
   @Override
-  public java.util.List<ProductCategoryAssignment> findAllByProductId(Long id) {
+  public java.util.List<ProductCategoryAssignment> findAllByProductId(final Long id) {
     return productCategoryAssignmentRepository.findAllByProductId(id);
   }
 
@@ -62,12 +62,12 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
   }
 
   @Override
-  public ProductCategoryAssignment save(ProductCategoryAssignment assignment) {
+  public ProductCategoryAssignment save(final ProductCategoryAssignment assignment) {
     return productCategoryAssignmentRepository.save(assignment);
   }
 
   @Override
-  public void deleteAllByProductId(Long id) {
+  public void deleteAllByProductId(final Long id) {
     productCategoryAssignmentRepository.deleteAllByProductId(id);
   }
 }

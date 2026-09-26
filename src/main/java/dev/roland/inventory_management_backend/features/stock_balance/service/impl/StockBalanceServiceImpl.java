@@ -33,7 +33,7 @@ public class StockBalanceServiceImpl implements StockBalanceService {
   }
 
   @Override
-  public java.util.List<StockBalance> findAllByProductId(Long id) {
+  public java.util.List<StockBalance> findAllByProductId(final Long id) {
     return stockBalanceRepository.findAllByProductId(id);
   }
 

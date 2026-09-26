@@ -101,22 +101,23 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public java.util.Optional<Product> findByIdAndCompanyId(Long id, Long companyId) {
+  public java.util.Optional<Product> findByIdAndCompanyId(final Long id, final Long companyId) {
     return productRepository.findByIdAndCompanyId(id, companyId);
   }
 
   @Override
-  public boolean existsByCompanyIdAndSku(Long companyId, String sku) {
+  public boolean existsByCompanyIdAndSku(final Long companyId, final String sku) {
     return productRepository.existsByCompanyIdAndSku(companyId, sku);
   }
 
   @Override
-  public boolean existsByCompanyIdAndSkuAndIdNot(Long companyId, String sku, Long id) {
+  public boolean existsByCompanyIdAndSkuAndIdNot(
+      final Long companyId, final String sku, final Long id) {
     return productRepository.existsByCompanyIdAndSkuAndIdNot(companyId, sku, id);
   }
 
   @Override
-  public boolean existsUsingUnit(Long unitId) {
+  public boolean existsUsingUnit(final Long unitId) {
     return productRepository.existsUsingUnit(unitId);
   }
 

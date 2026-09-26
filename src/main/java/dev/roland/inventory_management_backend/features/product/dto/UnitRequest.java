@@ -5,7 +5,13 @@ import jakarta.validation.constraints.Size;
 
 import dev.roland.inventory_management_backend.features.product.message.ProductValidationMessage;
 
-/** Creates or updates a company-owned unit. */
+/**
+ * Creates or updates a company-owned unit.
+ *
+ * @param code unit or entity code
+ * @param name display name
+ * @param symbol unit symbol
+ */
 public record UnitRequest(
     @NotBlank(message = ProductValidationMessage.REQUIRED)
         @Size(max = 50, message = ProductValidationMessage.TOO_LONG)

@@ -33,7 +33,7 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
   }
 
   @Override
-  public java.util.List<ProductAttributeValue> findAllByProductId(Long id) {
+  public java.util.List<ProductAttributeValue> findAllByProductId(final Long id) {
     return productAttributeValueRepository.findAllByProductId(id);
   }
 
@@ -44,18 +44,18 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
   }
 
   @Override
-  public void deleteAllByProductId(Long id) {
+  public void deleteAllByProductId(final Long id) {
     productAttributeValueRepository.deleteAll(
         productAttributeValueRepository.findAllByProductId(id));
   }
 
   @Override
-  public boolean existsByOptionId(Long id) {
+  public boolean existsByOptionId(final Long id) {
     return productAttributeValueRepository.existsByOptionId(id);
   }
 
   @Override
-  public boolean existsByDefinitionId(Long id) {
+  public boolean existsByDefinitionId(final Long id) {
     return productAttributeValueRepository.existsByDefinitionId(id);
   }
 }

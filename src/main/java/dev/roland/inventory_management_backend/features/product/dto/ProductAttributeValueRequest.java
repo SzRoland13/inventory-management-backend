@@ -10,7 +10,16 @@ import jakarta.validation.constraints.Positive;
 
 import dev.roland.inventory_management_backend.features.product.message.ProductValidationMessage;
 
-/** Supplies one typed value for a product attribute definition. */
+/**
+ * Supplies one typed value for a product attribute definition.
+ *
+ * @param booleanValue boolean attribute value
+ * @param dateValue date attribute value
+ * @param definitionId attribute definition identifier
+ * @param numberValue numeric attribute value
+ * @param optionId selected option identifier
+ * @param textValue text attribute value
+ */
 public record ProductAttributeValueRequest(
     @NotNull(message = ProductValidationMessage.REQUIRED) Long definitionId,
     @Positive(message = ProductValidationMessage.POSITIVE) Long optionId,
@@ -19,6 +28,11 @@ public record ProductAttributeValueRequest(
         BigDecimal numberValue,
     LocalDate dateValue,
     Boolean booleanValue) {
+  /**
+   * Checks whether the supplied values meet the required condition.
+   *
+   * @return true if a matching record exists
+   */
   @AssertTrue(message = ProductValidationMessage.EXACTLY_ONE_ATTRIBUTE_VALUE)
   public boolean isExactlyOneValueSupplied() {
     int count = 0;

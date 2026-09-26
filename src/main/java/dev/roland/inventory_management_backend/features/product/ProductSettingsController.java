@@ -46,11 +46,22 @@ public class ProductSettingsController {
 
   private final ProductSettingsFacade productSettingsFacade;
 
+  /**
+   * Lists the requested resources.
+   *
+   * @return the matching resources
+   */
   @GetMapping(UNITS_PATH)
   public ResponseEntity<ApiResponse<List<UnitResponse>>> listUnits() {
     return ok(ProductSettingsMessageKey.UNITS_RETRIEVED, productSettingsFacade.listUnits());
   }
 
+  /**
+   * Creates the requested resource.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @PostMapping(UNITS_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<UnitResponse>> createUnit(
@@ -58,6 +69,13 @@ public class ProductSettingsController {
     return ok(ProductSettingsMessageKey.UNIT_CREATED, productSettingsFacade.createUnit(request));
   }
 
+  /**
+   * Updates the requested resource.
+   *
+   * @param id the resource identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PutMapping(UNIT_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<UnitResponse>> updateUnit(
@@ -66,6 +84,12 @@ public class ProductSettingsController {
         ProductSettingsMessageKey.UNIT_UPDATED, productSettingsFacade.updateUnit(id, request));
   }
 
+  /**
+   * Deletes the matching record or records.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @DeleteMapping(UNIT_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<Void>> deleteUnit(@PathVariable final Long id) {
@@ -73,12 +97,23 @@ public class ProductSettingsController {
     return ok(ProductSettingsMessageKey.UNIT_DELETED, null);
   }
 
+  /**
+   * Lists the requested resources.
+   *
+   * @return the matching resources
+   */
   @GetMapping(CATEGORIES_PATH)
   public ResponseEntity<ApiResponse<List<CategoryResponse>>> listCategories() {
     return ok(
         ProductSettingsMessageKey.CATEGORIES_RETRIEVED, productSettingsFacade.listCategories());
   }
 
+  /**
+   * Creates the requested resource.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @PostMapping(CATEGORIES_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
@@ -87,6 +122,13 @@ public class ProductSettingsController {
         ProductSettingsMessageKey.CATEGORY_CREATED, productSettingsFacade.createCategory(request));
   }
 
+  /**
+   * Updates the requested resource.
+   *
+   * @param id the resource identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PutMapping(CATEGORY_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
@@ -96,6 +138,12 @@ public class ProductSettingsController {
         productSettingsFacade.updateCategory(id, request));
   }
 
+  /**
+   * Deletes the matching record or records.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @DeleteMapping(CATEGORY_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable final Long id) {
@@ -103,12 +151,23 @@ public class ProductSettingsController {
     return ok(ProductSettingsMessageKey.CATEGORY_DELETED, null);
   }
 
+  /**
+   * Lists the requested resources.
+   *
+   * @return the matching resources
+   */
   @GetMapping(ATTRIBUTES_PATH)
   public ResponseEntity<ApiResponse<List<AttributeDefinitionResponse>>> listDefinitions() {
     return ok(
         ProductSettingsMessageKey.ATTRIBUTES_RETRIEVED, productSettingsFacade.listDefinitions());
   }
 
+  /**
+   * Creates the requested resource.
+   *
+   * @param request the validated request
+   * @return the API response
+   */
   @PostMapping(ATTRIBUTES_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<AttributeDefinitionResponse>> createDefinition(
@@ -118,6 +177,13 @@ public class ProductSettingsController {
         productSettingsFacade.createDefinition(request));
   }
 
+  /**
+   * Updates the requested resource.
+   *
+   * @param id the resource identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PutMapping(ATTRIBUTE_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<AttributeDefinitionResponse>> updateDefinition(
@@ -127,6 +193,12 @@ public class ProductSettingsController {
         productSettingsFacade.updateDefinition(id, request));
   }
 
+  /**
+   * Deletes the matching record or records.
+   *
+   * @param id the resource identifier
+   * @return the API response
+   */
   @DeleteMapping(ATTRIBUTE_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<Void>> deleteDefinition(@PathVariable final Long id) {
@@ -134,6 +206,13 @@ public class ProductSettingsController {
     return ok(ProductSettingsMessageKey.ATTRIBUTE_DELETED, null);
   }
 
+  /**
+   * Creates the requested resource.
+   *
+   * @param definitionId the attribute definition identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PostMapping(ATTRIBUTE_OPTIONS_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<AttributeOptionResponse>> createOption(
@@ -144,6 +223,14 @@ public class ProductSettingsController {
         productSettingsFacade.createOption(definitionId, request));
   }
 
+  /**
+   * Updates the requested resource.
+   *
+   * @param definitionId the attribute definition identifier
+   * @param optionId the attribute option identifier
+   * @param request the validated request
+   * @return the API response
+   */
   @PutMapping(ATTRIBUTE_OPTION_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<AttributeOptionResponse>> updateOption(
@@ -155,6 +242,13 @@ public class ProductSettingsController {
         productSettingsFacade.updateOption(definitionId, optionId, request));
   }
 
+  /**
+   * Deletes the matching record or records.
+   *
+   * @param definitionId the attribute definition identifier
+   * @param optionId the attribute option identifier
+   * @return the API response
+   */
   @DeleteMapping(ATTRIBUTE_OPTION_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<Void>> deleteOption(

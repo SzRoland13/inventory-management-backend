@@ -11,8 +11,20 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
 /** Looks up inventory balances by warehouse and product. */
 public interface StockBalanceRepository extends JpaRepository<StockBalance, Long> {
+  /**
+   * Finds matching records using the supplied criteria.
+   *
+   * @param productId the product identifier
+   * @return the matching resources
+   */
   List<StockBalance> findAllByProductId(Long productId);
 
+  /**
+   * Finds matching records using the supplied criteria.
+   *
+   * @param productIds the product identifiers
+   * @return the matching resources
+   */
   List<StockBalance> findAllByProductIdIn(List<Long> productIds);
 
   /**
