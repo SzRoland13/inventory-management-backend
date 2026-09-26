@@ -12,6 +12,12 @@ public class AppConfiguration {
   @Value("${app.security.secure-cookie}")
   private boolean secureCookie;
 
+  @Value("${app.security.jwt.access-cookie-name}")
+  private String accessTokenCookieName;
+
+  @Value("${app.security.jwt.refresh-cookie-name}")
+  private String refreshTokenCookieName;
+
   @Value("${app.security.jwt.access-expiration-time}")
   private long accessTokenExpirationTime;
 

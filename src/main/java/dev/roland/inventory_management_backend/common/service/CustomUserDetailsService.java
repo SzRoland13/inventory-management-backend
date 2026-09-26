@@ -28,6 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     User user = userService.findByUsernameOrThrow(username);
 
-    return new CustomUserDetails(user);
+    return new CustomUserDetails(
+        user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getStatus());
   }
 }

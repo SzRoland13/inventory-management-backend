@@ -6,46 +6,49 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Adapts a persisted {@link User} to Spring Security's {@code UserDetails} contract.
+ * Serializable authentication principal containing a snapshot of a user's identity and status.
  *
- * <p>This is not a database entity. It exposes the user's username, password, role, and account
- * status to authentication and authorization infrastructure. A suspended user is considered both
- * disabled and locked.
+ * <p>This is not a database entity and intentionally keeps only scalar serializable fields. A
+ * suspended user is considered both disabled and locked.
  */
 @Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-  private final User user;
+  private final Long userId;
+  private final String username;
+  private final String password;
+  private final UserRole role;
+  private final UserStatus status;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(user.getRole().toGrantedAuthority(), user.getStatus().toGrantedAuthority());
+    return List.of(role.toGrantedAuthority(), status.toGrantedAuthority());
   }
 
   @Override
   public String getPassword() {
-    return user.getPassword();
+    return password;
   }
 
   @Override
   public String getUsername() {
-    return user.getUsername();
+    return username;
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    return user.getStatus() != UserStatus.SUSPENDED;
+    return status != UserStatus.SUSPENDED;
   }
 
   @Override
   public boolean isEnabled() {
-    return user.getStatus() != UserStatus.SUSPENDED;
+    return status != UserStatus.SUSPENDED;
   }
 }

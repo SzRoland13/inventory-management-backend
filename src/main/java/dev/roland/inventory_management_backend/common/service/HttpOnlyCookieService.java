@@ -8,10 +8,15 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class HttpOnlyCookieService {
-  public static String ACCESS_TOKEN = "access_token";
-  public static String REFRESH_TOKEN = "refresh_token";
+
+  private final AppConfiguration appConfiguration;
 
   /**
    * Extracts the access token from the configured HTTP-only cookie.
@@ -20,7 +25,7 @@ public class HttpOnlyCookieService {
    * @return access token value, or null when the cookie is absent
    */
   public String extractAccessTokenFromCookie(HttpServletRequest request) {
-    return extractToken(request, ACCESS_TOKEN);
+    return extractToken(request, appConfiguration.getAccessTokenCookieName());
   }
 
   /**
@@ -30,7 +35,7 @@ public class HttpOnlyCookieService {
    * @return refresh token value, or null when the cookie is absent
    */
   public String extractRefreshTokenFromCookie(HttpServletRequest request) {
-    return extractToken(request, REFRESH_TOKEN);
+    return extractToken(request, appConfiguration.getRefreshTokenCookieName());
   }
 
   private String extractToken(HttpServletRequest request, String tokenName) {
@@ -53,7 +58,8 @@ public class HttpOnlyCookieService {
    */
   public void setAccessCookie(
       HttpServletResponse response, String token, boolean secure, int maxAge) {
-    response.addCookie(createCookie(ACCESS_TOKEN, token, secure, maxAge));
+    response.addCookie(
+        createCookie(appConfiguration.getAccessTokenCookieName(), token, secure, maxAge));
   }
 
   /**
@@ -63,7 +69,7 @@ public class HttpOnlyCookieService {
    * @param secure whether the clearing cookie should require HTTPS
    */
   public void clearAccessCookie(HttpServletResponse response, boolean secure) {
-    response.addCookie(createCookie(ACCESS_TOKEN, "", secure, 0));
+    response.addCookie(createCookie(appConfiguration.getAccessTokenCookieName(), "", secure, 0));
   }
 
   /**
@@ -76,7 +82,8 @@ public class HttpOnlyCookieService {
    */
   public void setRefreshCookie(
       HttpServletResponse response, String token, boolean secure, int maxAge) {
-    response.addCookie(createCookie(REFRESH_TOKEN, token, secure, maxAge));
+    response.addCookie(
+        createCookie(appConfiguration.getRefreshTokenCookieName(), token, secure, maxAge));
   }
 
   /**
@@ -86,9 +93,13 @@ public class HttpOnlyCookieService {
    * @param secure whether the clearing cookie should require HTTPS
    */
   public void clearRefreshCookie(HttpServletResponse response, boolean secure) {
-    response.addCookie(createCookie(REFRESH_TOKEN, "", secure, 0));
+    response.addCookie(createCookie(appConfiguration.getRefreshTokenCookieName(), "", secure, 0));
   }
 
+  @SuppressFBWarnings(
+      value = "INSECURE_COOKIE",
+      justification =
+          "The Secure flag is supplied from SECURE_HTTP so local HTTP development can opt out; deployed environments must enable it.")
   private Cookie createCookie(String name, String token, boolean secure, int maxAge) {
     Cookie cookie = new Cookie(name, token);
     cookie.setHttpOnly(true);

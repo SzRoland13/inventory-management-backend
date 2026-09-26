@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.common.exception;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
@@ -23,6 +25,6 @@ public class ApiException extends RuntimeException {
   public ApiException(MessageKey messageKey, Map<String, Object> params) {
     super(messageKey.getKey());
     this.messageKey = messageKey;
-    this.params = params;
+    this.params = params == null ? null : Collections.unmodifiableMap(new HashMap<>(params));
   }
 }

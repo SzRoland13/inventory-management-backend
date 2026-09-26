@@ -51,6 +51,8 @@ app:
       secret: ${JWT_SECRET}
       access-expiration-time: ${ACCESS_TOKEN_EXPIRY}
       refresh-expiration-time: ${REFRESH_TOKEN_EXPIRY}
+      access-cookie-name: ${ACCESS_TOKEN_COOKIE_NAME:access_token}
+      refresh-cookie-name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
 #S3 config
   storage:
     bucket: ${STORAGE_BUCKET}
