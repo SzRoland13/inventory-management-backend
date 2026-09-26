@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:inventory_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;NON_KEYWORDS=VALUE,YEAR
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate.hbm2ddl.halt_on_error: true
+  liquibase:
+    enabled: false
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+  data:
+    redis:
+      host: localhost
+      port: 6379
+app:
+  security:
+    secure-cookie: false
+    jwt:
+      secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      access-expiration-time: 900000
+      refresh-expiration-time: 604800000
+  storage:
+    bucket: test-bucket
+    endpoint: http://localhost:8333
+    region: us-east-1
+    access-key: test-access-key
+    secret-key: test-secret-key
