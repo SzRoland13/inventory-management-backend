@@ -12,6 +12,7 @@ import dev.roland.inventory_management_backend.common.configuration.AppConfigura
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
+/** Creates, clears, and reads the HTTP-only access and refresh cookies used by authentication. */
 @Service
 @RequiredArgsConstructor
 public class HttpOnlyCookieService {

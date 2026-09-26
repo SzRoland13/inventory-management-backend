@@ -5,6 +5,7 @@ import java.time.Instant;
 import lombok.Builder;
 import lombok.Data;
 
+/** Returns a short-lived token used to continue an in-progress login. */
 @Data
 @Builder
 public class ShortLifeTokenResponse {

@@ -5,6 +5,7 @@ import java.util.Optional;
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
 
+/** Defines operations supported by the one time code feature. */
 public interface OneTimeCodeService extends BaseService<OneTimeCode, Long> {
 
   /**

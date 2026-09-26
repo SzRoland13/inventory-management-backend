@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.features.media_usage.repository.M
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the media usage service operations. */
 @Service
 @RequiredArgsConstructor
 public class MediaUsageServiceImpl implements MediaUsageService {
@@ -38,7 +39,12 @@ public class MediaUsageServiceImpl implements MediaUsageService {
     return mediaUsageRepository.findByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param id id supplied to this method
+   * @return usage count by media asset id result
+   */
   @Override
   public Long usageCountByMediaAssetId(Long id) {
     return mediaUsageRepository.countByMediaAsset_Id(id);

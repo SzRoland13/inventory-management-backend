@@ -25,6 +25,7 @@ import dev.roland.inventory_management_backend.features.user.message.UserMessage
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes user administration, account-state, and profile REST endpoints. */
 @RestController
 @RequestMapping(USER_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -42,6 +43,12 @@ public class UserController {
   private final UserService userService;
   private final UserFacade userFacade;
 
+  /**
+   * Registers a user account.
+   *
+   * @param request account details for the new user
+   * @return response containing the created user
+   */
   @PostMapping(REGISTER_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> registerUser(
@@ -51,6 +58,13 @@ public class UserController {
             UserMessageKey.REGISTRATION_SUCCESSFUL, userFacade.registerUser(request)));
   }
 
+  /**
+   * Updates the account identified by the supplied id.
+   *
+   * @param id identifier of the account to update
+   * @param updateRequest fields to change
+   * @return response containing the updated user
+   */
   @PutMapping(ID_PARAM)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> updateUser(
@@ -60,6 +74,11 @@ public class UserController {
             UserMessageKey.UPDATE_SUCCESS, userService.updateUser(id, updateRequest)));
   }
 
+  /**
+   * Returns the user accounts available to administrators.
+   *
+   * @return response containing the user list
+   */
   @GetMapping(ALL_USERS_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
@@ -67,6 +86,12 @@ public class UserController {
         ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userFacade.getAllUsers()));
   }
 
+  /**
+   * Resets two-factor authentication for the specified user.
+   *
+   * @param id identifier of the user
+   * @return confirmation response
+   */
   @PostMapping(RESET_TWO_FA_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
@@ -75,6 +100,12 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.TWO_FA_SETUP_RESET_COMPLETE, null));
   }
 
+  /**
+   * Suspends the specified user account.
+   *
+   * @param id identifier of the user
+   * @return confirmation response
+   */
   @PostMapping(SUSPEND_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id) {
@@ -83,6 +114,12 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_SUSPENDED, null));
   }
 
+  /**
+   * Activates the specified user account.
+   *
+   * @param id identifier of the user
+   * @return confirmation response
+   */
   @PostMapping(ACTIVATE_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
@@ -91,6 +128,12 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_ACTIVATED, null));
   }
 
+  /**
+   * Resets the password setup state for the specified user.
+   *
+   * @param id identifier of the user
+   * @return confirmation response
+   */
   @PostMapping(RESET_PASSWORD_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable Long id) {
@@ -99,6 +142,13 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
   }
 
+  /**
+   * Associates an uploaded media asset with the user avatar.
+   *
+   * @param id id supplied to this method
+   * @param request request supplied to this method
+   * @return update avatar result
+   */
   @PostMapping(AVATAR_ENDPOINT)
   public ResponseEntity<ApiResponse<Void>> updateAvatar(
       @PathVariable Long id, @RequestBody AvatarUploadRequest request) {

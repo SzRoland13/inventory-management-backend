@@ -17,6 +17,7 @@ import dev.roland.inventory_management_backend.features.media_asset.facade.Media
 import dev.roland.inventory_management_backend.features.media_asset.message.MediaMessageKey;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes media upload, preview, and deletion endpoints. */
 @RestController
 @RequestMapping(MediaAssetController.MEDIA_ASSET_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -27,6 +28,12 @@ public class MediaAssetController {
 
   private final MediaAssetFacade mediaAssetFacade;
 
+  /**
+   * Creates upload instructions for a new media asset.
+   *
+   * @param request metadata for the asset to upload
+   * @return response containing the upload instructions
+   */
   @PostMapping
   public ResponseEntity<ApiResponse<MediaUploadInitResponse>> initializeUpload(
       @RequestBody MediaUploadInitRequest request) {
@@ -37,12 +44,24 @@ public class MediaAssetController {
                 mediaAssetFacade.getPutRequestForNewMediaAsset(request)));
   }
 
+  /**
+   * Returns a preview URL for the requested media asset.
+   *
+   * @param id identifier of the media asset
+   * @return response containing the preview URL
+   */
   @GetMapping(MEDIA_ASSET_PREVIEW_ENDPOINT)
   public ResponseEntity<ApiResponse<MediaPreviewResponse>> getPreview(@PathVariable Long id) {
     return ResponseEntity.ok(
         ApiResponse.success(MediaMessageKey.URL_GENERATED, mediaAssetFacade.getPreview(id)));
   }
 
+  /**
+   * Deletes the requested media asset.
+   *
+   * @param id identifier of the media asset to delete
+   * @return deletion confirmation response
+   */
   @DeleteMapping(ID_PARAM)
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
     mediaAssetFacade.deleteAsset(id);

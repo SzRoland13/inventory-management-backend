@@ -32,6 +32,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import lombok.RequiredArgsConstructor;
 
+/** Coordinates company profile updates and associated media changes. */
 @Service
 @RequiredArgsConstructor
 public class CompanyFacadeImpl implements CompanyFacade {
@@ -102,7 +103,12 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildCompanyBillingDataResponse(company);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param request request supplied to this method
+   * @return update preferred currency result
+   */
   @Override
   @Transactional
   public UpdatedPreferredCurrencyResponse updatePreferredCurrency(

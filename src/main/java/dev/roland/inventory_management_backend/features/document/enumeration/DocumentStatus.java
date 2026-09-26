@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.document.enumeration;
 
+/** Defines the lifecycle states used when posting or managing documents. */
 public enum DocumentStatus {
   /** Represents the draft value. */
   DRAFT,

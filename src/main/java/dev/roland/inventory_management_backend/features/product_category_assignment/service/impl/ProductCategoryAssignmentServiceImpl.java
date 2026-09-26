@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.features.product_category_assignm
 import dev.roland.inventory_management_backend.features.product_category_assignment.service.ProductCategoryAssignmentService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the product category assignment service operations. */
 @Service
 @RequiredArgsConstructor
 public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssignmentService {
@@ -31,7 +32,11 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
         .orElseGet(() -> productCategoryAssignmentRepository.save(buildAssignment(id)));
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param id id supplied to this method
+   */
   @Transactional
   @Override
   public void remove(ProductCategoryAssignmentId id) {

@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.unit.repository.UnitRepo
 import dev.roland.inventory_management_backend.features.unit.service.UnitService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the unit of measure service operations. */
 @Service
 @RequiredArgsConstructor
 public class UnitServiceImpl implements UnitService {
@@ -21,7 +22,11 @@ public class UnitServiceImpl implements UnitService {
     return unitRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.UNIT;

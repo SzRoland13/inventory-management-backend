@@ -8,6 +8,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
+/** Defines authentication operations exposed to the API layer. */
 public interface AuthService {
 
   /**

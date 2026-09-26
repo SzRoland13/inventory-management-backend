@@ -12,6 +12,7 @@ import dev.roland.inventory_management_backend.features.one_time_code.repository
 import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the one time code service operations. */
 @Service
 @RequiredArgsConstructor
 public class OneTImeCodeServiceImpl implements OneTimeCodeService {

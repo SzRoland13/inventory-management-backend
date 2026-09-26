@@ -8,5 +8,10 @@ import java.io.Serializable;
  * @param <ID> serializable type of the model identifier
  */
 public interface IdInterface<ID extends Serializable> {
+  /**
+   * Returns the entity identifier.
+   *
+   * @return identifier of this entity
+   */
   ID getId();
 }

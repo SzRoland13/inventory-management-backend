@@ -3,6 +3,7 @@ package dev.roland.inventory_management_backend.features.product_category_assign
 import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignment;
 import dev.roland.inventory_management_backend.features.product_category_assignment.ProductCategoryAssignmentId;
 
+/** Defines operations supported by the product category assignment feature. */
 public interface ProductCategoryAssignmentService {
   /**
    * Assigns a product to a category if the assignment does not already exist.

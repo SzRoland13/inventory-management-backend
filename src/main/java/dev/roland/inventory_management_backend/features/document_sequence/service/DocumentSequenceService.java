@@ -3,4 +3,5 @@ package dev.roland.inventory_management_backend.features.document_sequence.servi
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
 
+/** Defines operations supported by the document numbering sequence feature. */
 public interface DocumentSequenceService extends BaseService<DocumentSequence, Long> {}

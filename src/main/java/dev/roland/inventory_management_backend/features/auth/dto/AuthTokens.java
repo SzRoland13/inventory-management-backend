@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Carries the access and refresh tokens issued by the authentication flow. */
 @Getter
 @Setter
 @NoArgsConstructor

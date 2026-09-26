@@ -7,9 +7,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/** Defines the cross-origin policy for credentialed frontend requests. */
 @Configuration
 public class CorsConfiguration {
 
+  /**
+   * Defines the origins and request options allowed by CORS.
+   *
+   * @return CORS policy source used by Spring MVC and Security
+   */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     org.springframework.web.cors.CorsConfiguration configuration =

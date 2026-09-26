@@ -5,6 +5,7 @@ import java.util.Optional;
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 
+/** Defines operations supported by the refresh token feature. */
 public interface RefreshTokenService extends BaseService<RefreshToken, Long> {
 
   /**

@@ -12,7 +12,13 @@ public enum MailTemplate {
 
   private final String fileName;
 
-  /** Resolves a template by its file name, ignoring case. */
+  /**
+   * Resolves a template by its file name, ignoring case.
+   *
+   * @param fileName template file name to resolve
+   * @return matching template
+   * @throws IllegalArgumentException when no template has that file name
+   */
   public static MailTemplate fromFileName(String fileName) {
     for (MailTemplate template : values()) {
       if (template.fileName.equalsIgnoreCase(fileName)) {

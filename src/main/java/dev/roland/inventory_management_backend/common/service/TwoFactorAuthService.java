@@ -13,6 +13,7 @@ import dev.samstevens.totp.qr.ZxingPngQrGenerator;
 import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.TimeProvider;
 
+/** Creates TOTP setup data and verifies time-based authentication codes. */
 @Service
 public class TwoFactorAuthService {
 
@@ -23,6 +24,13 @@ public class TwoFactorAuthService {
   private static final int PERIOD = 30;
   private static final int TOLERANCE_STEPS = 1;
 
+  /** Configures TOTP generation and verification with the supplied time source. */
+  /**
+   * Configures TOTP generation and verification with the supplied time source.
+   *
+   * @param secretGenerator generates shared TOTP secrets
+   * @param timeProvider supplies the current time for code validation
+   */
   public TwoFactorAuthService(SecretGenerator secretGenerator, TimeProvider timeProvider) {
     this.secretGenerator = secretGenerator;
 
@@ -48,6 +56,7 @@ public class TwoFactorAuthService {
    * @param secret TOTP shared secret
    * @param email user email shown as the QR label
    * @return PNG data URI for the QR code
+   * @throws RuntimeException when QR image generation fails
    */
   public String generateQrCodeImage(String secret, String email) {
     QrData data =

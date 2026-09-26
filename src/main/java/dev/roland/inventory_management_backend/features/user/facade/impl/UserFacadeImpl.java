@@ -25,6 +25,7 @@ import dev.roland.inventory_management_backend.features.user.message.UserMessage
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the user account service operations. */
 @Service
 @RequiredArgsConstructor
 public class UserFacadeImpl implements UserFacade {
@@ -114,7 +115,11 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Clears the user's password and authentication setup state.
+   *
+   * @param user account whose credentials and authentication state are reset
+   */
   private void resetUserPasswordAndAuth(User user) {
     // Reset password - set to null so user must request new one-time password
     user.setPassword(null);
@@ -127,7 +132,12 @@ public class UserFacadeImpl implements UserFacade {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param id id supplied to this method
+   * @param mediaAssetId media asset id supplied to this method
+   */
   @Override
   public void updateAvatar(Long id, Long mediaAssetId) {
     User user = userService.findByIdOrThrow(id);
@@ -165,7 +175,11 @@ public class UserFacadeImpl implements UserFacade {
     mediaUsageService.save(usage);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get all users result
+   */
   @Override
   public AllUserResponse getAllUsers() {
     List<User> users = userService.findAll();

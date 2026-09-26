@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Exposes the user identity, role, and account state returned by user endpoints. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,6 +17,11 @@ import lombok.Setter;
 @Builder
 public class UserDto {
 
+  /**
+   * Creates a user response from the supplied account fields.
+   *
+   * @param user account fields to expose
+   */
   public UserDto(User user) {
     this.id = user.getId();
     this.username = user.getUsername();

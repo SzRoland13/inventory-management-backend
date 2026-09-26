@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>This is not a database entity and intentionally keeps only scalar serializable fields. A
  * suspended user is considered both disabled and locked.
+ *
+ * @return get authorities result
  */
 @Getter
 @RequiredArgsConstructor

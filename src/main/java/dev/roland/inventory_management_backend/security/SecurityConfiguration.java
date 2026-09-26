@@ -22,6 +22,7 @@ import dev.roland.inventory_management_backend.features.auth.AuthController;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import lombok.RequiredArgsConstructor;
 
+/** Defines stateless JWT authentication and access rules for API routes. */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -31,6 +32,13 @@ public class SecurityConfiguration {
   private final CustomUserDetailsService userDetailsService;
   private final AuthenticationFilter authenticationFilter;
 
+  /**
+   * Configures the stateless API security filter chain.
+   *
+   * @param http http supplied to this method
+   * @return filter chain result
+   * @throws Exception when the operation cannot be completed
+   */
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
@@ -76,11 +84,23 @@ public class SecurityConfiguration {
     return http.build();
   }
 
+  /**
+   * Creates the password encoder used for stored credentials.
+   *
+   * @return encoder used to hash passwords
+   */
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
+  /**
+   * Exposes Spring Security authentication for login workflows.
+   *
+   * @param authenticationConfiguration authentication configuration supplied to this method
+   * @return authentication manager result
+   * @throws Exception when the operation cannot be completed
+   */
   @Bean
   public AuthenticationManager authenticationManager(
       AuthenticationConfiguration authenticationConfiguration) throws Exception {

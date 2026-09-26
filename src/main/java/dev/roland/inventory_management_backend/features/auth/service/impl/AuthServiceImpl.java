@@ -17,6 +17,7 @@ import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements password setup and authenticated-session operations. */
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -71,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
    *     Security, representing the currently authenticated user
    * @throws UnauthorizedException if the authentication is missing, invalid, or the principal
    *     cannot be resolved
+   * @return check session result
    */
   @Override
   public UserDto checkSession(Authentication authentication) {

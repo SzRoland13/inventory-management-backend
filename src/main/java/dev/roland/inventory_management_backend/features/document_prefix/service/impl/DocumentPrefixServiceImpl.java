@@ -20,6 +20,7 @@ import dev.roland.inventory_management_backend.features.document_prefix.reposito
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the document numbering prefix service operations. */
 @Service
 @RequiredArgsConstructor
 public class DocumentPrefixServiceImpl implements DocumentPrefixService {
@@ -62,7 +63,12 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
     return DocumentPrefixesResponse.builder().prefixes(dtos).build();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param dtos dtos supplied to this method
+   * @return update prefixes result
+   */
   @Transactional
   @Override
   public DocumentPrefixesResponse updatePrefixes(List<DocumentPrefixDto> dtos) {

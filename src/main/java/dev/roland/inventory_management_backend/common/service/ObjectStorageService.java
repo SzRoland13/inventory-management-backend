@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+/** Stores media objects and creates access URLs through the configured S3-compatible service. */
 @Service
 @RequiredArgsConstructor
 public class ObjectStorageService {

@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.refresh_token.service.Re
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the refresh token service operations. */
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {

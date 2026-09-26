@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the credentials submitted to authenticate an account. */
 @Data
 public class LoginRequest {
 

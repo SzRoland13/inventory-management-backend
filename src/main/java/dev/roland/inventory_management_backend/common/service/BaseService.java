@@ -10,6 +10,12 @@ import dev.roland.inventory_management_backend.common.exception.NotFoundExceptio
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
 
+/**
+ * Provides shared CRUD operations for JPA-backed domain services.
+ *
+ * @param <T> entity managed by the service
+ * @param <ID> type of the entity identifier
+ */
 public interface BaseService<T extends IdInterface<ID>, ID extends Serializable> {
 
   /**

@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.product_attribute_option
 import dev.roland.inventory_management_backend.features.product_attribute_option.service.ProductAttributeOptionService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the product attribute option service operations. */
 @Service
 @RequiredArgsConstructor
 public class ProductAttributeOptionServiceImpl implements ProductAttributeOptionService {
@@ -21,7 +22,11 @@ public class ProductAttributeOptionServiceImpl implements ProductAttributeOption
     return productAttributeOptionRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_ATTRIBUTE_OPTION;

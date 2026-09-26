@@ -12,6 +12,7 @@ import dev.roland.inventory_management_backend.features.company.repository.Compa
 import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements persistence operations for company profile data. */
 @Service
 @RequiredArgsConstructor
 public class CompanyServiceImpl implements CompanyService {
@@ -35,7 +36,11 @@ public class CompanyServiceImpl implements CompanyService {
     return companyRepository.findFirstByOrderByIdAsc();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get company or create new result
+   */
   @Override
   public Company getCompanyOrCreateNew() {
     return findFirstByOrderByIdAsc().orElseGet(() -> save(Company.builder().name("").build()));

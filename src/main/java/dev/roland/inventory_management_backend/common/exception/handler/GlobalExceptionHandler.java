@@ -19,35 +19,60 @@ import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  /** Handles the corresponding exception as a consistent API response. */
+  /**
+   * Converts a domain API failure into a bad-request response.
+   *
+   * @param ex exception carrying the response message and parameters
+   * @return bad-request response for the client
+   */
   @ExceptionHandler(ApiException.class)
   public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
   }
 
-  /** Handles the corresponding exception as a consistent API response. */
+  /**
+   * Converts a missing-resource failure into a not-found response.
+   *
+   * @param ex exception carrying the missing-resource message
+   * @return not-found response for the client
+   */
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<ApiResponse<Void>> handleNotFoundExceptions(NotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(ApiResponse.failure(ex.getMessageKey()));
   }
 
-  /** Handles the corresponding exception as a consistent API response. */
+  /**
+   * Converts an authorization failure into an unauthorized response.
+   *
+   * @param ex exception carrying the authorization message
+   * @return unauthorized response for the client
+   */
   @ExceptionHandler(UnauthorizedException.class)
   public ResponseEntity<ApiResponse<Void>> handleUnauthorized(UnauthorizedException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
   }
 
-  /** Handles the corresponding exception as a consistent API response. */
+  /**
+   * Converts an unexpected failure into a generic server-error response.
+   *
+   * @param ex unexpected exception raised while handling the request
+   * @return generic server-error response for the client
+   */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ApiResponse.failure(GenericMessageKey.GENERIC_ERROR));
   }
 
-  /** Handles the corresponding exception as a consistent API response. */
+  /**
+   * Converts request validation failures into a response containing field errors.
+   *
+   * @param ex exception containing the rejected request fields
+   * @return bad-request response with field-specific validation messages
+   */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<String>> handleValidationErrors(
       MethodArgumentNotValidException ex) {

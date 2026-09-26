@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.auth.message.AuthMessage
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/** Validates access tokens on incoming requests and establishes the authenticated principal. */
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter extends OncePerRequestFilter {

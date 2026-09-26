@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.media_asset.service.Medi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/** Removes expired or unreferenced media objects from persistent storage. */
 @Service
 @RequiredArgsConstructor
 @Slf4j

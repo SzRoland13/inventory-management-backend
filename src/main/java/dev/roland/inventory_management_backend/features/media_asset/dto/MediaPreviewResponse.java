@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Shapes media asset data returned to API clients. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

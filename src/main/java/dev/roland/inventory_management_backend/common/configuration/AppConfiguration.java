@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
+/** Collects application settings for authentication, storage, mail, and Redis services. */
 @Getter
 @Component
 public class AppConfiguration {

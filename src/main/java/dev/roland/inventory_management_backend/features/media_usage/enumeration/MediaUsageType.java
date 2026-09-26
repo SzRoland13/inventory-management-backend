@@ -3,6 +3,7 @@ package dev.roland.inventory_management_backend.features.media_usage.enumeration
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/** Identifies the purpose for which a media asset is attached to an entity. */
 @Getter
 @AllArgsConstructor
 public enum MediaUsageType {

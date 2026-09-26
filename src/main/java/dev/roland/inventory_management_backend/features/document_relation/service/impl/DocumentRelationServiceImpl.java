@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.document_relation.reposi
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the document relationship service operations. */
 @Service
 @RequiredArgsConstructor
 public class DocumentRelationServiceImpl implements DocumentRelationService {
@@ -21,7 +22,11 @@ public class DocumentRelationServiceImpl implements DocumentRelationService {
     return documentRelationRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_RELATION;

@@ -7,6 +7,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import dev.roland.inventory_management_backend.common.annotation.ValidPassword;
 
+/** Checks password input against the application password requirements. */
 public class PasswordValidator implements ConstraintValidator<ValidPassword, String> {
 
   private static final Pattern UPPERCASE = Pattern.compile("[A-Z]");

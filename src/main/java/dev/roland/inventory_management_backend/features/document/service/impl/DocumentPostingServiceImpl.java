@@ -17,13 +17,19 @@ import dev.roland.inventory_management_backend.features.stock_movement.service.S
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the inventory document service operations. */
 @Service
 @RequiredArgsConstructor
 public class DocumentPostingServiceImpl implements DocumentPostingService {
   private final DocumentService documentService;
   private final StockMovementService stockMovementService;
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param document document supplied to this method
+   * @return complete result
+   */
   @Transactional
   @Override
   public Document complete(Document document) {

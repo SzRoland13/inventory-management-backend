@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Reports whether an account still needs to complete first-login setup. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

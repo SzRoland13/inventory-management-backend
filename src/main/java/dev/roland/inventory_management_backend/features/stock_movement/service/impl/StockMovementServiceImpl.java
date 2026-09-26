@@ -20,6 +20,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the stock movement service operations. */
 @Service
 @RequiredArgsConstructor
 public class StockMovementServiceImpl implements StockMovementService {
@@ -38,7 +39,16 @@ public class StockMovementServiceImpl implements StockMovementService {
     return NotFoundMessageKey.STOCK_MOVEMENT;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param documentLine document line supplied to this method
+   * @param warehouse warehouse supplied to this method
+   * @param quantityChange quantity change supplied to this method
+   * @param movementType movement type supplied to this method
+   * @param createdByUser created by user supplied to this method
+   * @return post movement result
+   */
   @Transactional
   @Override
   public StockMovement postMovement(

@@ -49,6 +49,7 @@ import dev.roland.inventory_management_backend.features.user.enumeration.UserSta
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Coordinates login, one-time-code, token, and two-factor authentication workflows. */
 @Service
 @RequiredArgsConstructor
 public class AuthFacadeImpl implements AuthFacade {
@@ -109,12 +110,22 @@ public class AuthFacadeImpl implements AuthFacade {
     oneTimeCodeService.delete(oneTimeCode);
   }
 
-  /** Generates a random one-time code for login verification. */
+  /**
+   * Generates a random one-time code for login verification.
+   *
+   * @return generated one-time code
+   */
   private String generateOneTimeCode() {
     return UUID.randomUUID().toString().replace("-", "");
   }
 
-  /** Sends the one-time code email to the user. */
+  /**
+   * Sends the one-time code email to the user.
+   *
+   * @param user account receiving the code
+   * @param code one-time code included in the email
+   * @return true when the email was sent successfully
+   */
   private boolean sendFirstLoginEmail(User user, String code) {
     Map<String, Object> model = Map.of("username", user.getUsername(), "oneTimeCode", code);
 
@@ -197,7 +208,12 @@ public class AuthFacadeImpl implements AuthFacade {
     return twoFactorAuthService.generateQrCodeImage(secret, user.getEmail());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param request request supplied to this method
+   * @return verify2fa login result
+   */
   @Override
   @Transactional
   public LoginFinalizationResult verify2faLogin(TwoFactorVerifyRequest request) {
@@ -268,7 +284,12 @@ public class AuthFacadeImpl implements AuthFacade {
     return new LogoutResult(true, true);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param user user supplied to this method
+   * @return generate tokens result
+   */
   @Transactional
   private AuthTokens generateTokens(User user) {
     String accessToken = jwtService.generateAccessToken(user);

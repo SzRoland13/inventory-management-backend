@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Carries input data for company Base Data Update in the company profile API. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

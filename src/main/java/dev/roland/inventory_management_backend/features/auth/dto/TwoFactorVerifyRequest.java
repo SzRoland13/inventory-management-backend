@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the TOTP code submitted to verify two-factor authentication. */
 @Data
 public class TwoFactorVerifyRequest {
 

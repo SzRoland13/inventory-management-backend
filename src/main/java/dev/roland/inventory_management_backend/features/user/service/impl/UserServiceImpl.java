@@ -18,6 +18,7 @@ import dev.roland.inventory_management_backend.features.user.repository.UserRepo
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the user account service operations. */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {

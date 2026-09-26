@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Combines authentication tokens with the user details returned after login. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,6 +19,7 @@ public class LoginResponse {
   private UserDetails user;
   private boolean firstTime2FAEnabled;
 
+  /** Carries the user profile fields returned alongside authentication tokens. */
   @Getter
   @Setter
   @NoArgsConstructor

@@ -6,6 +6,7 @@ import dev.roland.inventory_management_backend.common.enumeration.MailTemplate;
 import lombok.Builder;
 import lombok.Data;
 
+/** Carries the recipient, subject, body, and optional template data for an email. */
 @Data
 @Builder
 public class EmailDetails {

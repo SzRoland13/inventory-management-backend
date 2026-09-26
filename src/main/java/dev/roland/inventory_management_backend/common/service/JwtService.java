@@ -18,6 +18,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 
+/** Creates and validates the access and refresh JWTs used by API authentication. */
 @Component
 @RequiredArgsConstructor
 public class JwtService {

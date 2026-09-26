@@ -36,6 +36,7 @@ import dev.roland.inventory_management_backend.features.auth.service.AuthService
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes the authentication and token-management REST endpoints. */
 @RestController
 @RequestMapping(AUTH_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -57,6 +58,12 @@ public class AuthController {
   private final HttpOnlyCookieService cookieService;
   private final AppConfiguration appConfiguration;
 
+  /**
+   * Checks whether the email belongs to an account completing first login.
+   *
+   * @param request email to check
+   * @return response indicating whether this is the account's first login
+   */
   @PostMapping(CHECK_FIRST_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<CheckFirstLoginResponse>> checkIfFirstLogin(
       @Valid @RequestBody EmailRequest request) {
@@ -68,6 +75,12 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(messageKey, response));
   }
 
+  /**
+   * Sends a one-time code for first-login verification.
+   *
+   * @param request email address receiving the code
+   * @return confirmation response
+   */
   @PostMapping(SEND_OTC_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> sendOneTimeCode(@Valid @RequestBody EmailRequest request) {
     authFacade.sendOneTimeCode(request);
@@ -76,6 +89,12 @@ public class AuthController {
         .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
   }
 
+  /**
+   * Validates the first-login one-time code.
+   *
+   * @param request email and one-time code to validate
+   * @return validation response
+   */
   @PostMapping(VALIDATE_OTC_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> validateOneTimeCode(
       @Valid @RequestBody FirstLoginValidationRequest request) {
@@ -85,6 +104,12 @@ public class AuthController {
         ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, null));
   }
 
+  /**
+   * Sets the password after first-login verification.
+   *
+   * @param request password setup details
+   * @return confirmation response
+   */
   @PostMapping(SETUP_PASSWORD_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleSetupOfNewPassword(
       @Valid @RequestBody PasswordSetupRequest request) {
@@ -93,6 +118,12 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));
   }
 
+  /**
+   * Starts authentication and returns the temporary login token.
+   *
+   * @param request login credentials
+   * @return response containing the temporary login token
+   */
   @PostMapping(LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(
       @Valid @RequestBody LoginRequest request) {
@@ -101,6 +132,13 @@ public class AuthController {
             ApiResponse.success(AuthMessageKey.VALID_CREDENTIALS, authFacade.handleLogin(request)));
   }
 
+  /**
+   * Refreshes the access token using the refresh cookie.
+   *
+   * @param refreshToken refresh token cookie, if present
+   * @param response HTTP response receiving updated cookies
+   * @return token refresh result
+   */
   @PostMapping(REFRESH_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleTokenRefresh(
       @CookieValue(value = "refresh_token", required = false) String refreshToken,
@@ -124,12 +162,25 @@ public class AuthController {
         : ResponseEntity.ok(ApiResponse.success(AuthMessageKey.TOKEN_REFRESHED, null));
   }
 
+  /**
+   * Starts two-factor authentication setup for the account.
+   *
+   * @param request account email
+   * @return response containing the authenticator setup data
+   */
   @PostMapping(TWO_FA_SETUP_ENDPOINT)
   ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody EmailRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TWO_FA_CODE_GENERATED, authFacade.setup2fa(request)));
   }
 
+  /**
+   * Completes login with a two-factor verification code.
+   *
+   * @param request temporary token and verification code
+   * @param response HTTP response receiving authentication cookies
+   * @return response containing the signed-in user details
+   */
   @PostMapping(TWO_FA_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(
       @Valid @RequestBody TwoFactorVerifyRequest request, HttpServletResponse response) {
@@ -155,12 +206,25 @@ public class AuthController {
     return ResponseEntity.ok(ApiResponse.success(key, result.getLoginResponse()));
   }
 
+  /**
+   * Checks whether the current authenticated session is valid.
+   *
+   * @param authentication current authenticated principal
+   * @return response containing the signed-in user details
+   */
   @GetMapping(CHECK_SESSION_ENDPOINT)
   public ResponseEntity<ApiResponse<UserDto>> checkSession(Authentication authentication) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TOKEN_VALID, authService.checkSession(authentication)));
   }
 
+  /**
+   * Ends the current session and clears authentication cookies.
+   *
+   * @param refreshToken refresh token cookie, if present
+   * @param response HTTP response whose authentication cookies are cleared
+   * @return logout confirmation response
+   */
   @PostMapping(LOGOUT_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleLogout(
       @CookieValue(value = "refresh_token", required = false) String refreshToken,

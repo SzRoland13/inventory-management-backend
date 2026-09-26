@@ -11,6 +11,7 @@ import dev.roland.inventory_management_backend.common.configuration.AppConfigura
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
 import lombok.RequiredArgsConstructor;
 
+/** Stores and retrieves short-lived authentication sessions in Redis. */
 @Service
 @RequiredArgsConstructor
 public class LoginSessionService {

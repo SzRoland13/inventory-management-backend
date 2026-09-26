@@ -21,6 +21,7 @@ import com.github.mustachejava.MustacheFactory;
 import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
 import lombok.RequiredArgsConstructor;
 
+/** Sends plain-text and Mustache-rendered HTML email through Spring Mail. */
 @Service
 @RequiredArgsConstructor
 public class EmailService {
