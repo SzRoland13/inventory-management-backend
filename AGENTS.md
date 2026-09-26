@@ -203,3 +203,9 @@ When making meaningful changes, add focused tests where practical. Be aware that
 - Keep README facts aligned with `pom.xml`, `application.yml`, package names, and `docker-compose.yml` when the stack changes.
 - `target/` exists locally and should not be edited.
 - `.env` exists locally and should not be committed or printed.
+
+## Shared Graphify Skill
+
+The Graphify skill is maintained in `.agents/skills/graphify/` so coding agents can share the same instructions. Read its `SKILL.md` and relevant files under `references/` when using Graphify.
+
+For codebase questions, if `graphify-out/graph.json` exists, start with `graphify query "<question>"`. Use `graphify path` for a relationship between two concepts and `graphify explain` for a focused concept. Use `graphify-out/wiki/index.md` for broad navigation when it exists. After changing code, run `graphify update .` when the CLI is available. Generated graph data in `graphify-out/` is ignored by Git.
