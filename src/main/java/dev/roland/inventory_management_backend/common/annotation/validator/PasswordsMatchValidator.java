@@ -14,9 +14,8 @@ public class PasswordsMatchValidator
   public boolean isValid(
       final PasswordSetupRequest request,
       final ConstraintValidatorContext constraintValidatorContext) {
-    if (request.getPassword() == null || request.getRepeatPassword() == null) {
-      return false;
-    }
-    return request.getPassword().equals(request.getRepeatPassword());
+    return request.getPassword() != null
+        && request.getRepeatPassword() != null
+        && request.getPassword().equals(request.getRepeatPassword());
   }
 }

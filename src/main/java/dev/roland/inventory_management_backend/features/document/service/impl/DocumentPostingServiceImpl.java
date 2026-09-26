@@ -33,19 +33,19 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
   @Transactional
   @Override
   public Document complete(final Document document) {
-    if (document.getStatus() == DocumentStatus.COMPLETED) {
-      return document;
-    }
-
-    if (document.getLines() != null) {
-      for (DocumentLine line : document.getLines()) {
-        postLine(document, line);
+    Document result = document;
+    if (document.getStatus() != DocumentStatus.COMPLETED) {
+      if (document.getLines() != null) {
+        for (DocumentLine line : document.getLines()) {
+          postLine(document, line);
+        }
       }
-    }
 
-    document.setStatus(DocumentStatus.COMPLETED);
-    document.setCompletedAt(LocalDateTime.now());
-    return documentService.save(document);
+      document.setStatus(DocumentStatus.COMPLETED);
+      document.setCompletedAt(LocalDateTime.now());
+      result = documentService.save(document);
+    }
+    return result;
   }
 
   private void postLine(final Document document, final DocumentLine line) {

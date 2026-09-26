@@ -40,15 +40,19 @@ public class HttpOnlyCookieService {
   }
 
   private String extractToken(final HttpServletRequest request, final String tokenName) {
-    if (request.getCookies() == null) {
-      return null;
+    final Cookie[] cookies = request.getCookies();
+    final String token;
+    if (cookies == null) {
+      token = null;
+    } else {
+      token =
+          Arrays.stream(cookies)
+              .filter(cookie -> tokenName.equals(cookie.getName()))
+              .map(Cookie::getValue)
+              .findFirst()
+              .orElse(null);
     }
-
-    return Arrays.stream(request.getCookies())
-        .filter(cookie -> tokenName.equals(cookie.getName()))
-        .map(Cookie::getValue)
-        .findFirst()
-        .orElse(null);
+    return token;
   }
 
   /**

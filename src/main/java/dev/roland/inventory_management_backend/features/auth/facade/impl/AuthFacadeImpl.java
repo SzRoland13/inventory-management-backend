@@ -177,14 +177,15 @@ public class AuthFacadeImpl implements AuthFacade {
             .findByToken(token)
             .orElseThrow(() -> new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS));
 
+    final TokenRefreshResult result;
     if (jwtService.isTokenExpired(savedToken.getToken())) {
       refreshTokenService.delete(savedToken);
-      return new TokenRefreshResult(null, true);
+      result = new TokenRefreshResult(null, true);
+    } else {
+      final String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
+      result = new TokenRefreshResult(newAccessToken, false);
     }
-
-    final String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
-
-    return new TokenRefreshResult(newAccessToken, false);
+    return result;
   }
 
   /** {@inheritDoc} */

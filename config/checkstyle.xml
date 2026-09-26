@@ -54,6 +54,12 @@
         <!-- Variables that are never reassigned must be final -->
         <module name="FinalLocalVariable"/>
 
+        <!-- Keep methods to a single return statement. -->
+        <module name="ReturnCount">
+            <property name="max" value="1"/>
+            <property name="maxForVoid" value="1"/>
+        </module>
+
     </module>
 
 </module>

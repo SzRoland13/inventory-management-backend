@@ -38,6 +38,7 @@ public class EmailService {
    * @return true when the mail sender accepts the message, otherwise false
    */
   public boolean sendSimpleMail(final EmailDetails details) {
+    boolean sent = false;
     try {
       final SimpleMailMessage mailMessage = new SimpleMailMessage();
 
@@ -47,11 +48,11 @@ public class EmailService {
       mailMessage.setSubject(details.getSubject());
 
       javaMailSender.send(mailMessage);
-
-      return true;
+      sent = true;
     } catch (Exception e) {
-      return false;
+      // Report failure to the caller.
     }
+    return sent;
   }
 
   /**
@@ -61,15 +62,16 @@ public class EmailService {
    * @return true if email sent successfully, false otherwise
    */
   public boolean sendMailWithTemplate(final EmailDetails details) {
+    boolean sent = false;
     try {
       final String htmlBody =
           renderTemplate(details.getTemplateName().getFileName(), details.getTemplateModel());
       sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
-      return true;
+      sent = true;
     } catch (Exception e) {
       e.printStackTrace();
-      return false;
     }
+    return sent;
   }
 
   private String renderTemplate(final String templateName, final Map<String, Object> model)

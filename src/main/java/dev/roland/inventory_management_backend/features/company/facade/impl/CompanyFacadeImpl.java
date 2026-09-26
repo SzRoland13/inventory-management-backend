@@ -134,42 +134,43 @@ public class CompanyFacadeImpl implements CompanyFacade {
         mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
 
-    if (existingUsage.isPresent()
-        && existingUsage.get().getMediaAsset().getId().equals(newMediaId)) {
-      return;
-    }
+    if (existingUsage.isEmpty()
+        || !existingUsage.get().getMediaAsset().getId().equals(newMediaId)) {
+      if (existingUsage.isPresent()) {
+        final MediaUsage usage = existingUsage.get();
+        final MediaAsset oldAsset = usage.getMediaAsset();
 
-    if (existingUsage.isPresent()) {
-      final MediaUsage usage = existingUsage.get();
-      final MediaAsset oldAsset = usage.getMediaAsset();
+        mediaUsageService.delete(usage);
 
-      mediaUsageService.delete(usage);
-
-      if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
-        mediaAssetFacade.deleteAsset(oldAsset.getId());
+        if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
+          mediaAssetFacade.deleteAsset(oldAsset.getId());
+        }
       }
+
+      final MediaAsset newAsset = mediaAssetService.findByIdOrThrow(newMediaId);
+
+      final String newPath =
+          objectStorageService.generateSolidObjectPath(
+              newAsset.getFilename(),
+              MediaEntityType.COMPANY,
+              company.getId(),
+              MediaUsageType.LOGO);
+
+      objectStorageService.move(newAsset.getObjectPath(), newPath);
+
+      newAsset.setObjectPath(newPath);
+      mediaAssetService.save(newAsset);
+
+      final MediaUsage usage =
+          MediaUsage.builder()
+              .mediaAsset(newAsset)
+              .entityType(MediaEntityType.COMPANY)
+              .entityId(company.getId())
+              .usageType(MediaUsageType.LOGO)
+              .build();
+
+      mediaUsageService.save(usage);
     }
-
-    final MediaAsset newAsset = mediaAssetService.findByIdOrThrow(newMediaId);
-
-    final String newPath =
-        objectStorageService.generateSolidObjectPath(
-            newAsset.getFilename(), MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
-
-    objectStorageService.move(newAsset.getObjectPath(), newPath);
-
-    newAsset.setObjectPath(newPath);
-    mediaAssetService.save(newAsset);
-
-    final MediaUsage usage =
-        MediaUsage.builder()
-            .mediaAsset(newAsset)
-            .entityType(MediaEntityType.COMPANY)
-            .entityId(company.getId())
-            .usageType(MediaUsageType.LOGO)
-            .build();
-
-    mediaUsageService.save(usage);
   }
 
   private CompanyBaseDataResponse buildBaseDataResponse(final Company company) {
