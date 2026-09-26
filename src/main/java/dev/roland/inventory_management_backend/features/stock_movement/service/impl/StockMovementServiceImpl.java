@@ -52,12 +52,12 @@ public class StockMovementServiceImpl implements StockMovementService {
   @Transactional
   @Override
   public StockMovement postMovement(
-      DocumentLine documentLine,
-      Warehouse warehouse,
-      BigDecimal quantityChange,
-      StockMovementType movementType,
-      User createdByUser) {
-    StockBalance balance =
+      final DocumentLine documentLine,
+      final Warehouse warehouse,
+      final BigDecimal quantityChange,
+      final StockMovementType movementType,
+      final User createdByUser) {
+    final StockBalance balance =
         stockBalanceRepository
             .findByWarehouseAndProduct(warehouse, documentLine.getProduct())
             .orElseGet(
@@ -71,7 +71,7 @@ public class StockMovementServiceImpl implements StockMovementService {
     balance.setQuantity(balance.getQuantity().add(quantityChange));
     stockBalanceRepository.save(balance);
 
-    StockMovement movement =
+    final StockMovement movement =
         StockMovement.builder()
             .document(documentLine.getDocument())
             .documentLine(documentLine)

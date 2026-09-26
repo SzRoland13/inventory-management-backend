@@ -29,8 +29,9 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
    * @return get put request for new media asset result
    */
   @Override
-  public MediaUploadInitResponse getPutRequestForNewMediaAsset(MediaUploadInitRequest request) {
-    GeneratedMediaPathAndName generatedMediaPathAndName =
+  public MediaUploadInitResponse getPutRequestForNewMediaAsset(
+      final MediaUploadInitRequest request) {
+    final GeneratedMediaPathAndName generatedMediaPathAndName =
         objectStorageService.generateTempObjectPath(request.getFilename());
 
     MediaAsset mediaAsset =
@@ -44,7 +45,7 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
 
     mediaAsset = mediaAssetService.save(mediaAsset);
 
-    PresignedUrlData presigned =
+    final PresignedUrlData presigned =
         objectStorageService.generatePresignedPutUrl(
             mediaAsset.getObjectPath(), request.getMimeType());
 
@@ -54,9 +55,9 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
 
   /** {@inheritDoc} */
   @Override
-  public MediaPreviewResponse getPreview(Long id) {
-    MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);
-    PresignedUrlData presigned =
+  public MediaPreviewResponse getPreview(final Long id) {
+    final MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);
+    final PresignedUrlData presigned =
         objectStorageService.generatePresignedGetUrl(mediaAsset.getObjectPath());
 
     return new MediaPreviewResponse(mediaAsset.getId(), presigned.getUrl(), presigned.getExpiry());
@@ -68,8 +69,8 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
    * @param id id supplied to this method
    */
   @Override
-  public void deleteAsset(Long id) {
-    MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);
+  public void deleteAsset(final Long id) {
+    final MediaAsset mediaAsset = mediaAssetService.findByIdOrThrow(id);
 
     objectStorageService.delete(mediaAsset.getObjectPath());
     mediaAssetService.delete(mediaAsset);

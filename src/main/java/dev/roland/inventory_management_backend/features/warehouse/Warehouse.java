@@ -65,7 +65,7 @@ public class Warehouse {
 
   @UpdateTimestamp
   @Column(name = "updated_at")
-  private LocalDateTime updated_at;
+  private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "warehouse")
   @MapKey(name = "product")

@@ -20,7 +20,7 @@ public class UserDtoWithAvatar extends UserDto {
    * @param user account fields to expose
    * @param avatarUrl URL used to display the user's avatar
    */
-  public UserDtoWithAvatar(User user, String avatarUrl) {
+  public UserDtoWithAvatar(final User user, final String avatarUrl) {
     super(user);
     this.avatarUrl = avatarUrl;
   }

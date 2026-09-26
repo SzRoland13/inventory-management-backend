@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
    * @return bad-request response for the client
    */
   @ExceptionHandler(ApiException.class)
-  public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
+  public ResponseEntity<ApiResponse<Void>> handleApiException(final ApiException ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
   }
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
    * @return not-found response for the client
    */
   @ExceptionHandler(NotFoundException.class)
-  public ResponseEntity<ApiResponse<Void>> handleNotFoundExceptions(NotFoundException ex) {
+  public ResponseEntity<ApiResponse<Void>> handleNotFoundExceptions(final NotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(ApiResponse.failure(ex.getMessageKey()));
   }
@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
    * @return unauthorized response for the client
    */
   @ExceptionHandler(UnauthorizedException.class)
-  public ResponseEntity<ApiResponse<Void>> handleUnauthorized(UnauthorizedException ex) {
+  public ResponseEntity<ApiResponse<Void>> handleUnauthorized(final UnauthorizedException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
   }
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
    * @return generic server-error response for the client
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
+  public ResponseEntity<ApiResponse<Void>> handleGenericException(final Exception ex) {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ApiResponse.failure(GenericMessageKey.GENERIC_ERROR));
   }
@@ -75,8 +75,8 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<String>> handleValidationErrors(
-      MethodArgumentNotValidException ex) {
-    Map<String, Object> params = new HashMap<>();
+      final MethodArgumentNotValidException ex) {
+    final Map<String, Object> params = new HashMap<>();
     ex.getBindingResult()
         .getFieldErrors()
         .forEach(error -> params.put(error.getField(), error.getDefaultMessage()));

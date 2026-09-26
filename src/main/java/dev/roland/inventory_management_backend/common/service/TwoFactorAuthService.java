@@ -24,17 +24,17 @@ public class TwoFactorAuthService {
   private static final int PERIOD = 30;
   private static final int TOLERANCE_STEPS = 1;
 
-  /** Configures TOTP generation and verification with the supplied time source. */
   /**
    * Configures TOTP generation and verification with the supplied time source.
    *
    * @param secretGenerator generates shared TOTP secrets
    * @param timeProvider supplies the current time for code validation
    */
-  public TwoFactorAuthService(SecretGenerator secretGenerator, TimeProvider timeProvider) {
+  public TwoFactorAuthService(
+      final SecretGenerator secretGenerator, final TimeProvider timeProvider) {
     this.secretGenerator = secretGenerator;
 
-    DefaultCodeGenerator codeGenerator =
+    final DefaultCodeGenerator codeGenerator =
         new DefaultCodeGenerator(HashingAlgorithm.SHA1, CODE_DIGITS);
 
     this.verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
@@ -58,8 +58,8 @@ public class TwoFactorAuthService {
    * @return PNG data URI for the QR code
    * @throws RuntimeException when QR image generation fails
    */
-  public String generateQrCodeImage(String secret, String email) {
-    QrData data =
+  public String generateQrCodeImage(final String secret, final String email) {
+    final QrData data =
         new QrData.Builder()
             .label(email)
             .issuer("Inventory Management App")
@@ -69,9 +69,9 @@ public class TwoFactorAuthService {
             .period(PERIOD)
             .build();
 
-    QrGenerator generator = new ZxingPngQrGenerator();
+    final QrGenerator generator = new ZxingPngQrGenerator();
     try {
-      byte[] imageData = generator.generate(data);
+      final byte[] imageData = generator.generate(data);
       return getDataUriForImage(imageData, generator.getImageMimeType());
     } catch (Exception e) {
       throw new RuntimeException("Failed to generate QR code", e);
@@ -85,7 +85,7 @@ public class TwoFactorAuthService {
    * @param code code entered by the user
    * @return true when the code is valid within the configured tolerance window
    */
-  public boolean verifyCode(String secret, String code) {
+  public boolean verifyCode(final String secret, final String code) {
     return verifier.isValidCode(secret, code);
   }
 }

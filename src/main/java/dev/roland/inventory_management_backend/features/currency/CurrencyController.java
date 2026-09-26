@@ -27,7 +27,7 @@ public class CurrencyController {
    */
   @GetMapping
   public ResponseEntity<ApiResponse<CurrenciesResponse>> getAll() {
-    CurrenciesResponse response = currencyService.getAll();
+    final CurrenciesResponse response = currencyService.getAll();
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }

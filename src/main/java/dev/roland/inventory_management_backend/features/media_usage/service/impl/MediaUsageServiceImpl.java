@@ -35,7 +35,7 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   /** {@inheritDoc} */
   @Override
   public Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
-      MediaEntityType type, Long entityId, MediaUsageType usageType) {
+      final MediaEntityType type, final Long entityId, final MediaUsageType usageType) {
     return mediaUsageRepository.findByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
   }
 
@@ -46,7 +46,7 @@ public class MediaUsageServiceImpl implements MediaUsageService {
    * @return usage count by media asset id result
    */
   @Override
-  public Long usageCountByMediaAssetId(Long id) {
-    return mediaUsageRepository.countByMediaAsset_Id(id);
+  public Long usageCountByMediaAssetId(final Long id) {
+    return mediaUsageRepository.countByMediaAssetId(id);
   }
 }

@@ -39,7 +39,7 @@ public enum UserStatus {
    * @param statuses statuses to convert
    * @return corresponding authority names
    */
-  public static String[] asAuthorities(UserStatus... statuses) {
+  public static String[] asAuthorities(final UserStatus... statuses) {
     return Arrays.stream(statuses).map(UserStatus::getAsAuthority).toArray(String[]::new);
   }
 
@@ -49,7 +49,7 @@ public enum UserStatus {
    * @param value status name to resolve
    * @return matching status, or empty when the name is unknown
    */
-  public static Optional<UserStatus> fromString(String value) {
+  public static Optional<UserStatus> fromString(final String value) {
     return Arrays.stream(values())
         .filter(status -> status.name().equalsIgnoreCase(value))
         .findFirst();

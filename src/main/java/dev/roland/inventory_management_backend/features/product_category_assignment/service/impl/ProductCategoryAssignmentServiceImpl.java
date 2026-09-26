@@ -25,8 +25,8 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
   /** {@inheritDoc} */
   @Transactional
   @Override
-  public ProductCategoryAssignment assign(Long productId, Long categoryId) {
-    ProductCategoryAssignmentId id = new ProductCategoryAssignmentId(productId, categoryId);
+  public ProductCategoryAssignment assign(final Long productId, final Long categoryId) {
+    final ProductCategoryAssignmentId id = new ProductCategoryAssignmentId(productId, categoryId);
     return productCategoryAssignmentRepository
         .findById(id)
         .orElseGet(() -> productCategoryAssignmentRepository.save(buildAssignment(id)));
@@ -39,13 +39,13 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
    */
   @Transactional
   @Override
-  public void remove(ProductCategoryAssignmentId id) {
+  public void remove(final ProductCategoryAssignmentId id) {
     productCategoryAssignmentRepository.deleteById(id);
   }
 
-  private ProductCategoryAssignment buildAssignment(ProductCategoryAssignmentId id) {
-    Product product = productService.findByIdOrThrow(id.getProductId());
-    ProductCategory category = productCategoryService.findByIdOrThrow(id.getCategoryId());
+  private ProductCategoryAssignment buildAssignment(final ProductCategoryAssignmentId id) {
+    final Product product = productService.findByIdOrThrow(id.getProductId());
+    final ProductCategory category = productCategoryService.findByIdOrThrow(id.getCategoryId());
 
     return ProductCategoryAssignment.builder().id(id).product(product).category(category).build();
   }

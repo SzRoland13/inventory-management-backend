@@ -11,7 +11,7 @@ public class NotFoundException extends ApiException {
    *
    * @param message localized message associated with the missing resource
    */
-  public NotFoundException(MessageKey message) {
+  public NotFoundException(final MessageKey message) {
     super(message);
   }
 
@@ -21,7 +21,7 @@ public class NotFoundException extends ApiException {
    * @param messageKey localized message associated with the missing resource
    * @param params values used to interpolate the message
    */
-  public NotFoundException(MessageKey messageKey, Map<String, Object> params) {
+  public NotFoundException(final MessageKey messageKey, final Map<String, Object> params) {
     super(messageKey, params);
   }
 }

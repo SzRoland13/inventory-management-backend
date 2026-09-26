@@ -18,7 +18,7 @@ public class CorsConfiguration {
    */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
-    org.springframework.web.cors.CorsConfiguration configuration =
+    final org.springframework.web.cors.CorsConfiguration configuration =
         new org.springframework.web.cors.CorsConfiguration();
 
     configuration.setAllowedOrigins(List.of("http://localhost:3001"));
@@ -27,7 +27,7 @@ public class CorsConfiguration {
     configuration.setAllowedHeaders(
         List.of("X-Requested-With", "Content-Type", "Cookie", "X-XSRF-TOKEN", "Authorization"));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
 
     return source;

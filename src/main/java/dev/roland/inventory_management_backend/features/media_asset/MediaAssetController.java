@@ -36,7 +36,7 @@ public class MediaAssetController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<MediaUploadInitResponse>> initializeUpload(
-      @RequestBody MediaUploadInitRequest request) {
+      @RequestBody final MediaUploadInitRequest request) {
     return ResponseEntity.accepted()
         .body(
             ApiResponse.success(
@@ -51,7 +51,7 @@ public class MediaAssetController {
    * @return response containing the preview URL
    */
   @GetMapping(MEDIA_ASSET_PREVIEW_ENDPOINT)
-  public ResponseEntity<ApiResponse<MediaPreviewResponse>> getPreview(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<MediaPreviewResponse>> getPreview(@PathVariable final Long id) {
     return ResponseEntity.ok(
         ApiResponse.success(MediaMessageKey.URL_GENERATED, mediaAssetFacade.getPreview(id)));
   }
@@ -63,7 +63,7 @@ public class MediaAssetController {
    * @return deletion confirmation response
    */
   @DeleteMapping(ID_PARAM)
-  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable final Long id) {
     mediaAssetFacade.deleteAsset(id);
 
     return ResponseEntity.accepted().body(ApiResponse.success(MediaMessageKey.MEDIA_DELETED, null));

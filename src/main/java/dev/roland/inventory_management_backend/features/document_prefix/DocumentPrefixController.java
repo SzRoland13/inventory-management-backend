@@ -30,7 +30,7 @@ public class DocumentPrefixController {
    */
   @GetMapping
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> getAll() {
-    DocumentPrefixesResponse response = documentPrefixService.getAllPrefixes();
+    final DocumentPrefixesResponse response = documentPrefixService.getAllPrefixes();
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }
@@ -43,8 +43,9 @@ public class DocumentPrefixController {
    */
   @PostMapping()
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> update(
-      @RequestBody DocumentPrefixesUpdateRequest request) {
-    DocumentPrefixesResponse response = documentPrefixService.updatePrefixes(request.getPrefixes());
+      @RequestBody final DocumentPrefixesUpdateRequest request) {
+    final DocumentPrefixesResponse response =
+        documentPrefixService.updatePrefixes(request.getPrefixes());
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }

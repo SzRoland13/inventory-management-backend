@@ -22,7 +22,7 @@ public interface AuthFacade {
   void sendOneTimeCode(EmailRequest request);
 
   /**
-   * Validates user's first login one time code
+   * Validates the user's first-login one-time code.
    *
    * @param request user's email and one time code
    * @throws ApiException if user does not exist or one time code invalid
@@ -30,7 +30,7 @@ public interface AuthFacade {
   void validateOneTimeCode(FirstLoginValidationRequest request);
 
   /**
-   * Handles login by verifying credentials and generating auth tokens
+   * Handles login by verifying credentials and generating authentication tokens.
    *
    * @param request user's email address and password
    * @return {@link ShortLifeTokenResponse} to later provide with 2FA login
@@ -39,7 +39,7 @@ public interface AuthFacade {
   ShortLifeTokenResponse handleLogin(LoginRequest request);
 
   /**
-   * Handles token refresh by validating token validity and expiry
+   * Handles token refresh by validating token validity and expiry.
    *
    * @param token refresh token
    * @return token refresh result containing the new access token

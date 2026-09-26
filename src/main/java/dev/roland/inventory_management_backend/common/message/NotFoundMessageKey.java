@@ -49,7 +49,7 @@ public enum NotFoundMessageKey implements MessageKey {
 
   private final String key;
 
-  NotFoundMessageKey(String key) {
+  NotFoundMessageKey(final String key) {
     this.key = key;
   }
 }

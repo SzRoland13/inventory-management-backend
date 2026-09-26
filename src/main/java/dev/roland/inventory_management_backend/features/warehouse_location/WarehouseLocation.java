@@ -67,7 +67,7 @@ public class WarehouseLocation {
 
   @UpdateTimestamp
   @Column(name = "updated_at")
-  private LocalDateTime updated_at;
+  private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Warehouse> warehouses = new ArrayList<>();

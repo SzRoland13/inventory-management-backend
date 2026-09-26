@@ -26,30 +26,28 @@ public class AuthServiceImpl implements AuthService {
   private final PasswordEncoder passwordEncoder;
 
   /**
-   * This method checks if provided credentials are valid and if it is first login (missing
-   * password)
+   * Checks whether the supplied email belongs to an account that has not set a password.
    *
    * @param request email address of user
    * @return ApiResponse based on if the user is trying to log in first time or not
    * @throws ApiException if user is not registered
    */
   @Override
-  public CheckFirstLoginResponse checkIfFirstLogin(EmailRequest request) {
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+  public CheckFirstLoginResponse checkIfFirstLogin(final EmailRequest request) {
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     return new CheckFirstLoginResponse(true, user.getPassword() == null);
   }
 
   /**
-   * This method checks if provided credentials are valid and if it is then saves the new password
-   * of user
+   * Saves the new password after validating first-login credentials.
    *
    * @param request email of user and the password two times
    * @throws ApiException if user credentials are invalid or the two passwords do not match
    */
   @Override
-  public void handleSetupOfNewPassword(PasswordSetupRequest request) {
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+  public void handleSetupOfNewPassword(final PasswordSetupRequest request) {
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     if (user.getPassword() != null || user.isOtcSetupComplete()) {
       throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
@@ -70,18 +68,18 @@ public class AuthServiceImpl implements AuthService {
    *
    * @param authentication the {@link Authentication} object automatically injected by Spring
    *     Security, representing the currently authenticated user
+   * @return check session result
    * @throws UnauthorizedException if the authentication is missing, invalid, or the principal
    *     cannot be resolved
-   * @return check session result
    */
   @Override
-  public UserDto checkSession(Authentication authentication) {
+  public UserDto checkSession(final Authentication authentication) {
 
     if (authentication == null || !authentication.isAuthenticated()) {
       throw new UnauthorizedException(AuthMessageKey.INVALID_TOKEN);
     }
 
-    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    final CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
     return new UserDto(userService.findByIdOrThrow(userDetails.getUserId()));
   }

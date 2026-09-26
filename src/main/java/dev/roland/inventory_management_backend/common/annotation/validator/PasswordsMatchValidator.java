@@ -12,8 +12,11 @@ public class PasswordsMatchValidator
 
   @Override
   public boolean isValid(
-      PasswordSetupRequest request, ConstraintValidatorContext constraintValidatorContext) {
-    if (request.getPassword() == null || request.getRepeatPassword() == null) return false;
+      final PasswordSetupRequest request,
+      final ConstraintValidatorContext constraintValidatorContext) {
+    if (request.getPassword() == null || request.getRepeatPassword() == null) {
+      return false;
+    }
     return request.getPassword().equals(request.getRepeatPassword());
   }
 }

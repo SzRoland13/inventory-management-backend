@@ -71,7 +71,7 @@ public class CompanyController {
   @PutMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<CompanyBaseDataResponse>> updateCompanyBaseData(
-      @RequestBody CompanyBaseDataUpdateRequest request) {
+      @RequestBody final CompanyBaseDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -87,7 +87,7 @@ public class CompanyController {
   @PutMapping(BILLING_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<CompanyBillingDataResponse>> updateCompanyBillingData(
-      @RequestBody CompanyBillingDataUpdateRequest request) {
+      @RequestBody final CompanyBillingDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -102,7 +102,8 @@ public class CompanyController {
    */
   @PostMapping(LOGO_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> updateLogo(@RequestBody LogoUpdateRequest request) {
+  public ResponseEntity<ApiResponse<Void>> updateLogo(
+      @RequestBody final LogoUpdateRequest request) {
     companyFacade.updateLogo(request.getMediaAssetId());
 
     return ResponseEntity.ok(ApiResponse.success(CompanyMessageKey.LOGO_UPDATED, null));
@@ -117,7 +118,7 @@ public class CompanyController {
   @PostMapping(PREFERRED_CURRENCY_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UpdatedPreferredCurrencyResponse>> updatePreferredCurrency(
-      @RequestBody CompanyPreferredCurrencyUpdateRequest request) {
+      @RequestBody final CompanyPreferredCurrencyUpdateRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
             CompanyMessageKey.CURRENCY_UPDATED, companyFacade.updatePreferredCurrency(request)));

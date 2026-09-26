@@ -14,7 +14,7 @@ public enum CompanyMessageKey implements MessageKey {
 
   private final String key;
 
-  CompanyMessageKey(String key) {
+  CompanyMessageKey(final String key) {
     this.key = key;
   }
 }

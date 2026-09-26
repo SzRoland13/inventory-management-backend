@@ -29,7 +29,7 @@ public class ApiResponse<T> {
    * @param payload successful response data
    * @return successful API response
    */
-  public static <T> ApiResponse<T> success(MessageKey key, T payload) {
+  public static <T> ApiResponse<T> success(final MessageKey key, final T payload) {
     return new ApiResponse<>(true, key.getKey(), payload, null, Instant.now());
   }
 
@@ -40,7 +40,7 @@ public class ApiResponse<T> {
    * @param key localization key for the failure
    * @return failed API response
    */
-  public static <T> ApiResponse<T> failure(MessageKey key) {
+  public static <T> ApiResponse<T> failure(final MessageKey key) {
     return new ApiResponse<>(false, key.getKey(), null, null, Instant.now());
   }
 
@@ -52,7 +52,7 @@ public class ApiResponse<T> {
    * @param params values used to interpolate the message
    * @return failed API response
    */
-  public static <T> ApiResponse<T> failure(MessageKey key, Map<String, Object> params) {
+  public static <T> ApiResponse<T> failure(final MessageKey key, final Map<String, Object> params) {
     return new ApiResponse<>(false, key.getKey(), null, params, Instant.now());
   }
 
@@ -64,7 +64,7 @@ public class ApiResponse<T> {
    * @param payload payload supplied to this method
    * @return failure result
    */
-  public static <T> ApiResponse<T> failure(MessageKey key, T payload) {
+  public static <T> ApiResponse<T> failure(final MessageKey key, final T payload) {
     return new ApiResponse<>(false, key.getKey(), payload, null, Instant.now());
   }
 }

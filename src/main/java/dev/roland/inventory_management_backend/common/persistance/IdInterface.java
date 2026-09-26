@@ -5,13 +5,13 @@ import java.io.Serializable;
 /**
  * Defines the common identifier accessor implemented by persisted domain models.
  *
- * @param <ID> serializable type of the model identifier
+ * @param <IdentifierT> serializable type of the model identifier
  */
-public interface IdInterface<ID extends Serializable> {
+public interface IdInterface<IdentifierT extends Serializable> {
   /**
    * Returns the entity identifier.
    *
    * @return identifier of this entity
    */
-  ID getId();
+  IdentifierT getId();
 }

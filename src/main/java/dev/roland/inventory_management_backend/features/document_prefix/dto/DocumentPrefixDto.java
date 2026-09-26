@@ -19,7 +19,7 @@ public class DocumentPrefixDto {
    * @param prefix prefix supplied to this method
    * @return to dto result
    */
-  public static DocumentPrefixDto toDto(DocumentPrefix prefix) {
+  public static DocumentPrefixDto toDto(final DocumentPrefix prefix) {
     return DocumentPrefixDto.builder()
         .id(prefix.getId())
         .documentType(prefix.getDocumentType())

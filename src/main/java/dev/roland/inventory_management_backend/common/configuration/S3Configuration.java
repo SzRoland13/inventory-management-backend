@@ -25,10 +25,10 @@ public class S3Configuration {
    */
   @Bean
   public S3Client s3Client(
-      @Value("${app.storage.endpoint}") String endpoint,
-      @Value("${app.storage.region}") String region,
-      @Value("${app.storage.access-key}") String accessKey,
-      @Value("${app.storage.secret-key}") String secretKey) {
+      @Value("${app.storage.endpoint}") final String endpoint,
+      @Value("${app.storage.region}") final String region,
+      @Value("${app.storage.access-key}") final String accessKey,
+      @Value("${app.storage.secret-key}") final String secretKey) {
     return S3Client.builder()
         .endpointOverride(URI.create(endpoint))
         .region(Region.of(region))

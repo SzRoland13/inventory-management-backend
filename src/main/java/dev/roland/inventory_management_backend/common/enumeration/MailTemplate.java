@@ -19,7 +19,7 @@ public enum MailTemplate {
    * @return matching template
    * @throws IllegalArgumentException when no template has that file name
    */
-  public static MailTemplate fromFileName(String fileName) {
+  public static MailTemplate fromFileName(final String fileName) {
     for (MailTemplate template : values()) {
       if (template.fileName.equalsIgnoreCase(fileName)) {
         return template;

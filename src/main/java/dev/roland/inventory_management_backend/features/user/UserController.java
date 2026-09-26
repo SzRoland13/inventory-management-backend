@@ -52,7 +52,7 @@ public class UserController {
   @PostMapping(REGISTER_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> registerUser(
-      @Valid @RequestBody AddEditUserRequest request) {
+      @Valid @RequestBody final AddEditUserRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
             UserMessageKey.REGISTRATION_SUCCESSFUL, userFacade.registerUser(request)));
@@ -68,7 +68,7 @@ public class UserController {
   @PutMapping(ID_PARAM)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserDto>> updateUser(
-      @PathVariable Long id, @RequestBody AddEditUserRequest updateRequest) {
+      @PathVariable final Long id, @RequestBody final AddEditUserRequest updateRequest) {
     return ResponseEntity.ok(
         ApiResponse.success(
             UserMessageKey.UPDATE_SUCCESS, userService.updateUser(id, updateRequest)));
@@ -94,8 +94,8 @@ public class UserController {
    */
   @PostMapping(RESET_TWO_FA_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable Long id) {
-    userFacade.resetUser2FA(id);
+  public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable final Long id) {
+    userFacade.resetUserTwoFactorAuth(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.TWO_FA_SETUP_RESET_COMPLETE, null));
   }
@@ -108,7 +108,7 @@ public class UserController {
    */
   @PostMapping(SUSPEND_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable final Long id) {
     userFacade.suspendUser(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_SUSPENDED, null));
@@ -122,7 +122,7 @@ public class UserController {
    */
   @PostMapping(ACTIVATE_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable final Long id) {
     userFacade.activateUser(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.USER_ACTIVATED, null));
@@ -136,7 +136,7 @@ public class UserController {
    */
   @PostMapping(RESET_PASSWORD_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable final Long id) {
     userFacade.resetPassword(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
@@ -151,7 +151,7 @@ public class UserController {
    */
   @PostMapping(AVATAR_ENDPOINT)
   public ResponseEntity<ApiResponse<Void>> updateAvatar(
-      @PathVariable Long id, @RequestBody AvatarUploadRequest request) {
+      @PathVariable final Long id, @RequestBody final AvatarUploadRequest request) {
     userFacade.updateAvatar(id, request.getMediaAssetId());
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.AVATAR_UPDATED, null));

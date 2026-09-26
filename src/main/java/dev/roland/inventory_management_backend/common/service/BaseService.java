@@ -14,16 +14,16 @@ import dev.roland.inventory_management_backend.common.persistance.IdInterface;
  * Provides shared CRUD operations for JPA-backed domain services.
  *
  * @param <T> entity managed by the service
- * @param <ID> type of the entity identifier
+ * @param <IdentifierT> type of the entity identifier
  */
-public interface BaseService<T extends IdInterface<ID>, ID extends Serializable> {
+public interface BaseService<T extends IdInterface<IdentifierT>, IdentifierT extends Serializable> {
 
   /**
    * Returns the Spring Data repository backing this service.
    *
    * @return repository used for persistence operations
    */
-  JpaRepository<T, ID> getRepository();
+  JpaRepository<T, IdentifierT> getRepository();
 
   /**
    * Returns the message key used when this service cannot find an entity.
@@ -38,7 +38,7 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @param entity entity to create or update
    * @return persisted entity returned by the repository
    */
-  default T save(T entity) {
+  default T save(final T entity) {
     return getRepository().save(entity);
   }
 
@@ -49,7 +49,7 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @return matching entity
    * @throws NotFoundException when no entity exists for the id
    */
-  default T findByIdOrThrow(ID id) {
+  default T findByIdOrThrow(final IdentifierT id) {
     return getRepository()
         .findById(id)
         .orElseThrow(() -> new NotFoundException(getNotFoundMessageKey()));
@@ -61,7 +61,7 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @param id identifier of the entity to delete
    * @throws NotFoundException when no entity exists for the id
    */
-  default void deleteById(ID id) {
+  default void deleteById(final IdentifierT id) {
     getRepository().delete(findByIdOrThrow(id));
   }
 
@@ -71,7 +71,7 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @param id entity identifier
    * @return true when an entity exists, otherwise false
    */
-  default boolean existsById(ID id) {
+  default boolean existsById(final IdentifierT id) {
     return getRepository().existsById(id);
   }
 
@@ -81,7 +81,7 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @param entity entity to delete
    * @throws NotFoundException when no entity exists for the entity id
    */
-  default void delete(T entity) {
+  default void delete(final T entity) {
     if (!existsById(entity.getId())) {
       throw new NotFoundException(getNotFoundMessageKey());
     }
@@ -106,8 +106,8 @@ public interface BaseService<T extends IdInterface<ID>, ID extends Serializable>
    * @return persisted updated entity
    * @throws NotFoundException when no entity exists for the id
    */
-  default T update(ID id, Consumer<T> updater) {
-    T entity = findByIdOrThrow(id);
+  default T update(final IdentifierT id, final Consumer<T> updater) {
+    final T entity = findByIdOrThrow(id);
     updater.accept(entity);
     return save(entity);
   }

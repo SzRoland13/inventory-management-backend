@@ -36,7 +36,7 @@ public enum UserMessageKey implements MessageKey {
 
   private final String key;
 
-  UserMessageKey(String key) {
+  UserMessageKey(final String key) {
     this.key = key;
   }
 }

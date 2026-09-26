@@ -66,10 +66,10 @@ public class AuthController {
    */
   @PostMapping(CHECK_FIRST_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<CheckFirstLoginResponse>> checkIfFirstLogin(
-      @Valid @RequestBody EmailRequest request) {
-    CheckFirstLoginResponse response = authService.checkIfFirstLogin(request);
+      @Valid @RequestBody final EmailRequest request) {
+    final CheckFirstLoginResponse response = authService.checkIfFirstLogin(request);
 
-    AuthMessageKey messageKey =
+    final AuthMessageKey messageKey =
         response.isFirstLogin() ? AuthMessageKey.FIRST_LOGIN : AuthMessageKey.NOT_FIRST_LOGIN;
 
     return ResponseEntity.ok(ApiResponse.success(messageKey, response));
@@ -82,7 +82,8 @@ public class AuthController {
    * @return confirmation response
    */
   @PostMapping(SEND_OTC_ENDPOINT)
-  ResponseEntity<ApiResponse<Void>> sendOneTimeCode(@Valid @RequestBody EmailRequest request) {
+  ResponseEntity<ApiResponse<Void>> sendOneTimeCode(
+      @Valid @RequestBody final EmailRequest request) {
     authFacade.sendOneTimeCode(request);
 
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -97,7 +98,7 @@ public class AuthController {
    */
   @PostMapping(VALIDATE_OTC_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> validateOneTimeCode(
-      @Valid @RequestBody FirstLoginValidationRequest request) {
+      @Valid @RequestBody final FirstLoginValidationRequest request) {
     authFacade.validateOneTimeCode(request);
 
     return ResponseEntity.ok(
@@ -112,7 +113,7 @@ public class AuthController {
    */
   @PostMapping(SETUP_PASSWORD_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleSetupOfNewPassword(
-      @Valid @RequestBody PasswordSetupRequest request) {
+      @Valid @RequestBody final PasswordSetupRequest request) {
     authService.handleSetupOfNewPassword(request);
 
     return ResponseEntity.ok(ApiResponse.success(AuthMessageKey.PASSWORD_SETUP_SUCCESS, null));
@@ -126,7 +127,7 @@ public class AuthController {
    */
   @PostMapping(LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<ShortLifeTokenResponse>> handleLogin(
-      @Valid @RequestBody LoginRequest request) {
+      @Valid @RequestBody final LoginRequest request) {
     return ResponseEntity.ok()
         .body(
             ApiResponse.success(AuthMessageKey.VALID_CREDENTIALS, authFacade.handleLogin(request)));
@@ -141,10 +142,10 @@ public class AuthController {
    */
   @PostMapping(REFRESH_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleTokenRefresh(
-      @CookieValue(value = "refresh_token", required = false) String refreshToken,
-      HttpServletResponse response) {
+      @CookieValue(value = "refresh_token", required = false) final String refreshToken,
+      final HttpServletResponse response) {
 
-    TokenRefreshResult result = authFacade.handleTokenRefresh(refreshToken);
+    final TokenRefreshResult result = authFacade.handleTokenRefresh(refreshToken);
 
     if (result.isShouldClearRefreshToken()) {
       cookieService.clearRefreshCookie(response, appConfiguration.isSecureCookie());
@@ -169,7 +170,7 @@ public class AuthController {
    * @return response containing the authenticator setup data
    */
   @PostMapping(TWO_FA_SETUP_ENDPOINT)
-  ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody EmailRequest request) {
+  ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody final EmailRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TWO_FA_CODE_GENERATED, authFacade.setup2fa(request)));
   }
@@ -183,9 +184,10 @@ public class AuthController {
    */
   @PostMapping(TWO_FA_LOGIN_ENDPOINT)
   ResponseEntity<ApiResponse<LoginResponse>> verify2faLogin(
-      @Valid @RequestBody TwoFactorVerifyRequest request, HttpServletResponse response) {
+      @Valid @RequestBody final TwoFactorVerifyRequest request,
+      final HttpServletResponse response) {
 
-    LoginFinalizationResult result = authFacade.verify2faLogin(request);
+    final LoginFinalizationResult result = authFacade.verify2faLogin(request);
 
     cookieService.setAccessCookie(
         response,
@@ -198,7 +200,7 @@ public class AuthController {
         appConfiguration.isSecureCookie(),
         (int) appConfiguration.getRefreshTokenExpirationTime() / 1000);
 
-    MessageKey key =
+    final MessageKey key =
         result.isFirstTime2faEnabled()
             ? AuthMessageKey.TWO_FA_SETUP_COMPLETE
             : AuthMessageKey.LOGIN_SUCCESS;
@@ -213,7 +215,7 @@ public class AuthController {
    * @return response containing the signed-in user details
    */
   @GetMapping(CHECK_SESSION_ENDPOINT)
-  public ResponseEntity<ApiResponse<UserDto>> checkSession(Authentication authentication) {
+  public ResponseEntity<ApiResponse<UserDto>> checkSession(final Authentication authentication) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TOKEN_VALID, authService.checkSession(authentication)));
   }
@@ -227,10 +229,10 @@ public class AuthController {
    */
   @PostMapping(LOGOUT_ENDPOINT)
   ResponseEntity<ApiResponse<Void>> handleLogout(
-      @CookieValue(value = "refresh_token", required = false) String refreshToken,
-      HttpServletResponse response) {
+      @CookieValue(value = "refresh_token", required = false) final String refreshToken,
+      final HttpServletResponse response) {
 
-    LogoutResult result = authFacade.handleLogout(refreshToken);
+    final LogoutResult result = authFacade.handleLogout(refreshToken);
 
     if (result.isClearAccessToken()) {
       cookieService.clearAccessCookie(response, appConfiguration.isSecureCookie());

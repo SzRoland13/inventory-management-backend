@@ -60,7 +60,7 @@ public enum AuthMessageKey implements MessageKey {
 
   private final String key;
 
-  AuthMessageKey(String key) {
+  AuthMessageKey(final String key) {
     this.key = key;
   }
 }

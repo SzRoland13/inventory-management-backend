@@ -20,12 +20,12 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, Long> {
    */
   @Query(
       """
-SELECT m FROM MediaAsset m
-WHERE m.createdAt < :threshold
-AND NOT EXISTS (
-   SELECT u FROM MediaUsage u
-   WHERE u.mediaAsset = m
-)
-""")
+      SELECT m FROM MediaAsset m
+      WHERE m.createdAt < :threshold
+      AND NOT EXISTS (
+      SELECT u FROM MediaUsage u
+      WHERE u.mediaAsset = m
+      )
+      """)
   List<MediaAsset> findOrphanAssetsOlderThan(LocalDateTime threshold);
 }

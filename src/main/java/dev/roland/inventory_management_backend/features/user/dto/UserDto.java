@@ -22,7 +22,7 @@ public class UserDto {
    *
    * @param user account fields to expose
    */
-  public UserDto(User user) {
+  public UserDto(final User user) {
     this.id = user.getId();
     this.username = user.getUsername();
     this.email = user.getEmail();

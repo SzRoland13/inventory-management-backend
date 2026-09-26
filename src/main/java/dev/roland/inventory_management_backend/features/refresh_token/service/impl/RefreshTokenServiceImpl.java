@@ -24,7 +24,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   @SuppressFBWarnings(
       value = "EI_EXPOSE_REP",
       justification =
-          "BaseService default CRUD methods use this accessor to reach the shared Spring Data repository.")
+          "BaseService CRUD methods use this accessor to reach the Spring Data repository.")
   @Override
   public JpaRepository<RefreshToken, Long> getRepository() {
     return refreshTokenRepository;
@@ -44,7 +44,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
    *     Optional} if no matching token exists
    */
   @Override
-  public Optional<RefreshToken> findByToken(String token) {
+  public Optional<RefreshToken> findByToken(final String token) {
     return refreshTokenRepository.findByToken(token);
   }
 }

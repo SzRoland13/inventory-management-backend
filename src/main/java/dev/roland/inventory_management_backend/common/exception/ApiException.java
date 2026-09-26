@@ -19,7 +19,7 @@ public class ApiException extends RuntimeException {
    *
    * @param messageKey localized message associated with the failure
    */
-  public ApiException(MessageKey messageKey) {
+  public ApiException(final MessageKey messageKey) {
     super(messageKey.getKey());
     this.messageKey = messageKey;
     this.params = null;
@@ -31,7 +31,7 @@ public class ApiException extends RuntimeException {
    * @param messageKey localized message associated with the failure
    * @param params values used to interpolate the message
    */
-  public ApiException(MessageKey messageKey, Map<String, Object> params) {
+  public ApiException(final MessageKey messageKey, final Map<String, Object> params) {
     super(messageKey.getKey());
     this.messageKey = messageKey;
     this.params = params == null ? null : Collections.unmodifiableMap(new HashMap<>(params));

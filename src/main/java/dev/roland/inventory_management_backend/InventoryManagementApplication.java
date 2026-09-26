@@ -12,7 +12,7 @@ public class InventoryManagementApplication {
    *
    * @param args args supplied to this method
    */
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     SpringApplication.run(InventoryManagementApplication.class, args);
   }
 }

@@ -37,9 +37,9 @@ public class EmailService {
    * @param details recipient, subject, and body of the email
    * @return true when the mail sender accepts the message, otherwise false
    */
-  public boolean sendSimpleMail(EmailDetails details) {
+  public boolean sendSimpleMail(final EmailDetails details) {
     try {
-      SimpleMailMessage mailMessage = new SimpleMailMessage();
+      final SimpleMailMessage mailMessage = new SimpleMailMessage();
 
       mailMessage.setFrom(sender);
       mailMessage.setTo(details.getRecipient());
@@ -60,9 +60,9 @@ public class EmailService {
    * @param details contains recipient, subject, template name, and model
    * @return true if email sent successfully, false otherwise
    */
-  public boolean sendMailWithTemplate(EmailDetails details) {
+  public boolean sendMailWithTemplate(final EmailDetails details) {
     try {
-      String htmlBody =
+      final String htmlBody =
           renderTemplate(details.getTemplateName().getFileName(), details.getTemplateModel());
       sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
       return true;
@@ -72,9 +72,10 @@ public class EmailService {
     }
   }
 
-  private String renderTemplate(String templateName, Map<String, Object> model) throws IOException {
-    MustacheFactory mf = new DefaultMustacheFactory();
-    Mustache mustache = mf.compile("templates/" + templateName + ".mustache");
+  private String renderTemplate(final String templateName, final Map<String, Object> model)
+      throws IOException {
+    final MustacheFactory mf = new DefaultMustacheFactory();
+    final Mustache mustache = mf.compile("templates/" + templateName + ".mustache");
 
     try (StringWriter writer = new StringWriter()) {
       mustache.execute(writer, model).flush();
@@ -82,9 +83,10 @@ public class EmailService {
     }
   }
 
-  private void sendHtmlEmail(String to, String subject, String htmlBody) throws MessagingException {
-    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-    MimeMessageHelper helper =
+  private void sendHtmlEmail(final String to, final String subject, final String htmlBody)
+      throws MessagingException {
+    final MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+    final MimeMessageHelper helper =
         new MimeMessageHelper(
             mimeMessage,
             MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,

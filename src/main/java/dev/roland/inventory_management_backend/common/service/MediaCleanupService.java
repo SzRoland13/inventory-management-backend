@@ -30,8 +30,8 @@ public class MediaCleanupService {
   @Scheduled(cron = "0 0 2 * * ?") // 2 AM Every day
   @Transactional
   public void cleanupOrphanedMedia() {
-    LocalDateTime threshold = LocalDateTime.now().minusHours(24);
-    List<MediaAsset> orphanedAssets = mediaAssetService.findOrphanAssetsOlderThan(threshold);
+    final LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+    final List<MediaAsset> orphanedAssets = mediaAssetService.findOrphanAssetsOlderThan(threshold);
 
     log.info("Found {} orphaned media assets to delete", orphanedAssets.size());
 

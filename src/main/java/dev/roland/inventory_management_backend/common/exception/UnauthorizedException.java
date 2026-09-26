@@ -11,7 +11,7 @@ public class UnauthorizedException extends ApiException {
    *
    * @param messageKey localized message associated with the failure
    */
-  public UnauthorizedException(MessageKey messageKey) {
+  public UnauthorizedException(final MessageKey messageKey) {
     super(messageKey);
   }
 
@@ -21,7 +21,7 @@ public class UnauthorizedException extends ApiException {
    * @param messageKey localized message associated with the failure
    * @param params values used to interpolate the message
    */
-  public UnauthorizedException(MessageKey messageKey, Map<String, Object> params) {
+  public UnauthorizedException(final MessageKey messageKey, final Map<String, Object> params) {
     super(messageKey, params);
   }
 }

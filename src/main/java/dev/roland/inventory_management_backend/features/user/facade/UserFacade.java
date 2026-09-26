@@ -16,11 +16,11 @@ public interface UserFacade {
   UserDto registerUser(AddEditUserRequest request);
 
   /**
-   * Handles 2FA reset for a single user.
+   * Resets two-factor authentication for one user.
    *
-   * @param id user id to reset the 2fa for.
+   * @param id user id to reset two-factor authentication for
    */
-  void resetUser2FA(Long id);
+  void resetUserTwoFactorAuth(Long id);
 
   /**
    * Suspends a user and resets their password and 2FA.

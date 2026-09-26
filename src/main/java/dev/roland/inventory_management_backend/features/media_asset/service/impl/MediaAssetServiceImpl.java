@@ -38,7 +38,7 @@ public class MediaAssetServiceImpl implements MediaAssetService {
    * @return find orphan assets older than result
    */
   @Override
-  public List<MediaAsset> findOrphanAssetsOlderThan(LocalDateTime threshold) {
+  public List<MediaAsset> findOrphanAssetsOlderThan(final LocalDateTime threshold) {
     return mediaAssetRepository.findOrphanAssetsOlderThan(threshold);
   }
 }

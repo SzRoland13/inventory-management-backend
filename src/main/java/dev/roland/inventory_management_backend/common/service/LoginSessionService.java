@@ -25,9 +25,10 @@ public class LoginSessionService {
    * @param email user email
    * @return generated token with its expiry timestamp
    */
-  public TokenWithExpiry createTemporarySessionWithExpiry(String email) {
-    String token = UUID.randomUUID().toString();
-    Instant expiresAt = Instant.now().plusSeconds(appConfiguration.getSessionTtlMinutes() * 60);
+  public TokenWithExpiry createTemporarySessionWithExpiry(final String email) {
+    final String token = UUID.randomUUID().toString();
+    final Instant expiresAt =
+        Instant.now().plusSeconds(appConfiguration.getSessionTtlMinutes() * 60);
     redisTemplate
         .opsForValue()
         .set(token, email, appConfiguration.getSessionTtlMinutes(), TimeUnit.MINUTES);
@@ -40,7 +41,7 @@ public class LoginSessionService {
    * @param token the short-life token
    * @return email associated with the token, or null when the token is missing or expired
    */
-  public String consumeSessionToken(String token) {
+  public String consumeSessionToken(final String token) {
     return redisTemplate.opsForValue().get(token);
   }
 
@@ -49,7 +50,7 @@ public class LoginSessionService {
    *
    * @param token token to delete
    */
-  public void deleteToken(String token) {
+  public void deleteToken(final String token) {
     redisTemplate.delete(token);
   }
 
@@ -59,7 +60,7 @@ public class LoginSessionService {
    * @param token token to validate
    * @return true when Redis still contains the token
    */
-  public boolean isValid(String token) {
+  public boolean isValid(final String token) {
     return Boolean.TRUE.equals(redisTemplate.hasKey(token));
   }
 }

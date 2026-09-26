@@ -19,7 +19,7 @@ public class CurrencyResponse {
    * @param currency currency supplied to this method
    * @return to dto result
    */
-  public static CurrencyResponse toDto(Currency currency) {
+  public static CurrencyResponse toDto(final Currency currency) {
     return CurrencyResponse.builder()
         .id(currency.getId())
         .code(currency.getCode())

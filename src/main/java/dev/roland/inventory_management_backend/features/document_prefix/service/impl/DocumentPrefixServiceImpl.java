@@ -42,8 +42,8 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   /** {@inheritDoc} */
   @Override
   public DocumentPrefixesResponse getAllPrefixes() {
-    List<DocumentPrefix> prefixes = findAll();
-    List<DocumentPrefixDto> dtos;
+    final List<DocumentPrefix> prefixes = findAll();
+    final List<DocumentPrefixDto> dtos;
 
     if (prefixes.isEmpty()) {
       dtos =
@@ -71,11 +71,11 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
    */
   @Transactional
   @Override
-  public DocumentPrefixesResponse updatePrefixes(List<DocumentPrefixDto> dtos) {
-    Company company = companyService.getCompanyOrCreateNew();
+  public DocumentPrefixesResponse updatePrefixes(final List<DocumentPrefixDto> dtos) {
+    final Company company = companyService.getCompanyOrCreateNew();
 
     for (DocumentPrefixDto dto : dtos) {
-      DocumentPrefix entity;
+      final DocumentPrefix entity;
       if (dto.getId() != null) {
         entity = findByIdOrThrow(dto.getId());
       } else {

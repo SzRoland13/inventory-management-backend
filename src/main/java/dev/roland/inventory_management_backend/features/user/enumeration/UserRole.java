@@ -39,7 +39,7 @@ public enum UserRole {
    * @param value role name to resolve
    * @return matching role, or empty when the name is unknown
    */
-  public static Optional<UserRole> fromString(String value) {
+  public static Optional<UserRole> fromString(final String value) {
     return Arrays.stream(values()).filter(r -> r.name().equalsIgnoreCase(value)).findFirst();
   }
 }

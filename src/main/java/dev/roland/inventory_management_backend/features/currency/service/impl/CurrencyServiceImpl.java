@@ -39,7 +39,7 @@ public class CurrencyServiceImpl implements CurrencyService {
    */
   @Override
   public CurrenciesResponse getAll() {
-    List<Currency> currencies = findAll();
+    final List<Currency> currencies = findAll();
 
     return CurrenciesResponse.builder()
         .currencies(currencies.stream().map(CurrencyResponse::toDto).toList())

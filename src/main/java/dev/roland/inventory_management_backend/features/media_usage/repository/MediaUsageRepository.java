@@ -35,5 +35,6 @@ public interface MediaUsageRepository extends JpaRepository<MediaUsage, Long> {
    * @param id identifier of the media asset
    * @return number of usage records referencing the asset
    */
-  Long countByMediaAsset_Id(Long id);
+  @Query("select count(u) from MediaUsage u where u.mediaAsset.id = ?1")
+  Long countByMediaAssetId(Long id);
 }

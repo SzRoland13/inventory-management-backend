@@ -32,7 +32,7 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
    */
   @Transactional
   @Override
-  public Document complete(Document document) {
+  public Document complete(final Document document) {
     if (document.getStatus() == DocumentStatus.COMPLETED) {
       return document;
     }
@@ -48,8 +48,8 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
     return documentService.save(document);
   }
 
-  private void postLine(Document document, DocumentLine line) {
-    DocumentType type = document.getType();
+  private void postLine(final Document document, final DocumentLine line) {
+    final DocumentType type = document.getType();
     if (type == DocumentType.GOODS_RECEIPT) {
       post(
           line,
@@ -71,11 +71,11 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
     } else if (type == DocumentType.TRANSFER_RECEIPT) {
       post(line, document.getTargetWarehouse(), line.getQuantity(), StockMovementType.TRANSFER_IN);
     } else if (type == DocumentType.STOCK_ADJUSTMENT) {
-      StockMovementType movementType =
+      final StockMovementType movementType =
           line.getQuantity().signum() >= 0
               ? StockMovementType.ADJUSTMENT_INCREASE
               : StockMovementType.ADJUSTMENT_DECREASE;
-      Warehouse warehouse =
+      final Warehouse warehouse =
           document.getTargetWarehouse() != null
               ? document.getTargetWarehouse()
               : document.getSourceWarehouse();
@@ -84,10 +84,10 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
   }
 
   private void post(
-      DocumentLine line,
-      Warehouse warehouse,
-      java.math.BigDecimal quantityChange,
-      StockMovementType movementType) {
+      final DocumentLine line,
+      final Warehouse warehouse,
+      final java.math.BigDecimal quantityChange,
+      final StockMovementType movementType) {
     if (warehouse == null) {
       throw new IllegalStateException("Stock-affecting documents require a warehouse");
     }
