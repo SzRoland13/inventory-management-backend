@@ -6,7 +6,12 @@ import java.math.BigDecimal;
 public record ProductStockResponse(
     Long warehouseId,
     String warehouseName,
-    BigDecimal stockQuantity,
-    String stockUnitCode,
-    BigDecimal fullMainUnits,
-    BigDecimal secondaryUnitRemainder) {}
+    Quantity stockQuantity,
+    StockBreakdown displayQuantity) {
+
+  /** A quantity paired with the unit used to express it. */
+  public record Quantity(BigDecimal amount, UnitResponse unit) {}
+
+  /** Stock expressed as full main units and an optional secondary-unit remainder. */
+  public record StockBreakdown(Quantity fullMainUnits, Quantity secondaryUnitRemainder) {}
+}

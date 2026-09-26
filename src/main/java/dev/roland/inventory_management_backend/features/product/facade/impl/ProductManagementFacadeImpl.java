@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
@@ -26,10 +27,10 @@ import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductListRequest;
-import dev.roland.inventory_management_backend.features.product.dto.ProductPageResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductStockResponse;
+import dev.roland.inventory_management_backend.features.product.dto.UnitResponse;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.product.facade.ProductManagementFacade;
 import dev.roland.inventory_management_backend.features.product.message.ProductMessageKey;
@@ -71,13 +72,13 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
 
   @Transactional
   @Override
-  public ProductPageResponse<ProductResponse> list(
+  public PageResponse<ProductResponse> list(
       final boolean includeArchived, final ProductListRequest request) {
     final Company company = companyService.getCompanyOrCreateNew();
     final Page<Product> products = productService.search(company.getId(), includeArchived, request);
     final List<Long> productIds = products.getContent().stream().map(Product::getId).toList();
     if (productIds.isEmpty()) {
-      return ProductPageResponse.from(products.map(this::toResponse));
+      return PageResponse.from(products.map(this::toResponse));
     }
     final Map<Long, List<ProductCategoryAssignment>> assignmentsByProduct =
         assignmentService.findAllByProductIdIn(productIds).stream()
@@ -88,7 +89,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     final Map<Long, List<StockBalance>> balancesByProduct =
         stockBalanceService.findAllByProductIdIn(productIds).stream()
             .collect(Collectors.groupingBy(balance -> balance.getProduct().getId()));
-    return ProductPageResponse.from(
+    return PageResponse.from(
         products.map(
             product ->
                 toResponse(
@@ -137,11 +138,11 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     if (productService.existsByCompanyIdAndSkuAndIdNot(company.getId(), request.sku().trim(), id)) {
       throw new ApiException(ProductMessageKey.PRODUCT_SKU_ALREADY_EXISTS);
     }
-    final Unit requestedMain = findSelectableUnit(request.unitId(), company);
+    final Unit requestedMain = findSelectableUnit(request.units().mainUnitId(), company);
     final Unit requestedSecondary =
-        request.secondaryUnitId() == null
+        request.units().secondaryUnitId() == null
             ? null
-            : findSelectableUnit(request.secondaryUnitId(), company);
+            : findSelectableUnit(request.units().secondaryUnitId(), company);
     if (movementService.existsByProductId(id)
         && (!Objects.equals(idOf(product.getUnit()), idOf(requestedMain))
             || !Objects.equals(idOf(product.getSecondaryUnit()), idOf(requestedSecondary)))) {
@@ -176,6 +177,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   }
 
   private void apply(final Product product, final ProductRequest request, final Company company) {
+    final ProductRequest.Dimensions dimensions = request.dimensions();
     product.setSku(request.sku().trim());
     product.setEan(request.ean());
     product.setName(request.name());
@@ -187,25 +189,25 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
       }
       product.setStatus(request.status());
     }
-    product.setUnit(findSelectableUnit(request.unitId(), company));
+    product.setUnit(findSelectableUnit(request.units().mainUnitId(), company));
     product.setSecondaryUnit(
-        request.secondaryUnitId() == null
+        request.units().secondaryUnitId() == null
             ? null
-            : findSelectableUnit(request.secondaryUnitId(), company));
-    product.setSecondaryUnitsPerMainUnit(request.secondaryUnitsPerMainUnit());
+            : findSelectableUnit(request.units().secondaryUnitId(), company));
+    product.setSecondaryUnitsPerMainUnit(request.units().secondaryUnitsPerMainUnit());
     product.setCurrency(
-        request.currencyId() == null
+        request.pricing().currencyId() == null
             ? null
             : currencyService
-                .findById(request.currencyId())
+                .findById(request.pricing().currencyId())
                 .orElseThrow(() -> new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA)));
-    product.setNetPrice(request.netPrice());
-    product.setCostPrice(request.costPrice());
-    product.setVatRate(request.vatRate());
-    product.setWeight(request.weight());
-    product.setWidth(request.width());
-    product.setHeight(request.height());
-    product.setDepth(request.depth());
+    product.setNetPrice(request.pricing().netPrice());
+    product.setCostPrice(request.pricing().costPrice());
+    product.setVatRate(request.pricing().vatRate());
+    product.setWeight(dimensions == null ? null : dimensions.weight());
+    product.setWidth(dimensions == null ? null : dimensions.width());
+    product.setHeight(dimensions == null ? null : dimensions.height());
+    product.setDepth(dimensions == null ? null : dimensions.depth());
   }
 
   private void replaceAssignments(
@@ -298,15 +300,19 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         || request.sku().isBlank()
         || request.name() == null
         || request.name().isBlank()
-        || request.unitId() == null
-        || request.netPrice() == null
-        || request.netPrice().signum() < 0
-        || request.vatRate() == null
-        || request.vatRate().signum() < 0
-        || request.secondaryUnitId() != null && request.secondaryUnitId().equals(request.unitId())
-        || (request.secondaryUnitId() == null) != (request.secondaryUnitsPerMainUnit() == null)
-        || (request.secondaryUnitsPerMainUnit() != null
-            && request.secondaryUnitsPerMainUnit().signum() <= 0)) {
+        || request.units() == null
+        || request.pricing() == null
+        || request.units().mainUnitId() == null
+        || request.pricing().netPrice() == null
+        || request.pricing().netPrice().signum() < 0
+        || request.pricing().vatRate() == null
+        || request.pricing().vatRate().signum() < 0
+        || request.units().secondaryUnitId() != null
+            && request.units().secondaryUnitId().equals(request.units().mainUnitId())
+        || (request.units().secondaryUnitId() == null)
+            != (request.units().secondaryUnitsPerMainUnit() == null)
+        || (request.units().secondaryUnitsPerMainUnit() != null
+            && request.units().secondaryUnitsPerMainUnit().signum() <= 0)) {
       throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
     }
     if (request.sku().length() > 100 || request.ean() != null && request.ean().length() > 20) {
@@ -373,32 +379,33 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         product.getDescription(),
         product.getBrand(),
         product.getStatus(),
-        main.getId(),
-        main.getCode(),
-        main.getName(),
-        secondary == null ? null : secondary.getId(),
-        secondary == null ? null : secondary.getCode(),
-        secondary == null ? null : secondary.getName(),
-        product.getSecondaryUnitsPerMainUnit(),
-        secondary == null
-            ? null
-            : product
-                .getNetPrice()
-                .divide(product.getSecondaryUnitsPerMainUnit(), 8, RoundingMode.HALF_UP),
-        product.getCurrency() == null ? null : product.getCurrency().getId(),
-        product.getNetPrice(),
-        product.getCostPrice(),
-        product.getVatRate(),
-        product.getWeight(),
-        product.getWidth(),
-        product.getHeight(),
-        product.getDepth(),
+        new ProductResponse.Units(
+            unitResponse(main),
+            secondary == null ? null : unitResponse(secondary),
+            product.getSecondaryUnitsPerMainUnit()),
+        new ProductResponse.Pricing(
+            product.getCurrency() == null ? null : product.getCurrency().getId(),
+            product.getNetPrice(),
+            secondary == null
+                ? null
+                : product
+                    .getNetPrice()
+                    .divide(product.getSecondaryUnitsPerMainUnit(), 8, RoundingMode.HALF_UP),
+            product.getCostPrice(),
+            product.getVatRate()),
+        new ProductResponse.Dimensions(
+            product.getWeight(), product.getWidth(), product.getHeight(), product.getDepth()),
         categoryIds,
         attributes,
         stockByWarehouse,
         product.getCreatedAt(),
         product.getUpdatedAt(),
         product.getDeletedAt());
+  }
+
+  private UnitResponse unitResponse(final Unit unit) {
+    return new UnitResponse(
+        unit.getId(), unit.getCode(), unit.getName(), unit.getSymbol(), unit.isSystem());
   }
 
   private ProductStockResponse stockResponse(final Product product, final StockBalance balance) {
@@ -408,19 +415,20 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
       return new ProductStockResponse(
           balance.getWarehouse().getId(),
           balance.getWarehouse().getName(),
-          quantity,
-          product.getUnit().getCode(),
-          quantity,
-          null);
+          new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit())),
+          new ProductStockResponse.StockBreakdown(
+              new ProductStockResponse.Quantity(quantity, unitResponse(product.getUnit())), null));
     }
     final BigDecimal conversion = product.getSecondaryUnitsPerMainUnit();
     return new ProductStockResponse(
         balance.getWarehouse().getId(),
         balance.getWarehouse().getName(),
-        quantity,
-        product.getSecondaryUnit().getCode(),
-        quantity.divideToIntegralValue(conversion),
-        quantity.remainder(conversion));
+        new ProductStockResponse.Quantity(quantity, unitResponse(product.getSecondaryUnit())),
+        new ProductStockResponse.StockBreakdown(
+            new ProductStockResponse.Quantity(
+                quantity.divideToIntegralValue(conversion), unitResponse(product.getUnit())),
+            new ProductStockResponse.Quantity(
+                quantity.remainder(conversion), unitResponse(product.getSecondaryUnit()))));
   }
 
   private Long idOf(final Unit unit) {

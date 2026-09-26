@@ -17,9 +17,11 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document_line.message.DocumentLineMessageKey;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.unit.Unit;
@@ -109,13 +111,13 @@ public class DocumentLine implements IdInterface<Long> {
   @PrePersist
   void initializeUnitSnapshot() {
     if (product == null) {
-      throw new IllegalStateException("A document line requires a product");
+      throw new ApiException(DocumentLineMessageKey.PRODUCT_REQUIRED);
     }
-    if (unitSnapshot == null && product != null) {
+    if (unitSnapshot == null) {
       unitSnapshot = product.getUnit();
     }
     if (unitSnapshot == null) {
-      throw new IllegalStateException("A document line requires a product unit");
+      throw new ApiException(DocumentLineMessageKey.UNIT_REQUIRED);
     }
     if (unitCodeSnapshot == null) {
       unitCodeSnapshot = unitSnapshot.getCode();
@@ -123,24 +125,14 @@ public class DocumentLine implements IdInterface<Long> {
     if (unitNameSnapshot == null) {
       unitNameSnapshot = unitSnapshot.getName();
     }
-    final boolean mainUnit = unitSnapshot.getId().equals(product.getUnit().getId());
-    final boolean secondaryUnit =
-        product.getSecondaryUnit() != null
-            && unitSnapshot.getId().equals(product.getSecondaryUnit().getId());
-    if (!mainUnit && !secondaryUnit) {
-      throw new IllegalStateException("Document line unit must match a product unit");
-    }
-    final BigDecimal expectedFactor =
-        mainUnit && product.getSecondaryUnit() != null
-            ? product.getSecondaryUnitsPerMainUnit()
-            : BigDecimal.ONE;
+    final BigDecimal expectedFactor = getExpectedFactor();
     if (conversionFactorSnapshot == null) {
       conversionFactorSnapshot = expectedFactor;
     } else if (conversionFactorSnapshot.compareTo(expectedFactor) != 0) {
-      throw new IllegalStateException("Document line conversion must match the product unit setup");
+      throw new ApiException(DocumentLineMessageKey.INVALID_CONVERSION_FACTOR);
     }
     if (conversionFactorSnapshot.signum() <= 0) {
-      throw new IllegalStateException("Document line conversion factor must be positive");
+      throw new ApiException(DocumentLineMessageKey.INVALID_CONVERSION_FACTOR);
     }
     if (productNameSnapshot == null) {
       productNameSnapshot = product.getName();
@@ -151,5 +143,18 @@ public class DocumentLine implements IdInterface<Long> {
     if (vatRateSnapshot == null) {
       vatRateSnapshot = product.getVatRate();
     }
+  }
+
+  private BigDecimal getExpectedFactor() {
+    final boolean mainUnit = unitSnapshot.getId().equals(product.getUnit().getId());
+    final boolean secondaryUnit =
+        product.getSecondaryUnit() != null
+            && unitSnapshot.getId().equals(product.getSecondaryUnit().getId());
+    if (!mainUnit && !secondaryUnit) {
+      throw new ApiException(DocumentLineMessageKey.INVALID_UNIT);
+    }
+    return mainUnit && product.getSecondaryUnit() != null
+        ? product.getSecondaryUnitsPerMainUnit()
+        : BigDecimal.ONE;
   }
 }

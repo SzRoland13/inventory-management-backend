@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.roland.inventory_management_backend.common.annotation.AdminOrManager;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
+import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductListRequest;
-import dev.roland.inventory_management_backend.features.product.dto.ProductPageResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductResponse;
 import dev.roland.inventory_management_backend.features.product.facade.ProductManagementFacade;
@@ -36,7 +36,7 @@ public class ProductController {
   private final ProductManagementFacade productManagementFacade;
 
   @GetMapping
-  public ResponseEntity<ApiResponse<ProductPageResponse<ProductResponse>>> list(
+  public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> list(
       @Valid @ModelAttribute final ProductListRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -85,7 +85,7 @@ public class ProductController {
 
   @GetMapping(ARCHIVED_PATH)
   @AdminOrManager
-  public ResponseEntity<ApiResponse<ProductPageResponse<ProductResponse>>> listArchived(
+  public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> listArchived(
       @Valid @ModelAttribute final ProductListRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
