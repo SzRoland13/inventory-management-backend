@@ -23,6 +23,7 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -70,5 +71,6 @@ public class MediaAsset implements IdInterface<Long> {
   private LocalDateTime createdAt;
 
   @OneToMany(mappedBy = "mediaAsset", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Default
   private List<MediaUsage> usages = new ArrayList<>();
 }

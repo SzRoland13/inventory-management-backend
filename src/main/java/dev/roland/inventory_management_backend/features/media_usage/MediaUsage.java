@@ -23,6 +23,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -67,6 +68,7 @@ public class MediaUsage implements IdInterface<Long> {
   private MediaUsageType usageType;
 
   @Column(name = "sort_order")
+  @Default
   private Integer sortOrder = 1;
 
   @CreationTimestamp
