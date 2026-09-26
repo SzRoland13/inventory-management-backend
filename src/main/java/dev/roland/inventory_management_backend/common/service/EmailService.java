@@ -20,10 +20,12 @@ import com.github.mustachejava.MustacheFactory;
 
 import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /** Sends plain-text and Mustache-rendered HTML email through Spring Mail. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
   private final JavaMailSender javaMailSender;
@@ -50,7 +52,7 @@ public class EmailService {
       javaMailSender.send(mailMessage);
       sent = true;
     } catch (Exception e) {
-      // Report failure to the caller.
+      log.warn("Failed to send simple email", e);
     }
     return sent;
   }
@@ -69,7 +71,7 @@ public class EmailService {
       sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
       sent = true;
     } catch (Exception e) {
-      e.printStackTrace();
+      log.warn("Failed to send templated email", e);
     }
     return sent;
   }
