@@ -7,6 +7,7 @@ import dev.roland.inventory_management_backend.features.document_prefix.Document
 import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixDto;
 import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixesResponse;
 
+/** Defines operations supported by the document numbering prefix feature. */
 public interface DocumentPrefixService extends BaseService<DocumentPrefix, Long> {
   /**
    * Returns configured document prefixes, or default prefixes when none have been saved yet.

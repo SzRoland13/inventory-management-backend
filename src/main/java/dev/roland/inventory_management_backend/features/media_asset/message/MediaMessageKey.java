@@ -14,7 +14,7 @@ public enum MediaMessageKey implements MessageKey {
 
   private final String key;
 
-  MediaMessageKey(String key) {
+  MediaMessageKey(final String key) {
     this.key = key;
   }
 }

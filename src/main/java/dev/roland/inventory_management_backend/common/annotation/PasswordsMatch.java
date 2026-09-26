@@ -10,6 +10,7 @@ import jakarta.validation.Constraint;
 
 import dev.roland.inventory_management_backend.common.annotation.validator.PasswordsMatchValidator;
 
+/** Declares a validation constraint that requires two password fields to match. */
 @Documented
 @Constraint(validatedBy = PasswordsMatchValidator.class)
 @Target({ElementType.TYPE})

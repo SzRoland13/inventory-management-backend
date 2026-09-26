@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.document_sequence.reposi
 import dev.roland.inventory_management_backend.features.document_sequence.service.DocumentSequenceService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the document numbering sequence service operations. */
 @Service
 @RequiredArgsConstructor
 public class DocumentSequenceServiceImpl implements DocumentSequenceService {
@@ -21,7 +22,11 @@ public class DocumentSequenceServiceImpl implements DocumentSequenceService {
     return documentSequenceRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_SEQUENCE;

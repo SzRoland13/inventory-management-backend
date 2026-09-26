@@ -24,6 +24,7 @@ import dev.roland.inventory_management_backend.features.company.facade.CompanyFa
 import dev.roland.inventory_management_backend.features.company.message.CompanyMessageKey;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes company profile and billing-data REST endpoints. */
 @RestController
 @RequestMapping(CompanyController.COMPANY_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -36,6 +37,11 @@ public class CompanyController {
 
   private final CompanyFacade companyFacade;
 
+  /**
+   * Returns the company details used in compact views.
+   *
+   * @return response containing the minimal company profile
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<CompanyMinimalResponse>> getMinimalCompanyData() {
     return ResponseEntity.ok(
@@ -43,6 +49,11 @@ public class CompanyController {
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.getMinimalCompanyData()));
   }
 
+  /**
+   * Returns the full company profile.
+   *
+   * @return response containing the extended company profile
+   */
   @GetMapping(COMPANY_EXTENDED_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<CompanyExtendedResponse>> getExtendedCompanyData() {
@@ -51,38 +62,63 @@ public class CompanyController {
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.getExtendedCompanyData()));
   }
 
+  /**
+   * Updates the company profile details.
+   *
+   * @param request company details to save
+   * @return response containing the updated profile
+   */
   @PutMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<CompanyBaseDataResponse>> updateCompanyBaseData(
-      @RequestBody CompanyBaseDataUpdateRequest request) {
+      @RequestBody final CompanyBaseDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.updateCompanyBaseData(request)));
   }
 
+  /**
+   * Updates the company billing details.
+   *
+   * @param request billing details to save
+   * @return response containing the updated billing profile
+   */
   @PutMapping(BILLING_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<CompanyBillingDataResponse>> updateCompanyBillingData(
-      @RequestBody CompanyBillingDataUpdateRequest request) {
+      @RequestBody final CompanyBillingDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
             GenericMessageKey.REQUEST_SUCCESS, companyFacade.updateCompanyBillingData(request)));
   }
 
+  /**
+   * Associates an uploaded media asset as the company logo.
+   *
+   * @param request media asset selected as the logo
+   * @return confirmation response
+   */
   @PostMapping(LOGO_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<ApiResponse<Void>> updateLogo(@RequestBody LogoUpdateRequest request) {
+  public ResponseEntity<ApiResponse<Void>> updateLogo(
+      @RequestBody final LogoUpdateRequest request) {
     companyFacade.updateLogo(request.getMediaAssetId());
 
     return ResponseEntity.ok(ApiResponse.success(CompanyMessageKey.LOGO_UPDATED, null));
   }
 
+  /**
+   * Changes the company preferred currency.
+   *
+   * @param request currency selected for the company
+   * @return response containing the updated currency
+   */
   @PostMapping(PREFERRED_CURRENCY_ENDPOINT)
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UpdatedPreferredCurrencyResponse>> updatePreferredCurrency(
-      @RequestBody CompanyPreferredCurrencyUpdateRequest request) {
+      @RequestBody final CompanyPreferredCurrencyUpdateRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
             CompanyMessageKey.CURRENCY_UPDATED, companyFacade.updatePreferredCurrency(request)));

@@ -51,6 +51,7 @@ public class ProductCategoryAssignment {
 
   @CreationTimestamp private LocalDateTime createdAt;
 
+  /** Creates the composite identifier when both assignment references are set. */
   @PrePersist
   void ensureId() {
     if (id == null && product != null && category != null) {

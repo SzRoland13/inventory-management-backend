@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.stock_balance.repository
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the stock balance service operations. */
 @Service
 @RequiredArgsConstructor
 public class StockBalanceServiceImpl implements StockBalanceService {
@@ -21,7 +22,11 @@ public class StockBalanceServiceImpl implements StockBalanceService {
     return stockBalanceRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.STOCK_BALANCE;

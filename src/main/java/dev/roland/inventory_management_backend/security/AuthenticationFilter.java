@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.auth.message.AuthMessage
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/** Validates access tokens on incoming requests and establishes the authenticated principal. */
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter extends OncePerRequestFilter {
@@ -31,24 +32,24 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
+      @NonNull final HttpServletRequest request,
+      @NonNull final HttpServletResponse response,
+      @NonNull final FilterChain filterChain)
       throws ServletException, IOException {
-    String jwt = cookieService.extractAccessTokenFromCookie(request);
+    final String jwt = cookieService.extractAccessTokenFromCookie(request);
 
     if (jwt != null
         && !jwt.isBlank()
         && SecurityContextHolder.getContext().getAuthentication() == null) {
-      String username = jwtService.extractUsername(jwt);
-      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+      final String username = jwtService.extractUsername(jwt);
+      final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
       if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
         throw new UnauthorizedException(AuthMessageKey.ACCOUNT_SUSPENDED);
       }
 
       if (jwtService.isTokenValid(jwt, userDetails)) {
-        UsernamePasswordAuthenticationToken authToken =
+        final UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
 

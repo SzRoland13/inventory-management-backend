@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.document_line.repository
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the document line service operations. */
 @Service
 @RequiredArgsConstructor
 public class DocumentLineServiceImpl implements DocumentLineService {
@@ -21,7 +22,11 @@ public class DocumentLineServiceImpl implements DocumentLineService {
     return documentLineRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_LINE;

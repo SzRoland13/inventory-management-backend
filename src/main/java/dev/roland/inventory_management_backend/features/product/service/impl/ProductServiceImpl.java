@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.product.repository.Produ
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the product catalog service operations. */
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -21,7 +22,11 @@ public class ProductServiceImpl implements ProductService {
     return productRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT;

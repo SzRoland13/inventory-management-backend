@@ -6,6 +6,7 @@ import java.util.List;
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 
+/** Defines operations supported by the media asset feature. */
 public interface MediaAssetService extends BaseService<MediaAsset, Long> {
   /**
    * Finds media assets that are not attached to an entity and were created before the threshold.

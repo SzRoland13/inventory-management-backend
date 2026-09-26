@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -62,6 +63,7 @@ public class DocumentSequence implements IdInterface<Long> {
   private Integer year;
 
   @Column(name = "counter", nullable = false)
+  @Default
   private Long counter = 0L;
 
   @UpdateTimestamp

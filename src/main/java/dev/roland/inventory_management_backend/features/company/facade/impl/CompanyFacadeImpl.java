@@ -32,6 +32,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import lombok.RequiredArgsConstructor;
 
+/** Coordinates company profile updates and associated media changes. */
 @Service
 @RequiredArgsConstructor
 public class CompanyFacadeImpl implements CompanyFacade {
@@ -45,7 +46,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   /** {@inheritDoc} */
   @Override
   public CompanyMinimalResponse getMinimalCompanyData() {
-    Company company = companyService.getCompanyOrCreateNew();
+    final Company company = companyService.getCompanyOrCreateNew();
 
     return buildMinimalResponse(company);
   }
@@ -53,7 +54,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   /** {@inheritDoc} */
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
-    Company company = companyService.getCompanyOrCreateNew();
+    final Company company = companyService.getCompanyOrCreateNew();
 
     return buildExtendedResponse(company);
   }
@@ -61,7 +62,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   /** {@inheritDoc} */
   @Override
   @Transactional
-  public CompanyBaseDataResponse updateCompanyBaseData(CompanyBaseDataUpdateRequest request) {
+  public CompanyBaseDataResponse updateCompanyBaseData(final CompanyBaseDataUpdateRequest request) {
 
     Company company = companyService.getCompanyOrCreateNew();
 
@@ -80,8 +81,8 @@ public class CompanyFacadeImpl implements CompanyFacade {
   /** {@inheritDoc} */
   @Override
   @Transactional
-  public void updateLogo(Long mediaAssetId) {
-    Company company = companyService.getCompanyOrCreateNew();
+  public void updateLogo(final Long mediaAssetId) {
+    final Company company = companyService.getCompanyOrCreateNew();
 
     handleLogoUpdate(company, mediaAssetId);
   }
@@ -90,8 +91,8 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Override
   @Transactional
   public CompanyBillingDataResponse updateCompanyBillingData(
-      CompanyBillingDataUpdateRequest request) {
-    Company company = companyService.getCompanyOrCreateNew();
+      final CompanyBillingDataUpdateRequest request) {
+    final Company company = companyService.getCompanyOrCreateNew();
 
     company.setTaxNumber(request.getTaxNumber());
     company.setVatNumber(request.getVatNumber());
@@ -102,13 +103,18 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return buildCompanyBillingDataResponse(company);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param request request supplied to this method
+   * @return update preferred currency result
+   */
   @Override
   @Transactional
   public UpdatedPreferredCurrencyResponse updatePreferredCurrency(
-      CompanyPreferredCurrencyUpdateRequest request) {
-    Company company = companyService.findByIdOrThrow(request.getCompanyId());
-    Currency currency = currencyService.findByIdOrThrow(request.getCurrencyId());
+      final CompanyPreferredCurrencyUpdateRequest request) {
+    final Company company = companyService.findByIdOrThrow(request.getCompanyId());
+    final Currency currency = currencyService.findByIdOrThrow(request.getCurrencyId());
 
     company.setPreferredCurrency(currency);
     companyService.save(company);
@@ -119,52 +125,55 @@ public class CompanyFacadeImpl implements CompanyFacade {
         .build();
   }
 
-  private void handleLogoUpdate(Company company, Long newMediaId) {
-    if (newMediaId == null) return;
-
-    Optional<MediaUsage> existingUsage =
-        mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
-            MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
-
-    if (existingUsage.isPresent()
-        && existingUsage.get().getMediaAsset().getId().equals(newMediaId)) {
+  private void handleLogoUpdate(final Company company, final Long newMediaId) {
+    if (newMediaId == null) {
       return;
     }
 
-    if (existingUsage.isPresent()) {
-      MediaUsage usage = existingUsage.get();
-      MediaAsset oldAsset = usage.getMediaAsset();
+    final Optional<MediaUsage> existingUsage =
+        mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
+            MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
 
-      mediaUsageService.delete(usage);
+    if (existingUsage.isEmpty()
+        || !existingUsage.get().getMediaAsset().getId().equals(newMediaId)) {
+      if (existingUsage.isPresent()) {
+        final MediaUsage usage = existingUsage.get();
+        final MediaAsset oldAsset = usage.getMediaAsset();
 
-      if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
-        mediaAssetFacade.deleteAsset(oldAsset.getId());
+        mediaUsageService.delete(usage);
+
+        if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
+          mediaAssetFacade.deleteAsset(oldAsset.getId());
+        }
       }
+
+      final MediaAsset newAsset = mediaAssetService.findByIdOrThrow(newMediaId);
+
+      final String newPath =
+          objectStorageService.generateSolidObjectPath(
+              newAsset.getFilename(),
+              MediaEntityType.COMPANY,
+              company.getId(),
+              MediaUsageType.LOGO);
+
+      objectStorageService.move(newAsset.getObjectPath(), newPath);
+
+      newAsset.setObjectPath(newPath);
+      mediaAssetService.save(newAsset);
+
+      final MediaUsage usage =
+          MediaUsage.builder()
+              .mediaAsset(newAsset)
+              .entityType(MediaEntityType.COMPANY)
+              .entityId(company.getId())
+              .usageType(MediaUsageType.LOGO)
+              .build();
+
+      mediaUsageService.save(usage);
     }
-
-    MediaAsset newAsset = mediaAssetService.findByIdOrThrow(newMediaId);
-
-    String newPath =
-        objectStorageService.generateSolidObjectPath(
-            newAsset.getFilename(), MediaEntityType.COMPANY, company.getId(), MediaUsageType.LOGO);
-
-    objectStorageService.move(newAsset.getObjectPath(), newPath);
-
-    newAsset.setObjectPath(newPath);
-    mediaAssetService.save(newAsset);
-
-    MediaUsage usage =
-        MediaUsage.builder()
-            .mediaAsset(newAsset)
-            .entityType(MediaEntityType.COMPANY)
-            .entityId(company.getId())
-            .usageType(MediaUsageType.LOGO)
-            .build();
-
-    mediaUsageService.save(usage);
   }
 
-  private CompanyBaseDataResponse buildBaseDataResponse(Company company) {
+  private CompanyBaseDataResponse buildBaseDataResponse(final Company company) {
     return CompanyBaseDataResponse.builder()
         .id(company.getId())
         .name(company.getName())
@@ -176,7 +185,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
         .build();
   }
 
-  private CompanyBillingDataResponse buildCompanyBillingDataResponse(Company company) {
+  private CompanyBillingDataResponse buildCompanyBillingDataResponse(final Company company) {
     return CompanyBillingDataResponse.builder()
         .id(company.getId())
         .taxNumber(company.getTaxNumber())
@@ -187,16 +196,16 @@ public class CompanyFacadeImpl implements CompanyFacade {
         .build();
   }
 
-  private CompanyMinimalResponse buildMinimalResponse(Company company) {
+  private CompanyMinimalResponse buildMinimalResponse(final Company company) {
 
-    Optional<MediaUsage> logoUsage = findLogoUsage(company.getId());
+    final Optional<MediaUsage> logoUsage = findLogoUsage(company.getId());
 
     Long id = null;
     String url = null;
     Instant expiry = null;
 
     if (logoUsage.isPresent()) {
-      MediaPreviewResponse presigned =
+      final MediaPreviewResponse presigned =
           mediaAssetFacade.getPreview(logoUsage.get().getMediaAsset().getId());
 
       id = presigned.getId();
@@ -207,9 +216,9 @@ public class CompanyFacadeImpl implements CompanyFacade {
     return new CompanyMinimalResponse(company.getId(), company.getName(), id, url, expiry);
   }
 
-  private CompanyExtendedResponse buildExtendedResponse(Company company) {
+  private CompanyExtendedResponse buildExtendedResponse(final Company company) {
 
-    CompanyMinimalResponse base = buildMinimalResponse(company);
+    final CompanyMinimalResponse base = buildMinimalResponse(company);
 
     return new CompanyExtendedResponse(
         company.getId(),
@@ -230,7 +239,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
         CurrencyResponse.toDto(company.getPreferredCurrency()));
   }
 
-  private Optional<MediaUsage> findLogoUsage(Long companyId) {
+  private Optional<MediaUsage> findLogoUsage(final Long companyId) {
     return mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
         MediaEntityType.COMPANY, companyId, MediaUsageType.LOGO);
   }

@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.features.document_prefix.dto.Docu
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes endpoints for reading and updating document-number prefixes. */
 @Controller
 @RequestMapping(DocumentPrefixController.DOCUMENT_PREFIX_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -22,17 +23,29 @@ public class DocumentPrefixController {
 
   private final DocumentPrefixService documentPrefixService;
 
+  /**
+   * Returns the configured document-number prefixes.
+   *
+   * @return response containing configured prefixes
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> getAll() {
-    DocumentPrefixesResponse response = documentPrefixService.getAllPrefixes();
+    final DocumentPrefixesResponse response = documentPrefixService.getAllPrefixes();
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }
 
+  /**
+   * Replaces the configured document-number prefixes.
+   *
+   * @param request request supplied to this method
+   * @return update result
+   */
   @PostMapping()
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> update(
-      @RequestBody DocumentPrefixesUpdateRequest request) {
-    DocumentPrefixesResponse response = documentPrefixService.updatePrefixes(request.getPrefixes());
+      @RequestBody final DocumentPrefixesUpdateRequest request) {
+    final DocumentPrefixesResponse response =
+        documentPrefixService.updatePrefixes(request.getPrefixes());
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }

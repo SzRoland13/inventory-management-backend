@@ -18,6 +18,7 @@ import dev.roland.inventory_management_backend.features.user.repository.UserRepo
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the user account service operations. */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -43,7 +44,7 @@ public class UserServiceImpl implements UserService {
    * @return the found {@link User}, or throws a {@link NotFoundException} if not found
    */
   @Override
-  public User findUserByEmailOrThrow(String email) {
+  public User findUserByEmailOrThrow(final String email) {
     return userRepository
         .findByEmail(email)
         .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.USER));
@@ -56,7 +57,7 @@ public class UserServiceImpl implements UserService {
    * @return the found {@link User}, or throws a {@link NotFoundException} if not found
    */
   @Override
-  public User findByUsernameOrThrow(String username) {
+  public User findByUsernameOrThrow(final String username) {
     return userRepository
         .findByUsername(username)
         .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.USER));
@@ -70,8 +71,8 @@ public class UserServiceImpl implements UserService {
    * @return the updated user in a {@link UserDto}
    */
   @Override
-  public UserDto updateUser(Long id, AddEditUserRequest request) {
-    User updated =
+  public UserDto updateUser(final Long id, final AddEditUserRequest request) {
+    final User updated =
         update(
             id,
             user -> {

@@ -14,6 +14,8 @@ public enum AuthMessageKey implements MessageKey {
   LOGOUT_SUCCESS("auth.logout.success"),
   /** Message key for invalid credentials. */
   INVALID_CREDENTIALS("auth.login.invalid-credentials"),
+  /** Message key for valid credentials. */
+  VALID_CREDENTIALS("auth.login.valid-credentials"),
   /** Message key for not first login. */
   NOT_FIRST_LOGIN("auth.login.not-first-login"),
   /** Message key for first login. */
@@ -58,7 +60,7 @@ public enum AuthMessageKey implements MessageKey {
 
   private final String key;
 
-  AuthMessageKey(String key) {
+  AuthMessageKey(final String key) {
     this.key = key;
   }
 }

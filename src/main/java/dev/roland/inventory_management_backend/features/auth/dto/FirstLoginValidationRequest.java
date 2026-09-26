@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the code and session data used to validate a first login. */
 @Data
 public class FirstLoginValidationRequest {
 

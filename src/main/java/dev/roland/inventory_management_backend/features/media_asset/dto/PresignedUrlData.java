@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Carries the result of presigned Url Data in the media asset workflow. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

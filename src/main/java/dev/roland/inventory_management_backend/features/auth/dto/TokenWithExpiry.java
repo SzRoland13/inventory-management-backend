@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import lombok.Data;
 
+/** Carries the result of token With Expiry in the authentication workflow. */
 @Data
 public class TokenWithExpiry {
   private final String token;

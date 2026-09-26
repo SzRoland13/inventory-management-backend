@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.features.currency.repository.Curr
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import lombok.AllArgsConstructor;
 
+/** Implements the currency service operations. */
 @Service
 @AllArgsConstructor
 public class CurrencyServiceImpl implements CurrencyService {
@@ -31,10 +32,14 @@ public class CurrencyServiceImpl implements CurrencyService {
     return NotFoundMessageKey.CURRENCY;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get all result
+   */
   @Override
   public CurrenciesResponse getAll() {
-    List<Currency> currencies = findAll();
+    final List<Currency> currencies = findAll();
 
     return CurrenciesResponse.builder()
         .currencies(currencies.stream().map(CurrencyResponse::toDto).toList())

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the refresh token used to request a new access token. */
 @Data
 public class RefreshRequest {
 

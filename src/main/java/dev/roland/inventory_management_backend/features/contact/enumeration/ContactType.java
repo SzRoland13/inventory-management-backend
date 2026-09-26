@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.contact.enumeration;
 
+/** Classifies contact details associated with a business partner. */
 public enum ContactType {
   /** Represents the billing value. */
   BILLING,

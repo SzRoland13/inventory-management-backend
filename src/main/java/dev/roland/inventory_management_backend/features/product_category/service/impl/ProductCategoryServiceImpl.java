@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.product_category.reposit
 import dev.roland.inventory_management_backend.features.product_category.service.ProductCategoryService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the product category service operations. */
 @Service
 @RequiredArgsConstructor
 public class ProductCategoryServiceImpl implements ProductCategoryService {
@@ -21,7 +22,11 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     return productCategoryRepository;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get not found message key result
+   */
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_CATEGORY;

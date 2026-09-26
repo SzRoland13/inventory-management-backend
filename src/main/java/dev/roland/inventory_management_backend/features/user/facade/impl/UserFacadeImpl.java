@@ -25,6 +25,7 @@ import dev.roland.inventory_management_backend.features.user.message.UserMessage
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the user account service operations. */
 @Service
 @RequiredArgsConstructor
 public class UserFacadeImpl implements UserFacade {
@@ -36,8 +37,8 @@ public class UserFacadeImpl implements UserFacade {
 
   /** {@inheritDoc} */
   @Override
-  public UserDto registerUser(AddEditUserRequest request) {
-    User user =
+  public UserDto registerUser(final AddEditUserRequest request) {
+    final User user =
         User.builder()
             .username(request.getUsername())
             .email(request.getEmail())
@@ -50,15 +51,15 @@ public class UserFacadeImpl implements UserFacade {
       throw new ApiException(UserMessageKey.INVALID_ROLE);
     }
 
-    User newUser = userService.save(user);
+    final User newUser = userService.save(user);
 
     return new UserDto(newUser);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void resetUser2FA(Long id) {
-    User user = userService.findByIdOrThrow(id);
+  public void resetUserTwoFactorAuth(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
 
     if (user.getTotpSecret() == null && !user.is2faEnabled()) {
       throw new ApiException(UserMessageKey.TWO_FA_NOT_ENABLED);
@@ -71,8 +72,8 @@ public class UserFacadeImpl implements UserFacade {
 
   /** {@inheritDoc} */
   @Override
-  public void suspendUser(Long id) {
-    User user = userService.findByIdOrThrow(id);
+  public void suspendUser(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
 
     if (user.getStatus() == UserStatus.SUSPENDED) {
       throw new ApiException(UserMessageKey.USER_ALREADY_SUSPENDED);
@@ -86,8 +87,8 @@ public class UserFacadeImpl implements UserFacade {
 
   /** {@inheritDoc} */
   @Override
-  public void activateUser(Long id) {
-    User user = userService.findByIdOrThrow(id);
+  public void activateUser(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
 
     if (user.getStatus() != UserStatus.SUSPENDED) {
       throw new ApiException(UserMessageKey.USER_NOT_SUSPENDED);
@@ -101,8 +102,8 @@ public class UserFacadeImpl implements UserFacade {
 
   /** {@inheritDoc} */
   @Override
-  public void resetPassword(Long id) {
-    User user = userService.findByIdOrThrow(id);
+  public void resetPassword(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
 
     if (!user.isOtcSetupComplete()) {
       throw new ApiException(UserMessageKey.PASSWORD_NOT_SET);
@@ -114,8 +115,12 @@ public class UserFacadeImpl implements UserFacade {
     userService.save(user);
   }
 
-  /** {@inheritDoc} */
-  private void resetUserPasswordAndAuth(User user) {
+  /**
+   * Clears the user's password and authentication setup state.
+   *
+   * @param user account whose credentials and authentication state are reset
+   */
+  private void resetUserPasswordAndAuth(final User user) {
     // Reset password - set to null so user must request new one-time password
     user.setPassword(null);
     user.setOtcSetupComplete(false);
@@ -127,12 +132,17 @@ public class UserFacadeImpl implements UserFacade {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param id id supplied to this method
+   * @param mediaAssetId media asset id supplied to this method
+   */
   @Override
-  public void updateAvatar(Long id, Long mediaAssetId) {
-    User user = userService.findByIdOrThrow(id);
+  public void updateAvatar(final Long id, final Long mediaAssetId) {
+    final User user = userService.findByIdOrThrow(id);
 
-    Optional<MediaUsage> existingUsage =
+    final Optional<MediaUsage> existingUsage =
         mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
 
@@ -145,16 +155,16 @@ public class UserFacadeImpl implements UserFacade {
     // delete old avatar usage and possibly the asset
     existingUsage.ifPresent(
         usage -> {
-          MediaAsset oldAsset = usage.getMediaAsset();
+          final MediaAsset oldAsset = usage.getMediaAsset();
           mediaUsageService.delete(usage);
           if (mediaUsageService.usageCountByMediaAssetId(oldAsset.getId()) == 0) {
             mediaAssetFacade.deleteAsset(oldAsset.getId());
           }
         });
 
-    MediaAsset newAsset = mediaAssetService.findByIdOrThrow(mediaAssetId);
+    final MediaAsset newAsset = mediaAssetService.findByIdOrThrow(mediaAssetId);
 
-    MediaUsage usage =
+    final MediaUsage usage =
         MediaUsage.builder()
             .mediaAsset(newAsset)
             .entityType(MediaEntityType.USER)
@@ -165,23 +175,27 @@ public class UserFacadeImpl implements UserFacade {
     mediaUsageService.save(usage);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return get all users result
+   */
   @Override
   public AllUserResponse getAllUsers() {
-    List<User> users = userService.findAll();
+    final List<User> users = userService.findAll();
 
     return new AllUserResponse(mapUsersToUserDtos(users));
   }
 
-  private List<UserDtoWithAvatar> mapUsersToUserDtos(List<User> users) {
+  private List<UserDtoWithAvatar> mapUsersToUserDtos(final List<User> users) {
     return users.stream()
         .map(
             user -> {
-              Optional<MediaUsage> avatarUsage =
+              final Optional<MediaUsage> avatarUsage =
                   mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
                       MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
 
-              String avatarUrl =
+              final String avatarUrl =
                   avatarUsage
                       .map(
                           usage ->

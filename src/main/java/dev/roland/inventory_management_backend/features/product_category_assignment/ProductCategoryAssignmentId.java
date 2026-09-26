@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Identifies a product-category assignment by its composite key. */
 @Embeddable
 @Getter
 @Setter

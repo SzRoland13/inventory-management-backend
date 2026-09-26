@@ -11,6 +11,7 @@ import dev.roland.inventory_management_backend.features.currency.dto.CurrenciesR
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import lombok.RequiredArgsConstructor;
 
+/** Exposes the supported-currency listing endpoint. */
 @Controller
 @RequestMapping(CurrencyController.CURRENCY_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -19,9 +20,14 @@ public class CurrencyController {
 
   private final CurrencyService currencyService;
 
+  /**
+   * Returns the currencies available to the application.
+   *
+   * @return get all result
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<CurrenciesResponse>> getAll() {
-    CurrenciesResponse response = currencyService.getAll();
+    final CurrenciesResponse response = currencyService.getAll();
 
     return ResponseEntity.ok(ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, response));
   }

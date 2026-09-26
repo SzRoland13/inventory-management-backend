@@ -19,6 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -67,8 +68,9 @@ public class WarehouseLocation {
 
   @UpdateTimestamp
   @Column(name = "updated_at")
-  private LocalDateTime updated_at;
+  private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Default
   private List<Warehouse> warehouses = new ArrayList<>();
 }

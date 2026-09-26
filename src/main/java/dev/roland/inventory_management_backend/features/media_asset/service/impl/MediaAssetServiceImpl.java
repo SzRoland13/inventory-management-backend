@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.media_asset.repository.M
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the media asset service operations. */
 @Service
 @RequiredArgsConstructor
 public class MediaAssetServiceImpl implements MediaAssetService {
@@ -30,9 +31,14 @@ public class MediaAssetServiceImpl implements MediaAssetService {
     return NotFoundMessageKey.MEDIA_ASSET;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param threshold threshold supplied to this method
+   * @return find orphan assets older than result
+   */
   @Override
-  public List<MediaAsset> findOrphanAssetsOlderThan(LocalDateTime threshold) {
+  public List<MediaAsset> findOrphanAssetsOlderThan(final LocalDateTime threshold) {
     return mediaAssetRepository.findOrphanAssetsOlderThan(threshold);
   }
 }

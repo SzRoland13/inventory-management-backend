@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.stock_movement.enumeration;
 
+/** Defines whether a stock movement increases, decreases, or otherwise adjusts inventory. */
 public enum StockMovementType {
   /** Represents the purchase inbound value. */
   PURCHASE_INBOUND,

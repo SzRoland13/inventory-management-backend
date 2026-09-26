@@ -12,9 +12,10 @@ import dev.roland.inventory_management_backend.features.one_time_code.repository
 import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the one time code service operations. */
 @Service
 @RequiredArgsConstructor
-public class OneTImeCodeServiceImpl implements OneTimeCodeService {
+public class OneTimeCodeServiceImpl implements OneTimeCodeService {
 
   private final OneTimeCodeRepository oneTimeCodeRepository;
 
@@ -38,7 +39,7 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
    *     Optional} if no matching token exists
    */
   @Override
-  public Optional<OneTimeCode> findByCode(String code) {
+  public Optional<OneTimeCode> findByCode(final String code) {
     return oneTimeCodeRepository.findByCode(code);
   }
 
@@ -50,7 +51,7 @@ public class OneTImeCodeServiceImpl implements OneTimeCodeService {
    *     Optional} if no matching token exists
    */
   @Override
-  public Optional<OneTimeCode> findByUserId(Long userId) {
+  public Optional<OneTimeCode> findByUserId(final Long userId) {
     return oneTimeCodeRepository.findByUserId(userId);
   }
 }

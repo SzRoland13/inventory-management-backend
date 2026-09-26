@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Carries input data for media Upload Init in the media asset API. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

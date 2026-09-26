@@ -20,6 +20,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the stock movement service operations. */
 @Service
 @RequiredArgsConstructor
 public class StockMovementServiceImpl implements StockMovementService {
@@ -38,16 +39,25 @@ public class StockMovementServiceImpl implements StockMovementService {
     return NotFoundMessageKey.STOCK_MOVEMENT;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param documentLine document line supplied to this method
+   * @param warehouse warehouse supplied to this method
+   * @param quantityChange quantity change supplied to this method
+   * @param movementType movement type supplied to this method
+   * @param createdByUser created by user supplied to this method
+   * @return post movement result
+   */
   @Transactional
   @Override
   public StockMovement postMovement(
-      DocumentLine documentLine,
-      Warehouse warehouse,
-      BigDecimal quantityChange,
-      StockMovementType movementType,
-      User createdByUser) {
-    StockBalance balance =
+      final DocumentLine documentLine,
+      final Warehouse warehouse,
+      final BigDecimal quantityChange,
+      final StockMovementType movementType,
+      final User createdByUser) {
+    final StockBalance balance =
         stockBalanceRepository
             .findByWarehouseAndProduct(warehouse, documentLine.getProduct())
             .orElseGet(
@@ -61,7 +71,7 @@ public class StockMovementServiceImpl implements StockMovementService {
     balance.setQuantity(balance.getQuantity().add(quantityChange));
     stockBalanceRepository.save(balance);
 
-    StockMovement movement =
+    final StockMovement movement =
         StockMovement.builder()
             .document(documentLine.getDocument())
             .documentLine(documentLine)

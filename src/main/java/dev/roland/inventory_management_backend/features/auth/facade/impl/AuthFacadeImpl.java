@@ -49,6 +49,7 @@ import dev.roland.inventory_management_backend.features.user.enumeration.UserSta
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Coordinates login, one-time-code, token, and two-factor authentication workflows. */
 @Service
 @RequiredArgsConstructor
 public class AuthFacadeImpl implements AuthFacade {
@@ -68,14 +69,15 @@ public class AuthFacadeImpl implements AuthFacade {
   /** {@inheritDoc} */
   @Transactional
   @Override
-  public void sendOneTimeCode(EmailRequest request) {
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+  public void sendOneTimeCode(final EmailRequest request) {
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     if (user.getPassword() != null) {
       throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
     }
 
-    OneTimeCode code = oneTimeCodeService.findByUserId(user.getId()).orElse(new OneTimeCode());
+    final OneTimeCode code =
+        oneTimeCodeService.findByUserId(user.getId()).orElse(new OneTimeCode());
 
     code.setUser(user);
     code.setCode(generateOneTimeCode());
@@ -90,13 +92,13 @@ public class AuthFacadeImpl implements AuthFacade {
 
   /** {@inheritDoc} */
   @Override
-  public void validateOneTimeCode(FirstLoginValidationRequest request) {
-    OneTimeCode oneTimeCode =
+  public void validateOneTimeCode(final FirstLoginValidationRequest request) {
+    final OneTimeCode oneTimeCode =
         oneTimeCodeService
             .findByCode(request.getOneTimeCode())
             .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
 
-    User user = oneTimeCode.getUser();
+    final User user = oneTimeCode.getUser();
 
     if (user == null || !user.getEmail().equals(request.getEmail())) {
       throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
@@ -109,16 +111,26 @@ public class AuthFacadeImpl implements AuthFacade {
     oneTimeCodeService.delete(oneTimeCode);
   }
 
-  /** Generates a random one-time code for login verification. */
+  /**
+   * Generates a random one-time code for login verification.
+   *
+   * @return generated one-time code
+   */
   private String generateOneTimeCode() {
     return UUID.randomUUID().toString().replace("-", "");
   }
 
-  /** Sends the one-time code email to the user. */
-  private boolean sendFirstLoginEmail(User user, String code) {
-    Map<String, Object> model = Map.of("username", user.getUsername(), "oneTimeCode", code);
+  /**
+   * Sends the one-time code email to the user.
+   *
+   * @param user account receiving the code
+   * @param code one-time code included in the email
+   * @return true when the email was sent successfully
+   */
+  private boolean sendFirstLoginEmail(final User user, final String code) {
+    final Map<String, Object> model = Map.of("username", user.getUsername(), "oneTimeCode", code);
 
-    EmailDetails emailDetails =
+    final EmailDetails emailDetails =
         EmailDetails.builder()
             .recipient(user.getEmail())
             .templateName(MailTemplate.ONE_TIME_CODE_MAIL)
@@ -131,18 +143,18 @@ public class AuthFacadeImpl implements AuthFacade {
 
   /** {@inheritDoc} */
   @Override
-  public ShortLifeTokenResponse handleLogin(LoginRequest request) {
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+  public ShortLifeTokenResponse handleLogin(final LoginRequest request) {
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     try {
-      UsernamePasswordAuthenticationToken authInputToken =
+      final UsernamePasswordAuthenticationToken authInputToken =
           new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword());
       authenticationManager.authenticate(authInputToken);
     } catch (BadCredentialsException e) {
       throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
     }
 
-    TokenWithExpiry tokenWithExpiry =
+    final TokenWithExpiry tokenWithExpiry =
         loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
 
     return ShortLifeTokenResponse.builder()
@@ -154,32 +166,33 @@ public class AuthFacadeImpl implements AuthFacade {
 
   /** {@inheritDoc} */
   @Override
-  public TokenRefreshResult handleTokenRefresh(String token) {
+  public TokenRefreshResult handleTokenRefresh(final String token) {
 
     if (token == null) {
       throw new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS);
     }
 
-    RefreshToken savedToken =
+    final RefreshToken savedToken =
         refreshTokenService
             .findByToken(token)
             .orElseThrow(() -> new UnauthorizedException(AuthMessageKey.INVALID_CREDENTIALS));
 
+    final TokenRefreshResult result;
     if (jwtService.isTokenExpired(savedToken.getToken())) {
       refreshTokenService.delete(savedToken);
-      return new TokenRefreshResult(null, true);
+      result = new TokenRefreshResult(null, true);
+    } else {
+      final String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
+      result = new TokenRefreshResult(newAccessToken, false);
     }
-
-    String newAccessToken = jwtService.generateAccessToken(savedToken.getUser());
-
-    return new TokenRefreshResult(newAccessToken, false);
+    return result;
   }
 
   /** {@inheritDoc} */
   @Override
   @Transactional
-  public String setup2fa(EmailRequest request) {
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+  public String setup2fa(final EmailRequest request) {
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     if (user.is2faEnabled()) {
       throw new ApiException(AuthMessageKey.TWO_FA_ALREADY_ENABLED);
@@ -189,7 +202,7 @@ public class AuthFacadeImpl implements AuthFacade {
       throw new ApiException(AuthMessageKey.ONE_TIME_CODE_SHOULD_BE_VERIFIED_FIRST);
     }
 
-    String secret = twoFactorAuthService.generateSecret();
+    final String secret = twoFactorAuthService.generateSecret();
 
     user.setTotpSecret(secret);
     userService.save(user);
@@ -197,23 +210,28 @@ public class AuthFacadeImpl implements AuthFacade {
     return twoFactorAuthService.generateQrCodeImage(secret, user.getEmail());
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param request request supplied to this method
+   * @return verify2fa login result
+   */
   @Override
   @Transactional
-  public LoginFinalizationResult verify2faLogin(TwoFactorVerifyRequest request) {
+  public LoginFinalizationResult verify2faLogin(final TwoFactorVerifyRequest request) {
 
-    boolean firstTime2FAEnabled = false;
+    boolean firstTimeTwoFaEnabled = false;
 
-    User user = userService.findUserByEmailOrThrow(request.getEmail());
+    final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
-    String emailAddressFromToken =
+    final String emailAddressFromToken =
         loginSessionService.consumeSessionToken(request.getShortLifeToken());
 
     if (emailAddressFromToken == null || !emailAddressFromToken.equals(request.getEmail())) {
       throw new ApiException(AuthMessageKey.INVALID_OR_EXPIRED_SESSION);
     }
 
-    boolean valid = twoFactorAuthService.verifyCode(user.getTotpSecret(), request.getCode());
+    final boolean valid = twoFactorAuthService.verifyCode(user.getTotpSecret(), request.getCode());
     if (!valid) {
       throw new ApiException(AuthMessageKey.INVALID_TWO_FA_CODE);
     }
@@ -222,12 +240,12 @@ public class AuthFacadeImpl implements AuthFacade {
       user.set2faEnabled(true);
       user.setStatus(UserStatus.ACTIVE);
       userService.save(user);
-      firstTime2FAEnabled = true;
+      firstTimeTwoFaEnabled = true;
     }
 
-    AuthTokens tokens = generateTokens(user);
+    final AuthTokens tokens = generateTokens(user);
 
-    LoginResponse.UserDetails userDetails =
+    final LoginResponse.UserDetails userDetails =
         LoginResponse.UserDetails.builder()
             .id(user.getId())
             .username(user.getUsername())
@@ -235,12 +253,12 @@ public class AuthFacadeImpl implements AuthFacade {
             .role(user.getRole())
             .build();
 
-    Optional<MediaUsage> mediaUsage =
+    final Optional<MediaUsage> mediaUsage =
         mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.USER, user.getId(), MediaUsageType.AVATAR);
 
     if (mediaUsage.isPresent()) {
-      PresignedUrlData imageData =
+      final PresignedUrlData imageData =
           objectStorageService.generatePresignedGetUrl(
               mediaUsage.get().getMediaAsset().getObjectPath());
 
@@ -249,17 +267,17 @@ public class AuthFacadeImpl implements AuthFacade {
       userDetails.setAvatarUrlExpiry(imageData.getExpiry());
     }
 
-    LoginResponse response = new LoginResponse(userDetails, firstTime2FAEnabled);
+    final LoginResponse response = new LoginResponse(userDetails, firstTimeTwoFaEnabled);
 
     loginSessionService.deleteToken(request.getShortLifeToken());
 
-    return new LoginFinalizationResult(response, tokens, firstTime2FAEnabled);
+    return new LoginFinalizationResult(response, tokens, firstTimeTwoFaEnabled);
   }
 
   /** {@inheritDoc} */
   @Override
   @Transactional
-  public LogoutResult handleLogout(String refreshToken) {
+  public LogoutResult handleLogout(final String refreshToken) {
 
     if (refreshToken != null) {
       refreshTokenService.findByToken(refreshToken).ifPresent(refreshTokenService::delete);
@@ -268,13 +286,18 @@ public class AuthFacadeImpl implements AuthFacade {
     return new LogoutResult(true, true);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @param user user supplied to this method
+   * @return generate tokens result
+   */
   @Transactional
-  private AuthTokens generateTokens(User user) {
-    String accessToken = jwtService.generateAccessToken(user);
-    String refreshToken = jwtService.generateRefreshToken(user);
+  private AuthTokens generateTokens(final User user) {
+    final String accessToken = jwtService.generateAccessToken(user);
+    final String refreshToken = jwtService.generateRefreshToken(user);
 
-    RefreshToken tokenEntity = new RefreshToken();
+    final RefreshToken tokenEntity = new RefreshToken();
     tokenEntity.setToken(refreshToken);
     tokenEntity.setUser(user);
     tokenEntity.setExpiryDate(

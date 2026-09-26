@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the profile and role fields used to create or update a user. */
 @Data
 public class AddEditUserRequest {
 

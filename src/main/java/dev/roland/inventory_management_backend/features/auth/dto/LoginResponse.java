@@ -2,6 +2,8 @@ package dev.roland.inventory_management_backend.features.auth.dto;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Combines authentication tokens with the user details returned after login. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,8 +19,11 @@ import lombok.Setter;
 public class LoginResponse {
 
   private UserDetails user;
-  private boolean firstTime2FAEnabled;
 
+  @JsonProperty("firstTime2FAEnabled")
+  private boolean firstTimeTwoFaEnabled;
+
+  /** Carries the user profile fields returned alongside authentication tokens. */
   @Getter
   @Setter
   @NoArgsConstructor

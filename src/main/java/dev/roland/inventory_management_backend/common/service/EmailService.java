@@ -20,9 +20,12 @@ import com.github.mustachejava.MustacheFactory;
 
 import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+/** Sends plain-text and Mustache-rendered HTML email through Spring Mail. */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
   private final JavaMailSender javaMailSender;
@@ -36,9 +39,10 @@ public class EmailService {
    * @param details recipient, subject, and body of the email
    * @return true when the mail sender accepts the message, otherwise false
    */
-  public boolean sendSimpleMail(EmailDetails details) {
+  public boolean sendSimpleMail(final EmailDetails details) {
+    boolean sent = false;
     try {
-      SimpleMailMessage mailMessage = new SimpleMailMessage();
+      final SimpleMailMessage mailMessage = new SimpleMailMessage();
 
       mailMessage.setFrom(sender);
       mailMessage.setTo(details.getRecipient());
@@ -46,11 +50,11 @@ public class EmailService {
       mailMessage.setSubject(details.getSubject());
 
       javaMailSender.send(mailMessage);
-
-      return true;
+      sent = true;
     } catch (Exception e) {
-      return false;
+      log.warn("Failed to send simple email", e);
     }
+    return sent;
   }
 
   /**
@@ -59,21 +63,23 @@ public class EmailService {
    * @param details contains recipient, subject, template name, and model
    * @return true if email sent successfully, false otherwise
    */
-  public boolean sendMailWithTemplate(EmailDetails details) {
+  public boolean sendMailWithTemplate(final EmailDetails details) {
+    boolean sent = false;
     try {
-      String htmlBody =
+      final String htmlBody =
           renderTemplate(details.getTemplateName().getFileName(), details.getTemplateModel());
       sendHtmlEmail(details.getRecipient(), details.getSubject(), htmlBody);
-      return true;
+      sent = true;
     } catch (Exception e) {
-      e.printStackTrace();
-      return false;
+      log.warn("Failed to send templated email", e);
     }
+    return sent;
   }
 
-  private String renderTemplate(String templateName, Map<String, Object> model) throws IOException {
-    MustacheFactory mf = new DefaultMustacheFactory();
-    Mustache mustache = mf.compile("templates/" + templateName + ".mustache");
+  private String renderTemplate(final String templateName, final Map<String, Object> model)
+      throws IOException {
+    final MustacheFactory mf = new DefaultMustacheFactory();
+    final Mustache mustache = mf.compile("templates/" + templateName + ".mustache");
 
     try (StringWriter writer = new StringWriter()) {
       mustache.execute(writer, model).flush();
@@ -81,9 +87,10 @@ public class EmailService {
     }
   }
 
-  private void sendHtmlEmail(String to, String subject, String htmlBody) throws MessagingException {
-    MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-    MimeMessageHelper helper =
+  private void sendHtmlEmail(final String to, final String subject, final String htmlBody)
+      throws MessagingException {
+    final MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+    final MimeMessageHelper helper =
         new MimeMessageHelper(
             mimeMessage,
             MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,

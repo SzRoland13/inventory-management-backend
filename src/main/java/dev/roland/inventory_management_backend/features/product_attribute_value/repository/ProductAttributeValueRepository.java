@@ -4,5 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import dev.roland.inventory_management_backend.features.product_attribute_value.ProductAttributeValue;
 
+/** Provides database queries for product attribute value records. */
 public interface ProductAttributeValueRepository
     extends JpaRepository<ProductAttributeValue, Long> {}

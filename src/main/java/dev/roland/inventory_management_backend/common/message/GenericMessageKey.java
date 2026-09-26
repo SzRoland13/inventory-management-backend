@@ -14,7 +14,7 @@ public enum GenericMessageKey implements MessageKey {
 
   private final String key;
 
-  GenericMessageKey(String key) {
+  GenericMessageKey(final String key) {
     this.key = key;
   }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Wraps the collection of user records returned by the user-listing endpoint. */
 @Getter
 @Setter
 @NoArgsConstructor

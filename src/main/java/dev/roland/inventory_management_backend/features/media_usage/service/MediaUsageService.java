@@ -7,6 +7,7 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 
+/** Defines operations supported by the media usage feature. */
 public interface MediaUsageService extends BaseService<MediaUsage, Long> {
   /**
    * Finds the media usage attached to an entity for a specific usage type.

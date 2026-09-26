@@ -5,12 +5,19 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
+/** Collects application settings for authentication, storage, mail, and Redis services. */
 @Getter
 @Component
 public class AppConfiguration {
 
   @Value("${app.security.secure-cookie}")
   private boolean secureCookie;
+
+  @Value("${app.security.jwt.access-cookie-name}")
+  private String accessTokenCookieName;
+
+  @Value("${app.security.jwt.refresh-cookie-name}")
+  private String refreshTokenCookieName;
 
   @Value("${app.security.jwt.access-expiration-time}")
   private long accessTokenExpirationTime;
@@ -22,19 +29,19 @@ public class AppConfiguration {
   private String secret;
 
   @Value("${app.storage.bucket}")
-  private String S3bucket;
+  private String s3Bucket;
 
   @Value("${app.storage.endpoint}")
-  private String S3Endpoint;
+  private String s3Endpoint;
 
   @Value("${app.storage.region}")
-  private String S3Region;
+  private String s3Region;
 
   @Value("${app.storage.access-key}")
-  private String S3AccessKey;
+  private String s3AccessKey;
 
   @Value("${app.storage.secret-key}")
-  private String S3SecretKey;
+  private String s3SecretKey;
 
   @Value("${redis.session.ttl-minutes}")
   private long sessionTtlMinutes;

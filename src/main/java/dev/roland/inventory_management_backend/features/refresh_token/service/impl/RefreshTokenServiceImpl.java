@@ -10,8 +10,10 @@ import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 import dev.roland.inventory_management_backend.features.refresh_token.repository.RefreshTokenRepository;
 import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
+/** Implements the refresh token service operations. */
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -19,6 +21,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   private final RefreshTokenRepository refreshTokenRepository;
 
   /** {@inheritDoc} */
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP",
+      justification =
+          "BaseService CRUD methods use this accessor to reach the Spring Data repository.")
   @Override
   public JpaRepository<RefreshToken, Long> getRepository() {
     return refreshTokenRepository;
@@ -38,7 +44,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
    *     Optional} if no matching token exists
    */
   @Override
-  public Optional<RefreshToken> findByToken(String token) {
+  public Optional<RefreshToken> findByToken(final String token) {
     return refreshTokenRepository.findByToken(token);
   }
 }

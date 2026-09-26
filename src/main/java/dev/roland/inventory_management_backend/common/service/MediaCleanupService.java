@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.media_asset.service.Medi
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/** Removes expired or unreferenced media objects from persistent storage. */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,8 +30,8 @@ public class MediaCleanupService {
   @Scheduled(cron = "0 0 2 * * ?") // 2 AM Every day
   @Transactional
   public void cleanupOrphanedMedia() {
-    LocalDateTime threshold = LocalDateTime.now().minusHours(24);
-    List<MediaAsset> orphanedAssets = mediaAssetService.findOrphanAssetsOlderThan(threshold);
+    final LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+    final List<MediaAsset> orphanedAssets = mediaAssetService.findOrphanAssetsOlderThan(threshold);
 
     log.info("Found {} orphaned media assets to delete", orphanedAssets.size());
 

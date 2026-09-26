@@ -7,9 +7,22 @@ import org.springframework.stereotype.Repository;
 
 import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
 
+/** Provides queries for one-time codes by code value and user. */
 @Repository
 public interface OneTimeCodeRepository extends JpaRepository<OneTimeCode, Long> {
+  /**
+   * Finds a one-time code by its value.
+   *
+   * @param code one-time code value to look up
+   * @return matching code, if one exists
+   */
   Optional<OneTimeCode> findByCode(String code);
 
+  /**
+   * Finds the one-time code associated with a user.
+   *
+   * @param userId identifier of the user
+   * @return matching code, if one exists
+   */
   Optional<OneTimeCode> findByUserId(Long userId);
 }

@@ -18,6 +18,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 
+/** Creates and validates the access and refresh JWTs used by API authentication. */
 @Component
 @RequiredArgsConstructor
 public class JwtService {
@@ -29,7 +30,7 @@ public class JwtService {
    * @param token signed JWT
    * @return username from the token subject
    */
-  public String extractUsername(String token) {
+  public String extractUsername(final String token) {
     return extractClaim(token, Claims::getSubject);
   }
 
@@ -39,7 +40,7 @@ public class JwtService {
    * @param token signed JWT
    * @return role claim value
    */
-  public String extractRole(String token) {
+  public String extractRole(final String token) {
     return extractClaim(token, claims -> claims.get("role", String.class));
   }
 
@@ -51,13 +52,13 @@ public class JwtService {
    * @param <T> extracted claim value type
    * @return resolved claim value
    */
-  public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+  public <T> T extractClaim(final String token, final Function<Claims, T> claimsResolver) {
     final Claims claims = extractAllClaims(token);
 
     return claimsResolver.apply(claims);
   }
 
-  private Claims extractAllClaims(String token) {
+  private Claims extractAllClaims(final String token) {
     return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
   }
 
@@ -67,8 +68,8 @@ public class JwtService {
    * @param user user to issue the token for
    * @return signed access token
    */
-  public String generateAccessToken(User user) {
-    Map<String, Object> claims = new HashMap<>();
+  public String generateAccessToken(final User user) {
+    final Map<String, Object> claims = new HashMap<>();
     claims.put("role", user.getRole().name());
     claims.put("email", user.getEmail());
     return generateAccessToken(claims, user);
@@ -81,7 +82,7 @@ public class JwtService {
    * @param user user to issue the token for
    * @return signed access token
    */
-  public String generateAccessToken(Map<String, Object> extraClaims, User user) {
+  public String generateAccessToken(final Map<String, Object> extraClaims, final User user) {
     return buildToken(extraClaims, user, appConfiguration.getAccessTokenExpirationTime());
   }
 
@@ -92,7 +93,7 @@ public class JwtService {
    * @param user user to issue the token for
    * @return signed refresh token
    */
-  public String generateRefreshToken(Map<String, Object> extraClaims, User user) {
+  public String generateRefreshToken(final Map<String, Object> extraClaims, final User user) {
     return buildToken(extraClaims, user, appConfiguration.getRefreshTokenExpirationTime());
   }
 
@@ -102,12 +103,13 @@ public class JwtService {
    * @param user user to issue the token for
    * @return signed refresh token
    */
-  public String generateRefreshToken(User user) {
+  public String generateRefreshToken(final User user) {
     return generateRefreshToken(new HashMap<>(), user);
   }
 
-  private String buildToken(Map<String, Object> extraClaims, User user, long expiration) {
-    long now = System.currentTimeMillis();
+  private String buildToken(
+      final Map<String, Object> extraClaims, final User user, final long expiration) {
+    final long now = System.currentTimeMillis();
 
     return Jwts.builder()
         .claims(extraClaims)
@@ -125,9 +127,9 @@ public class JwtService {
    * @param user expected token owner
    * @return true when the token subject matches the user and the token is not expired
    */
-  public boolean isTokenValid(String token, User user) {
+  public boolean isTokenValid(final String token, final User user) {
     final String username = extractUsername(token);
-    return (username.equals(user.getUsername())) && !isTokenExpired(token);
+    return username.equals(user.getUsername()) && !isTokenExpired(token);
   }
 
   /**
@@ -137,9 +139,9 @@ public class JwtService {
    * @param userDetails expected token owner
    * @return true when the token subject matches the user details and the token is not expired
    */
-  public boolean isTokenValid(String token, UserDetails userDetails) {
+  public boolean isTokenValid(final String token, final UserDetails userDetails) {
     final String username = extractUsername(token);
-    return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
   }
 
   /**
@@ -148,16 +150,16 @@ public class JwtService {
    * @param token signed JWT
    * @return true when the token is expired
    */
-  public boolean isTokenExpired(String token) {
+  public boolean isTokenExpired(final String token) {
     return extractExpiration(token).before(new Date());
   }
 
-  private Date extractExpiration(String token) {
+  private Date extractExpiration(final String token) {
     return extractClaim(token, Claims::getExpiration);
   }
 
   private SecretKey getSigningKey() {
-    byte[] keyBytes = Decoders.BASE64.decode(appConfiguration.getSecret());
+    final byte[] keyBytes = Decoders.BASE64.decode(appConfiguration.getSecret());
 
     return Keys.hmacShaKeyFor(keyBytes);
   }

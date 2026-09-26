@@ -7,6 +7,7 @@ import dev.roland.inventory_management_backend.common.annotation.PasswordsMatch;
 import dev.roland.inventory_management_backend.common.annotation.ValidPassword;
 import lombok.Data;
 
+/** Carries the new password and confirmation submitted during account setup. */
 @Data
 @PasswordsMatch
 public class PasswordSetupRequest {

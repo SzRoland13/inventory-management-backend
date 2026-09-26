@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.product.enumeration;
 
+/** Defines the lifecycle states available to catalog products. */
 public enum ProductStatus {
   /** Represents the active value. */
   ACTIVE,

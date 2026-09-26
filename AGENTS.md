@@ -30,7 +30,7 @@ Run these from `inventory-management-backend/`.
 docker compose up -d
 ```
 
-`docker-compose.yml` starts PostgreSQL 16, Redis 7, MinIO, and a MinIO bucket initialization container.
+`docker-compose.yml` starts PostgreSQL 16, Redis 7, SeaweedFS, and a bucket initialization container.
 
 The app is configured for PostgreSQL at `localhost:5432/inventory_db` with username/password `postgres` / `postgres`.
 
@@ -163,7 +163,7 @@ Migrations `011`, `012`, and `013` are still recent product/document/stock schem
 
 Media upload/preview/delete lives under `api/v1/media`.
 
-`ObjectStorageService` uses the AWS SDK S3 client and presigner, configured for path-style access and an endpoint override. This supports MinIO locally through `docker-compose.yml`.
+`ObjectStorageService` uses the AWS SDK S3 client and presigner, configured for path-style access and an endpoint override. This supports SeaweedFS locally through `docker-compose.yml`.
 
 Media object paths are generated under either:
 
@@ -203,3 +203,9 @@ When making meaningful changes, add focused tests where practical. Be aware that
 - Keep README facts aligned with `pom.xml`, `application.yml`, package names, and `docker-compose.yml` when the stack changes.
 - `target/` exists locally and should not be edited.
 - `.env` exists locally and should not be committed or printed.
+
+## Shared Graphify Skill
+
+The Graphify skill is maintained in `.agents/skills/graphify/` so coding agents can share the same instructions. Read its `SKILL.md` and relevant files under `references/` when using Graphify.
+
+For codebase questions, if `graphify-out/graph.json` exists, start with `graphify query "<question>"`. Use `graphify path` for a relationship between two concepts and `graphify explain` for a focused concept. Use `graphify-out/wiki/index.md` for broad navigation when it exists. After changing code, run `graphify update .` when the CLI is available. Generated graph data in `graphify-out/` is ignored by Git.

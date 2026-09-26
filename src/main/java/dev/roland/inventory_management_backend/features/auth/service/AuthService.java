@@ -8,11 +8,11 @@ import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
+/** Defines authentication operations exposed to the API layer. */
 public interface AuthService {
 
   /**
-   * This method checks if provided credentials are valid and if it is first login (missing
-   * password)
+   * Checks whether the supplied email belongs to an account that has not set a password.
    *
    * @param request email address of user
    * @return first-login status for the requested email
@@ -21,8 +21,7 @@ public interface AuthService {
   CheckFirstLoginResponse checkIfFirstLogin(EmailRequest request);
 
   /**
-   * This method checks if provided credentials are valid and if it is then saves the new password
-   * of user
+   * Saves the new password after validating first-login credentials.
    *
    * @param request email of user and the password two times
    * @throws ApiException if user credentials are invalid or the two passwords do not match

@@ -6,6 +6,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
+/** Defines operations supported by the user account feature. */
 public interface UserService extends BaseService<User, Long> {
 
   /**

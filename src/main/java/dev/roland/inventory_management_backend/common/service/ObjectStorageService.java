@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+/** Stores media objects and creates access URLs through the configured S3-compatible service. */
 @Service
 @RequiredArgsConstructor
 public class ObjectStorageService {
@@ -45,10 +46,13 @@ public class ObjectStorageService {
    * @param inputStream object content stream
    */
   public void upload(
-      String objectPath, long contentLength, String contentType, InputStream inputStream) {
-    PutObjectRequest request =
+      final String objectPath,
+      final long contentLength,
+      final String contentType,
+      final InputStream inputStream) {
+    final PutObjectRequest request =
         PutObjectRequest.builder()
-            .bucket(appConfiguration.getS3bucket())
+            .bucket(appConfiguration.getS3Bucket())
             .key(objectPath)
             .contentType(contentType)
             .build();
@@ -61,10 +65,10 @@ public class ObjectStorageService {
    *
    * @param objectPath object key to delete
    */
-  public void delete(String objectPath) {
+  public void delete(final String objectPath) {
     s3Client.deleteObject(
         DeleteObjectRequest.builder()
-            .bucket(appConfiguration.getS3bucket())
+            .bucket(appConfiguration.getS3Bucket())
             .key(objectPath)
             .build());
   }
@@ -75,21 +79,21 @@ public class ObjectStorageService {
    * @param objectPath object key to expose
    * @return presigned GET URL and expiry timestamp
    */
-  public PresignedUrlData generatePresignedGetUrl(String objectPath) {
+  public PresignedUrlData generatePresignedGetUrl(final String objectPath) {
     try (S3Presigner presigner = createPresigner()) {
 
-      GetObjectRequest objectRequest =
-          GetObjectRequest.builder().bucket(appConfiguration.getS3bucket()).key(objectPath).build();
+      final GetObjectRequest objectRequest =
+          GetObjectRequest.builder().bucket(appConfiguration.getS3Bucket()).key(objectPath).build();
 
-      Duration duration = Duration.ofHours(2);
+      final Duration duration = Duration.ofHours(2);
 
-      GetObjectPresignRequest presignRequest =
+      final GetObjectPresignRequest presignRequest =
           GetObjectPresignRequest.builder()
               .signatureDuration(duration)
               .getObjectRequest(objectRequest)
               .build();
 
-      PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
+      final PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
 
       return PresignedUrlData.builder()
           .url(presignedRequest.url().toExternalForm())
@@ -108,7 +112,10 @@ public class ObjectStorageService {
    * @return permanent object key
    */
   public String generateSolidObjectPath(
-      String fileName, MediaEntityType entityType, Long entityId, MediaUsageType usageType) {
+      final String fileName,
+      final MediaEntityType entityType,
+      final Long entityId,
+      final MediaUsageType usageType) {
     return entityType.getName().toLowerCase(Locale.ROOT)
         + "/"
         + entityId
@@ -124,15 +131,15 @@ public class ObjectStorageService {
    * @param originalFilename filename supplied by the client
    * @return generated temporary object path and filename
    */
-  public GeneratedMediaPathAndName generateTempObjectPath(String originalFilename) {
+  public GeneratedMediaPathAndName generateTempObjectPath(final String originalFilename) {
     String extension = "";
 
-    int dotIndex = originalFilename.lastIndexOf(".");
+    final int dotIndex = originalFilename.lastIndexOf(".");
     if (dotIndex != -1) {
       extension = originalFilename.substring(dotIndex);
     }
 
-    String newFileName = UUID.randomUUID().toString().replace("-", "") + extension;
+    final String newFileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
     return GeneratedMediaPathAndName.builder()
         .objectPath("temp/" + newFileName)
@@ -146,12 +153,12 @@ public class ObjectStorageService {
    * @param sourceKey existing object key
    * @param destinationKey target object key
    */
-  public void move(String sourceKey, String destinationKey) {
-    CopyObjectRequest copyRequest =
+  public void move(final String sourceKey, final String destinationKey) {
+    final CopyObjectRequest copyRequest =
         CopyObjectRequest.builder()
-            .sourceBucket(appConfiguration.getS3bucket())
+            .sourceBucket(appConfiguration.getS3Bucket())
             .sourceKey(sourceKey)
-            .destinationBucket(appConfiguration.getS3bucket())
+            .destinationBucket(appConfiguration.getS3Bucket())
             .destinationKey(destinationKey)
             .build();
 
@@ -167,24 +174,24 @@ public class ObjectStorageService {
    * @param mimeType expected MIME type for the upload
    * @return presigned PUT URL and expiry timestamp
    */
-  public PresignedUrlData generatePresignedPutUrl(String objectPath, String mimeType) {
+  public PresignedUrlData generatePresignedPutUrl(final String objectPath, final String mimeType) {
     try (S3Presigner presigner = createPresigner()) {
-      PutObjectRequest objectRequest =
+      final PutObjectRequest objectRequest =
           PutObjectRequest.builder()
-              .bucket(appConfiguration.getS3bucket())
+              .bucket(appConfiguration.getS3Bucket())
               .key(objectPath)
               .contentType(mimeType)
               .build();
 
-      Duration duration = Duration.ofMinutes(10);
+      final Duration duration = Duration.ofMinutes(10);
 
-      PutObjectPresignRequest presignRequest =
+      final PutObjectPresignRequest presignRequest =
           PutObjectPresignRequest.builder()
               .signatureDuration(duration)
               .putObjectRequest(objectRequest)
               .build();
 
-      PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(presignRequest);
+      final PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(presignRequest);
 
       return PresignedUrlData.builder()
           .url(presignedRequest.url().toExternalForm())

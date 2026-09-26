@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
 
+/** Carries the email address used to begin an authentication flow. */
 @Data
 public class EmailRequest {
 

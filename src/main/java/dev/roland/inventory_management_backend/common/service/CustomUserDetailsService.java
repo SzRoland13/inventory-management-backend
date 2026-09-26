@@ -10,6 +10,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
+/** Loads a user account and adapts its authentication fields for Spring Security. */
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
@@ -24,10 +25,11 @@ public class CustomUserDetailsService implements UserDetailsService {
    * @throws UsernameNotFoundException when the user cannot be resolved
    */
   @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+  public UserDetails loadUserByUsername(final String username) throws UsernameNotFoundException {
 
-    User user = userService.findByUsernameOrThrow(username);
+    final User user = userService.findByUsernameOrThrow(username);
 
-    return new CustomUserDetails(user);
+    return new CustomUserDetails(
+        user.getId(), user.getUsername(), user.getPassword(), user.getRole(), user.getStatus());
   }
 }

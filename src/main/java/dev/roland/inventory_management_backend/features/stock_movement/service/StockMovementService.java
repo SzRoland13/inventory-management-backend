@@ -9,6 +9,7 @@ import dev.roland.inventory_management_backend.features.stock_movement.enumerati
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
+/** Defines operations supported by the stock movement feature. */
 public interface StockMovementService extends BaseService<StockMovement, Long> {
   /**
    * Creates an immutable stock movement entry and applies its quantity change to the stock balance.

@@ -4,6 +4,7 @@ import dev.roland.inventory_management_backend.features.currency.Currency;
 import lombok.Builder;
 import lombok.Data;
 
+/** Shapes company profile data returned to API clients. */
 @Data
 @Builder
 public class UpdatedPreferredCurrencyResponse {

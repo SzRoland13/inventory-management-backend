@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Shapes company profile data returned to API clients. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

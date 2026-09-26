@@ -24,6 +24,7 @@ import dev.roland.inventory_management_backend.features.user.enumeration.UserSta
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -68,9 +69,11 @@ public class User implements IdInterface<Long> {
   private String totpSecret;
 
   @Column(name = "is_2fa_enabled", nullable = false)
+  @Default
   private boolean is2faEnabled = false;
 
   @Column(name = "is_otc_setup_complete", nullable = false)
+  @Default
   private boolean isOtcSetupComplete = false;
 
   @Column(name = "status", nullable = false, length = 50)
@@ -86,5 +89,6 @@ public class User implements IdInterface<Long> {
   private LocalDateTime updatedAt;
 
   @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Default
   private List<Warehouse> warehouses = new ArrayList<>();
 }

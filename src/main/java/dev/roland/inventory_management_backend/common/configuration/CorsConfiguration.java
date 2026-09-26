@@ -7,12 +7,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/** Defines the cross-origin policy for credentialed frontend requests. */
 @Configuration
 public class CorsConfiguration {
 
+  /**
+   * Defines the origins and request options allowed by CORS.
+   *
+   * @return CORS policy source used by Spring MVC and Security
+   */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
-    org.springframework.web.cors.CorsConfiguration configuration =
+    final org.springframework.web.cors.CorsConfiguration configuration =
         new org.springframework.web.cors.CorsConfiguration();
 
     configuration.setAllowedOrigins(List.of("http://localhost:3001"));
@@ -21,7 +27,7 @@ public class CorsConfiguration {
     configuration.setAllowedHeaders(
         List.of("X-Requested-With", "Content-Type", "Cookie", "X-XSRF-TOKEN", "Authorization"));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
 
     return source;
