@@ -31,4 +31,14 @@ public class StockBalanceServiceImpl implements StockBalanceService {
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.STOCK_BALANCE;
   }
+
+  @Override
+  public java.util.List<StockBalance> findAllByProductId(Long id) {
+    return stockBalanceRepository.findAllByProductId(id);
+  }
+
+  @Override
+  public java.util.List<StockBalance> findAllByProductIdIn(final java.util.List<Long> productIds) {
+    return stockBalanceRepository.findAllByProductIdIn(productIds);
+  }
 }

@@ -67,7 +67,7 @@ public class StockMovement implements IdInterface<Long> {
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(name = "quantity_change", nullable = false, precision = 15, scale = 2)
+  @Column(name = "quantity_change", nullable = false, precision = 24, scale = 8)
   private BigDecimal quantityChange;
 
   @Column(name = "movement_type", nullable = false, length = 50)

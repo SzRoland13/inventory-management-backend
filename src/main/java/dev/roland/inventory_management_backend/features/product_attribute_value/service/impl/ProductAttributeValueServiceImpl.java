@@ -31,4 +31,31 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_ATTRIBUTE_VALUE;
   }
+
+  @Override
+  public java.util.List<ProductAttributeValue> findAllByProductId(Long id) {
+    return productAttributeValueRepository.findAllByProductId(id);
+  }
+
+  @Override
+  public java.util.List<ProductAttributeValue> findAllByProductIdIn(
+      final java.util.List<Long> productIds) {
+    return productAttributeValueRepository.findAllByProductIdIn(productIds);
+  }
+
+  @Override
+  public void deleteAllByProductId(Long id) {
+    productAttributeValueRepository.deleteAll(
+        productAttributeValueRepository.findAllByProductId(id));
+  }
+
+  @Override
+  public boolean existsByOptionId(Long id) {
+    return productAttributeValueRepository.existsByOptionId(id);
+  }
+
+  @Override
+  public boolean existsByDefinitionId(Long id) {
+    return productAttributeValueRepository.existsByDefinitionId(id);
+  }
 }

@@ -31,4 +31,9 @@ public class DocumentLineServiceImpl implements DocumentLineService {
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_LINE;
   }
+
+  @Override
+  public boolean existsByUnitSnapshotId(Long id) {
+    return documentLineRepository.existsByUnitSnapshotId(id);
+  }
 }

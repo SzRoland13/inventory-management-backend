@@ -31,4 +31,20 @@ public class ProductAttributeDefinitionServiceImpl implements ProductAttributeDe
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_ATTRIBUTE_DEFINITION;
   }
+
+  @Override
+  public java.util.List<ProductAttributeDefinition> findAllByCompanyId(Long id) {
+    return productAttributeDefinitionRepository.findAllByCompanyId(id);
+  }
+
+  @Override
+  public java.util.Optional<ProductAttributeDefinition> findByIdAndCompanyId(
+      Long id, Long companyId) {
+    return productAttributeDefinitionRepository.findByIdAndCompanyId(id, companyId);
+  }
+
+  @Override
+  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+    return productAttributeDefinitionRepository.existsByCompanyIdAndCode(companyId, code);
+  }
 }

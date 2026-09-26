@@ -50,36 +50,34 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
 
   private void postLine(final Document document, final DocumentLine line) {
     final DocumentType type = document.getType();
+    final java.math.BigDecimal stockQuantity =
+        line.getQuantity().multiply(line.getConversionFactorSnapshot());
     if (type == DocumentType.GOODS_RECEIPT) {
-      post(
-          line,
-          document.getTargetWarehouse(),
-          line.getQuantity(),
-          StockMovementType.PURCHASE_INBOUND);
+      post(line, document.getTargetWarehouse(), stockQuantity, StockMovementType.PURCHASE_INBOUND);
     } else if (type == DocumentType.DELIVERY_NOTE) {
       post(
           line,
           document.getSourceWarehouse(),
-          line.getQuantity().negate(),
+          stockQuantity.negate(),
           StockMovementType.SALE_OUTBOUND);
     } else if (type == DocumentType.TRANSFER_DELIVERY) {
       post(
           line,
           document.getSourceWarehouse(),
-          line.getQuantity().negate(),
+          stockQuantity.negate(),
           StockMovementType.TRANSFER_OUT);
     } else if (type == DocumentType.TRANSFER_RECEIPT) {
-      post(line, document.getTargetWarehouse(), line.getQuantity(), StockMovementType.TRANSFER_IN);
+      post(line, document.getTargetWarehouse(), stockQuantity, StockMovementType.TRANSFER_IN);
     } else if (type == DocumentType.STOCK_ADJUSTMENT) {
       final StockMovementType movementType =
-          line.getQuantity().signum() >= 0
+          stockQuantity.signum() >= 0
               ? StockMovementType.ADJUSTMENT_INCREASE
               : StockMovementType.ADJUSTMENT_DECREASE;
       final Warehouse warehouse =
           document.getTargetWarehouse() != null
               ? document.getTargetWarehouse()
               : document.getSourceWarehouse();
-      post(line, warehouse, line.getQuantity(), movementType);
+      post(line, warehouse, stockQuantity, movementType);
     }
   }
 

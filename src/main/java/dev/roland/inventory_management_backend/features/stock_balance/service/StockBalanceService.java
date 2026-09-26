@@ -1,7 +1,13 @@
 package dev.roland.inventory_management_backend.features.stock_balance.service;
 
+import java.util.List;
+
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 
 /** Defines operations supported by the stock balance feature. */
-public interface StockBalanceService extends BaseService<StockBalance, Long> {}
+public interface StockBalanceService extends BaseService<StockBalance, Long> {
+  List<StockBalance> findAllByProductId(Long productId);
+
+  List<StockBalance> findAllByProductIdIn(List<Long> productIds);
+}

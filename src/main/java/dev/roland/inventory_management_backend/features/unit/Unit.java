@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -32,7 +31,7 @@ import lombok.Setter;
  * unique.
  */
 @Entity
-@Table(name = "units", uniqueConstraints = @UniqueConstraint(columnNames = {"company_id", "code"}))
+@Table(name = "units")
 @Getter
 @Setter
 @NoArgsConstructor

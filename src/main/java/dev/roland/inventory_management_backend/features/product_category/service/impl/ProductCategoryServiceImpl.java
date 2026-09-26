@@ -31,4 +31,19 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_CATEGORY;
   }
+
+  @Override
+  public java.util.List<ProductCategory> findAllByCompanyId(Long id) {
+    return productCategoryRepository.findAllByCompanyId(id);
+  }
+
+  @Override
+  public java.util.Optional<ProductCategory> findByIdAndCompanyId(Long id, Long companyId) {
+    return productCategoryRepository.findByIdAndCompanyId(id, companyId);
+  }
+
+  @Override
+  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+    return productCategoryRepository.existsByCompanyIdAndCode(companyId, code);
+  }
 }

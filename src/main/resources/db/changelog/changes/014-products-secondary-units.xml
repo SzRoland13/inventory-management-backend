@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="001" author="roland">
+        <sql>ALTER TABLE products DROP CONSTRAINT IF EXISTS products_sku_key</sql>
+        <addNotNullConstraint tableName="products" columnName="company_id" columnDataType="INTEGER"/>
+        <dropForeignKeyConstraint baseTableName="products" constraintName="fk_products_company"/>
+        <addForeignKeyConstraint baseTableName="products" baseColumnNames="company_id"
+                                 referencedTableName="companies" referencedColumnNames="id"
+                                 constraintName="fk_products_company"/>
+        <addUniqueConstraint tableName="products" columnNames="company_id, sku"
+                             constraintName="uq_products_company_sku"/>
+
+        <modifyDataType tableName="products" columnName="net_price" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="products" columnName="cost_price" newDataType="NUMERIC(24,8)"/>
+        <addColumn tableName="products">
+            <column name="deleted_at" type="TIMESTAMP"/>
+            <column name="secondary_unit_id" type="INTEGER"/>
+            <column name="secondary_units_per_main_unit" type="NUMERIC(24,8)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="products" baseColumnNames="secondary_unit_id"
+                                 referencedTableName="units" referencedColumnNames="id"
+                                 constraintName="fk_products_secondary_unit"/>
+        <sql>ALTER TABLE products ADD CONSTRAINT ck_products_secondary_unit_pair
+             CHECK ((secondary_unit_id IS NULL AND secondary_units_per_main_unit IS NULL)
+                 OR (secondary_unit_id IS NOT NULL AND secondary_unit_id &lt;&gt; unit_id
+                     AND secondary_units_per_main_unit &gt; 0))</sql>
+        <sql>CREATE INDEX idx_products_company_active ON products(company_id, deleted_at)</sql>
+    </changeSet>
+
+    <changeSet id="002" author="roland">
+        <dropUniqueConstraint tableName="units" constraintName="uq_units_company_code"/>
+        <sql>ALTER TABLE units ADD CONSTRAINT ck_units_company_system
+             CHECK ((is_system = TRUE AND company_id IS NULL)
+                 OR (is_system = FALSE AND company_id IS NOT NULL))</sql>
+        <sql>CREATE UNIQUE INDEX uq_units_system_code ON units(code) WHERE is_system = TRUE</sql>
+        <sql>CREATE UNIQUE INDEX uq_units_company_code ON units(company_id, code) WHERE is_system = FALSE</sql>
+        <insert tableName="units">
+            <column name="code" value="PAIR"/>
+            <column name="name" value="Pair"/>
+            <column name="symbol" value="pair"/>
+            <column name="is_system" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="003" author="roland">
+        <addNotNullConstraint tableName="product_categories" columnName="company_id" columnDataType="INTEGER"/>
+        <addNotNullConstraint tableName="product_attribute_definitions" columnName="company_id" columnDataType="INTEGER"/>
+    </changeSet>
+
+    <changeSet id="004" author="roland">
+        <sql>ALTER TABLE product_attribute_values ADD CONSTRAINT ck_product_attribute_values_one_value
+             CHECK (num_nonnulls(option_id, text_value, number_value, date_value, boolean_value) = 1)</sql>
+    </changeSet>
+
+    <changeSet id="005" author="roland">
+        <modifyDataType tableName="stock_balances" columnName="quantity" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="stock_movements" columnName="quantity_change" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="document_lines" columnName="quantity" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="document_lines" columnName="fulfilled_quantity" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="document_lines" columnName="unit_price" newDataType="NUMERIC(24,8)"/>
+        <modifyDataType tableName="document_lines" columnName="total_price" newDataType="NUMERIC(24,8)"/>
+        <addColumn tableName="document_lines">
+            <column name="unit_id_snapshot" type="INTEGER"/>
+            <column name="unit_code_snapshot" type="VARCHAR(50)"/>
+            <column name="unit_name_snapshot" type="VARCHAR(100)"/>
+            <column name="conversion_factor_snapshot" type="NUMERIC(24,8)"/>
+        </addColumn>
+        <sql>UPDATE document_lines dl SET unit_id_snapshot = p.unit_id, conversion_factor_snapshot = 1
+             FROM products p WHERE dl.product_id = p.id</sql>
+        <sql>UPDATE document_lines dl SET unit_code_snapshot = u.code, unit_name_snapshot = u.name
+             FROM units u WHERE dl.unit_id_snapshot = u.id</sql>
+        <addForeignKeyConstraint baseTableName="document_lines" baseColumnNames="unit_id_snapshot"
+                                 referencedTableName="units" referencedColumnNames="id"
+                                 constraintName="fk_document_lines_unit_snapshot"/>
+        <addNotNullConstraint tableName="document_lines" columnName="unit_id_snapshot" columnDataType="INTEGER"/>
+        <addNotNullConstraint tableName="document_lines" columnName="unit_code_snapshot" columnDataType="VARCHAR(50)"/>
+        <addNotNullConstraint tableName="document_lines" columnName="unit_name_snapshot" columnDataType="VARCHAR(100)"/>
+        <addNotNullConstraint tableName="document_lines" columnName="conversion_factor_snapshot" columnDataType="NUMERIC(24,8)"/>
+        <sql>ALTER TABLE document_lines ADD CONSTRAINT ck_document_lines_positive_conversion
+             CHECK (conversion_factor_snapshot &gt; 0)</sql>
+    </changeSet>
+
+</databaseChangeLog>

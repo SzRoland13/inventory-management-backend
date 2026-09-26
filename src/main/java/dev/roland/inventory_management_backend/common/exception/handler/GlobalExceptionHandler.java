@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -76,10 +77,26 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<String>> handleValidationErrors(
       final MethodArgumentNotValidException ex) {
+    return validationResponse(ex);
+  }
+
+  /** Converts model-attribute validation failures into field-level message keys. */
+  @ExceptionHandler(BindException.class)
+  public ResponseEntity<ApiResponse<String>> handleBindingErrors(final BindException ex) {
+    return validationResponse(ex);
+  }
+
+  private ResponseEntity<ApiResponse<String>> validationResponse(final BindException ex) {
     final Map<String, Object> params = new HashMap<>();
     ex.getBindingResult()
         .getFieldErrors()
-        .forEach(error -> params.put(error.getField(), error.getDefaultMessage()));
+        .forEach(
+            error ->
+                params.put(
+                    error.getField(),
+                    error.isBindingFailure()
+                        ? GenericMessageKey.INVALID_REQUEST_FORMAT.getKey()
+                        : error.getDefaultMessage()));
 
     return ResponseEntity.badRequest()
         .body(ApiResponse.failure(GenericMessageKey.VALIDATION_ERROR, params));

@@ -5,7 +5,6 @@ import static dev.roland.inventory_management_backend.features.user.UserControll
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.roland.inventory_management_backend.common.annotation.AdminOnly;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
@@ -50,7 +50,7 @@ public class UserController {
    * @return response containing the created user
    */
   @PostMapping(REGISTER_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<UserDto>> registerUser(
       @Valid @RequestBody final AddEditUserRequest request) {
     return ResponseEntity.ok(
@@ -66,7 +66,7 @@ public class UserController {
    * @return response containing the updated user
    */
   @PutMapping(ID_PARAM)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<UserDto>> updateUser(
       @PathVariable final Long id, @RequestBody final AddEditUserRequest updateRequest) {
     return ResponseEntity.ok(
@@ -80,7 +80,7 @@ public class UserController {
    * @return response containing the user list
    */
   @GetMapping(ALL_USERS_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<AllUserResponse>> getAllUsers() {
     return ResponseEntity.ok(
         ApiResponse.success(GenericMessageKey.REQUEST_SUCCESS, userFacade.getAllUsers()));
@@ -93,7 +93,7 @@ public class UserController {
    * @return confirmation response
    */
   @PostMapping(RESET_TWO_FA_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> reset2fa(@PathVariable final Long id) {
     userFacade.resetUserTwoFactorAuth(id);
 
@@ -107,7 +107,7 @@ public class UserController {
    * @return confirmation response
    */
   @PostMapping(SUSPEND_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> suspendUser(@PathVariable final Long id) {
     userFacade.suspendUser(id);
 
@@ -121,7 +121,7 @@ public class UserController {
    * @return confirmation response
    */
   @PostMapping(ACTIVATE_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable final Long id) {
     userFacade.activateUser(id);
 
@@ -135,7 +135,7 @@ public class UserController {
    * @return confirmation response
    */
   @PostMapping(RESET_PASSWORD_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> resetPassword(@PathVariable final Long id) {
     userFacade.resetPassword(id);
 

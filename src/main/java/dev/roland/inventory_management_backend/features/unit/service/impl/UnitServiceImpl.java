@@ -31,4 +31,24 @@ public class UnitServiceImpl implements UnitService {
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.UNIT;
   }
+
+  @Override
+  public java.util.List<Unit> findSelectableUnits(Long companyId) {
+    return unitRepository.findSelectableUnits(companyId);
+  }
+
+  @Override
+  public java.util.Optional<Unit> findById(Long id) {
+    return unitRepository.findById(id);
+  }
+
+  @Override
+  public boolean existsByCompanyIdAndCode(Long companyId, String code) {
+    return unitRepository.existsByCompanyIdAndCode(companyId, code);
+  }
+
+  @Override
+  public boolean existsBySystemTrueAndCode(String code) {
+    return unitRepository.existsBySystemTrueAndCode(code);
+  }
 }
