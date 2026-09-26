@@ -14,8 +14,20 @@ public class PasswordsMatchValidator
   public boolean isValid(
       final PasswordSetupRequest request,
       final ConstraintValidatorContext constraintValidatorContext) {
-    return request.getPassword() != null
-        && request.getRepeatPassword() != null
-        && request.getPassword().equals(request.getRepeatPassword());
+    final boolean matches =
+        request.getPassword() != null
+            && request.getRepeatPassword() != null
+            && request.getPassword().equals(request.getRepeatPassword());
+
+    if (!matches) {
+      constraintValidatorContext.disableDefaultConstraintViolation();
+      constraintValidatorContext
+          .buildConstraintViolationWithTemplate(
+              constraintValidatorContext.getDefaultConstraintMessageTemplate())
+          .addPropertyNode("repeatPassword")
+          .addConstraintViolation();
+    }
+
+    return matches;
   }
 }
