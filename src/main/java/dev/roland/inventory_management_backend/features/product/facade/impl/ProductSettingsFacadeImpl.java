@@ -20,6 +20,7 @@ import dev.roland.inventory_management_backend.features.product.dto.CategoryResp
 import dev.roland.inventory_management_backend.features.product.dto.UnitRequest;
 import dev.roland.inventory_management_backend.features.product.dto.UnitResponse;
 import dev.roland.inventory_management_backend.features.product.facade.ProductSettingsFacade;
+import dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapper;
 import dev.roland.inventory_management_backend.features.product.message.ProductMessageKey;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
 import dev.roland.inventory_management_backend.features.product_attribute_definition.ProductAttributeDefinition;
@@ -46,12 +47,13 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   private final ProductAttributeOptionService optionService;
   private final ProductAttributeValueService valueService;
   private final CompanyService companyService;
+  private final ProductSettingsMapper productSettingsMapper;
 
   @Override
   @Transactional
   public List<UnitResponse> listUnits() {
     return unitService.findSelectableUnits(company().getId()).stream()
-        .map(this::unitResponse)
+        .map(productSettingsMapper::toUnitResponse)
         .toList();
   }
 
@@ -72,7 +74,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
             .system(false)
             .company(company())
             .build();
-    return unitResponse(unitService.save(unit));
+    return productSettingsMapper.toUnitResponse(unitService.save(unit));
   }
 
   @Transactional
@@ -89,7 +91,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     unit.setCode(request.code().trim());
     unit.setName(request.name().trim());
     unit.setSymbol(request.symbol().trim());
-    return unitResponse(unitService.save(unit));
+    return productSettingsMapper.toUnitResponse(unitService.save(unit));
   }
 
   @Transactional
@@ -106,7 +108,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
   @Transactional
   public List<CategoryResponse> listCategories() {
     return categoryService.findAllByCompanyId(company().getId()).stream()
-        .map(this::categoryResponse)
+        .map(productSettingsMapper::toCategoryResponse)
         .toList();
   }
 
@@ -127,7 +129,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
             .description(request.description())
             .sortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)))
             .build();
-    return categoryResponse(categoryService.save(category));
+    return productSettingsMapper.toCategoryResponse(categoryService.save(category));
   }
 
   @Transactional
@@ -156,7 +158,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     category.setName(request.name().trim());
     category.setDescription(request.description());
     category.setSortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)));
-    return categoryResponse(categoryService.save(category));
+    return productSettingsMapper.toCategoryResponse(categoryService.save(category));
   }
 
   @Transactional
@@ -240,7 +242,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
             .value(request.value().trim())
             .sortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)))
             .build();
-    return optionResponse(optionService.save(option));
+    return productSettingsMapper.toAttributeOptionResponse(optionService.save(option));
   }
 
   @Transactional
@@ -259,7 +261,7 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     }
     option.setValue(request.value().trim());
     option.setSortOrder(Objects.requireNonNullElse(request.sortOrder(), Integer.valueOf(0)));
-    return optionResponse(optionService.save(option));
+    return productSettingsMapper.toAttributeOptionResponse(optionService.save(option));
   }
 
   @Transactional
@@ -312,35 +314,12 @@ public class ProductSettingsFacadeImpl implements ProductSettingsFacade {
     return new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
   }
 
-  private UnitResponse unitResponse(final Unit unit) {
-    return new UnitResponse(
-        unit.getId(), unit.getCode(), unit.getName(), unit.getSymbol(), unit.isSystem());
-  }
-
-  private CategoryResponse categoryResponse(final ProductCategory category) {
-    return new CategoryResponse(
-        category.getId(),
-        category.getParent() == null ? null : category.getParent().getId(),
-        category.getCode(),
-        category.getName(),
-        category.getDescription(),
-        category.getSortOrder());
-  }
-
   private AttributeDefinitionResponse definitionResponse(
       final ProductAttributeDefinition definition) {
-    return new AttributeDefinitionResponse(
-        definition.getId(),
-        definition.getCode(),
-        definition.getName(),
-        definition.getValueType(),
-        definition.isRequired(),
+    return productSettingsMapper.toAttributeDefinitionResponse(
+        definition,
         optionService.findAllByDefinitionId(definition.getId()).stream()
-            .map(this::optionResponse)
+            .map(productSettingsMapper::toAttributeOptionResponse)
             .toList());
-  }
-
-  private AttributeOptionResponse optionResponse(final ProductAttributeOption option) {
-    return new AttributeOptionResponse(option.getId(), option.getValue(), option.getSortOrder());
   }
 }
