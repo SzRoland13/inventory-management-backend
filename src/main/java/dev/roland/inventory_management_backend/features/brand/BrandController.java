@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.roland.inventory_management_backend.common.annotation.AdminOrManager;
+import dev.roland.inventory_management_backend.common.annotation.AdminOnly;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandRequest;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandResponse;
@@ -52,7 +52,7 @@ public class BrandController {
    * @return created brand
    */
   @PostMapping
-  @AdminOrManager
+  @AdminOnly
   public ResponseEntity<ApiResponse<BrandResponse>> create(
       @Valid @RequestBody final BrandRequest request) {
     return ResponseEntity.ok(
@@ -67,7 +67,7 @@ public class BrandController {
    * @return updated brand
    */
   @PutMapping(ID_PATH)
-  @AdminOrManager
+  @AdminOnly
   public ResponseEntity<ApiResponse<BrandResponse>> update(
       @PathVariable final Long id, @Valid @RequestBody final BrandRequest request) {
     return ResponseEntity.ok(
@@ -81,7 +81,7 @@ public class BrandController {
    * @return successful response with no payload
    */
   @DeleteMapping(ID_PATH)
-  @AdminOrManager
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable final Long id) {
     brandFacade.delete(id);
     return ResponseEntity.ok(ApiResponse.success(BrandMessageKey.BRAND_DELETED, null));
