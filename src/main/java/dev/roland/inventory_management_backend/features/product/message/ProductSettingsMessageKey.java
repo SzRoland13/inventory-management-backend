@@ -13,6 +13,7 @@ public enum ProductSettingsMessageKey implements MessageKey {
   UNIT_UPDATED("product.settings.unit.updated"),
   UNIT_DELETED("product.settings.unit.deleted"),
   CATEGORIES_RETRIEVED("product.settings.categories.retrieved"),
+  CATEGORIES_REORDERED("product.settings.categories.reordered"),
   CATEGORY_CREATED("product.settings.category.created"),
   CATEGORY_UPDATED("product.settings.category.updated"),
   CATEGORY_DELETED("product.settings.category.deleted"),

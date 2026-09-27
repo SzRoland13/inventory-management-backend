@@ -17,6 +17,14 @@ public interface ProductCategoryService extends BaseService<ProductCategory, Lon
   List<ProductCategory> findAllByCompanyId(Long companyId);
 
   /**
+   * Persists multiple categories.
+   *
+   * @param categories categories to persist
+   * @return saved categories
+   */
+  List<ProductCategory> saveAll(List<ProductCategory> categories);
+
+  /**
    * Finds matching records using the supplied criteria.
    *
    * @param id the resource identifier

@@ -3,7 +3,9 @@ package dev.roland.inventory_management_backend.features.product_category.facade
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +25,7 @@ import dev.roland.inventory_management_backend.features.product.dto.CategoryRequ
 import dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapperImpl;
 import dev.roland.inventory_management_backend.features.product.message.ProductMessageKey;
 import dev.roland.inventory_management_backend.features.product_category.ProductCategory;
+import dev.roland.inventory_management_backend.features.product_category.dto.CategoryReorderRequest;
 import dev.roland.inventory_management_backend.features.product_category.service.ProductCategoryService;
 
 @ExtendWith(MockitoExtension.class)
@@ -129,5 +132,85 @@ class ProductCategoryFacadeImplTest {
     assertEquals("TOOLS", updated.code());
     assertEquals("Revised", updated.description());
     assertEquals(4, updated.sortOrder());
+  }
+
+  @Test
+  void reordersRootCategoriesAndReturnsThemInRequestedOrder() {
+    final ProductCategory first =
+        ProductCategory.builder().id(10L).name("First").sortOrder(0).build();
+    final ProductCategory second =
+        ProductCategory.builder().id(20L).name("Second").sortOrder(1).build();
+    when(categoryService.findAllByCompanyId(1L)).thenReturn(List.of(first, second));
+    when(categoryService.saveAll(anyList())).thenAnswer(call -> call.getArgument(0));
+
+    final var reordered = categoryFacade.reorder(new CategoryReorderRequest(List.of(20L, 10L)));
+
+    assertEquals(List.of(20L, 10L), reordered.stream().map(response -> response.id()).toList());
+    assertEquals(0, second.getSortOrder());
+    assertEquals(1, first.getSortOrder());
+    verify(categoryService)
+        .saveAll(
+            org.mockito.ArgumentMatchers.argThat(
+                categories -> categories.equals(List.of(second, first))));
+  }
+
+  @Test
+  void reordersChildrenWithinTheirParentGroup() {
+    final ProductCategory parent = ProductCategory.builder().id(1L).name("Parent").build();
+    final ProductCategory first =
+        ProductCategory.builder().id(11L).name("First").parent(parent).sortOrder(0).build();
+    final ProductCategory second =
+        ProductCategory.builder().id(12L).name("Second").parent(parent).sortOrder(1).build();
+    when(categoryService.findAllByCompanyId(1L)).thenReturn(List.of(parent, first, second));
+    when(categoryService.saveAll(anyList())).thenAnswer(call -> call.getArgument(0));
+
+    final var reordered = categoryFacade.reorder(new CategoryReorderRequest(List.of(12L, 11L)));
+
+    assertEquals(List.of(12L, 11L), reordered.stream().map(response -> response.id()).toList());
+    assertEquals(1L, reordered.getFirst().parentId());
+    assertEquals(0, second.getSortOrder());
+    assertEquals(1, first.getSortOrder());
+  }
+
+  @Test
+  void rejectsCrossCompanyAndMixedParentReordersWithoutSaving() {
+    final ProductCategory root = ProductCategory.builder().id(1L).name("Root").sortOrder(4).build();
+    final ProductCategory otherRoot =
+        ProductCategory.builder().id(2L).name("Other root").sortOrder(5).build();
+    final ProductCategory child =
+        ProductCategory.builder().id(3L).name("Child").parent(root).sortOrder(6).build();
+    when(categoryService.findAllByCompanyId(1L)).thenReturn(List.of(root, otherRoot, child));
+
+    assertThrows(
+        ApiException.class,
+        () -> categoryFacade.reorder(new CategoryReorderRequest(List.of(1L, 999L))));
+    assertThrows(
+        ApiException.class,
+        () -> categoryFacade.reorder(new CategoryReorderRequest(List.of(1L, 3L))));
+
+    assertEquals(4, root.getSortOrder());
+    assertEquals(6, child.getSortOrder());
+    verify(categoryService, never()).saveAll(anyList());
+  }
+
+  @Test
+  void rejectsIncompleteOrDuplicateSiblingListsWithoutSaving() {
+    final ProductCategory first =
+        ProductCategory.builder().id(1L).name("First").sortOrder(4).build();
+    final ProductCategory second =
+        ProductCategory.builder().id(2L).name("Second").sortOrder(5).build();
+    when(categoryService.findAllByCompanyId(1L)).thenReturn(List.of(first, second));
+
+    assertThrows(
+        ApiException.class, () -> categoryFacade.reorder(new CategoryReorderRequest(List.of(1L))));
+    assertThrows(
+        ApiException.class,
+        () -> categoryFacade.reorder(new CategoryReorderRequest(List.of(1L, 1L))));
+    assertThrows(
+        ApiException.class, () -> categoryFacade.reorder(new CategoryReorderRequest(List.of())));
+
+    assertEquals(4, first.getSortOrder());
+    assertEquals(5, second.getSortOrder());
+    verify(categoryService, never()).saveAll(anyList());
   }
 }

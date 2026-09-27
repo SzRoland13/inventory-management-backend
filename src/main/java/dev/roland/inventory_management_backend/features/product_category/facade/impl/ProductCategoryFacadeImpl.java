@@ -1,7 +1,14 @@
 package dev.roland.inventory_management_backend.features.product_category.facade.impl;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 
@@ -14,6 +21,7 @@ import dev.roland.inventory_management_backend.features.product.dto.CategoryResp
 import dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapper;
 import dev.roland.inventory_management_backend.features.product.message.ProductMessageKey;
 import dev.roland.inventory_management_backend.features.product_category.ProductCategory;
+import dev.roland.inventory_management_backend.features.product_category.dto.CategoryReorderRequest;
 import dev.roland.inventory_management_backend.features.product_category.facade.ProductCategoryFacade;
 import dev.roland.inventory_management_backend.features.product_category.service.ProductCategoryService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +38,51 @@ public class ProductCategoryFacadeImpl implements ProductCategoryFacade {
   @Transactional
   public List<CategoryResponse> list() {
     return categoryService.findAllByCompanyId(companyId()).stream()
+        .sorted(categoryDisplayOrder())
+        .map(mapper::toCategoryResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional
+  public List<CategoryResponse> reorder(final CategoryReorderRequest request) {
+    final List<Long> categoryIds = request.categoryIds();
+    if (categoryIds == null || categoryIds.isEmpty()) {
+      throw invalid();
+    }
+
+    final Set<Long> requestedIds = new HashSet<>(categoryIds);
+    if (requestedIds.size() != categoryIds.size()) {
+      throw invalid();
+    }
+
+    final List<ProductCategory> companyCategories = categoryService.findAllByCompanyId(companyId());
+    final Map<Long, ProductCategory> categoriesById =
+        companyCategories.stream()
+            .collect(Collectors.toMap(ProductCategory::getId, Function.identity()));
+    final List<ProductCategory> orderedCategories = new ArrayList<>(categoryIds.size());
+    for (Long categoryId : categoryIds) {
+      final ProductCategory category = categoriesById.get(categoryId);
+      if (category == null) {
+        throw invalid();
+      }
+      orderedCategories.add(category);
+    }
+
+    final Long parentId = parentId(orderedCategories.getFirst());
+    final List<ProductCategory> siblings =
+        companyCategories.stream()
+            .filter(category -> Objects.equals(parentId(category), parentId))
+            .toList();
+    if (siblings.size() != categoryIds.size()
+        || !requestedIds.containsAll(siblings.stream().map(ProductCategory::getId).toList())) {
+      throw invalid();
+    }
+
+    for (int index = 0; index < orderedCategories.size(); index++) {
+      orderedCategories.get(index).setSortOrder(index);
+    }
+    return categoryService.saveAll(orderedCategories).stream()
         .map(mapper::toCategoryResponse)
         .toList();
   }
@@ -98,6 +151,18 @@ public class ProductCategoryFacadeImpl implements ProductCategoryFacade {
 
   private Long companyId() {
     return companyService.getCompanyOrCreateNew().getId();
+  }
+
+  private static Long parentId(final ProductCategory category) {
+    return category.getParent() == null ? null : category.getParent().getId();
+  }
+
+  private static Comparator<ProductCategory> categoryDisplayOrder() {
+    return Comparator.comparing(
+            ProductCategoryFacadeImpl::parentId, Comparator.nullsFirst(Comparator.naturalOrder()))
+        .thenComparing(
+            ProductCategory::getSortOrder, Comparator.nullsFirst(Comparator.naturalOrder()))
+        .thenComparing(ProductCategory::getId, Comparator.nullsFirst(Comparator.naturalOrder()));
   }
 
   private ApiException invalid() {

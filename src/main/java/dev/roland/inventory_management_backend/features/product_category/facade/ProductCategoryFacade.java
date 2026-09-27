@@ -4,6 +4,7 @@ import java.util.List;
 
 import dev.roland.inventory_management_backend.features.product.dto.CategoryRequest;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryResponse;
+import dev.roland.inventory_management_backend.features.product_category.dto.CategoryReorderRequest;
 
 /** Company-scoped product category operations. */
 public interface ProductCategoryFacade {
@@ -13,6 +14,14 @@ public interface ProductCategoryFacade {
    * @return company categories
    */
   List<CategoryResponse> list();
+
+  /**
+   * Reorders the complete sibling group represented by the supplied category identifiers.
+   *
+   * @param request ordered category identifiers
+   * @return updated categories in the requested order
+   */
+  List<CategoryResponse> reorder(CategoryReorderRequest request);
 
   /**
    * Creates a category for the current company.

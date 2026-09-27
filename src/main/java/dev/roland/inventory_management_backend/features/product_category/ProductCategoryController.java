@@ -19,6 +19,7 @@ import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryRequest;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryResponse;
 import dev.roland.inventory_management_backend.features.product.message.ProductSettingsMessageKey;
+import dev.roland.inventory_management_backend.features.product_category.dto.CategoryReorderRequest;
 import dev.roland.inventory_management_backend.features.product_category.facade.ProductCategoryFacade;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductCategoryController {
   public static final String BASE_ENDPOINT = "api/v1/product-settings/categories";
   public static final String ID_PATH = "/{id}";
+  public static final String REORDER_PATH = "/reorder";
 
   private final ProductCategoryFacade productCategoryFacade;
 
@@ -40,6 +42,20 @@ public class ProductCategoryController {
   @GetMapping
   public ResponseEntity<ApiResponse<List<CategoryResponse>>> list() {
     return ok(ProductSettingsMessageKey.CATEGORIES_RETRIEVED, productCategoryFacade.list());
+  }
+
+  /**
+   * Reorders all categories within one sibling group.
+   *
+   * @param request ordered category identifiers
+   * @return updated categories in the requested order
+   */
+  @PutMapping(REORDER_PATH)
+  @AdminOnly
+  public ResponseEntity<ApiResponse<List<CategoryResponse>>> reorder(
+      @Valid @RequestBody final CategoryReorderRequest request) {
+    return ok(
+        ProductSettingsMessageKey.CATEGORIES_REORDERED, productCategoryFacade.reorder(request));
   }
 
   /**
