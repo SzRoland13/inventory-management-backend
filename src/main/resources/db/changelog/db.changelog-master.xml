@@ -19,4 +19,5 @@
     <include file="db/changelog/changes/012-refactor-documents-related-tables.xml"/>
     <include file="db/changelog/changes/013-add-stock-movement-table.xml"/>
     <include file="db/changelog/changes/014-products-secondary-units.xml"/>
+    <include file="db/changelog/changes/015-create-brands-table.xml"/>
 </databaseChangeLog>

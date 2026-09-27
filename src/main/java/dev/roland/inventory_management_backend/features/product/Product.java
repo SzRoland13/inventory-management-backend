@@ -23,6 +23,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
+import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
@@ -69,8 +70,9 @@ public class Product implements IdInterface<Long> {
   @Column(name = "description")
   private String description;
 
-  @Column(name = "brand", length = 100)
-  private String brand;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "brand_id")
+  private Brand brand;
 
   @Column(name = "status", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)

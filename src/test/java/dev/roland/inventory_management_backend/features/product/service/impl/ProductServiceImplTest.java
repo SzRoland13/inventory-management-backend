@@ -14,6 +14,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 
+import dev.roland.inventory_management_backend.features.brand.Brand;
+import dev.roland.inventory_management_backend.features.brand.repository.BrandRepository;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.repository.CompanyRepository;
 import dev.roland.inventory_management_backend.features.product.Product;
@@ -35,6 +37,7 @@ import dev.roland.inventory_management_backend.features.unit.repository.UnitRepo
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ProductServiceImplTest {
   @Autowired private ProductRepository productRepository;
+  @Autowired private BrandRepository brandRepository;
   @Autowired private CompanyRepository companyRepository;
   @Autowired private UnitRepository unitRepository;
   @Autowired private ProductCategoryRepository categoryRepository;
@@ -216,12 +219,24 @@ class ProductServiceImplTest {
       Unit mainUnit,
       Unit secondaryUnit,
       LocalDateTime deletedAt) {
+    final Brand brandEntity =
+        brand == null
+            ? null
+            : brandRepository
+                .findByCompanyIdAndNameIgnoreCase(company.getId(), brand)
+                .orElseGet(
+                    () -> {
+                      final Brand newBrand = new Brand();
+                      newBrand.setCompany(company);
+                      newBrand.setName(brand);
+                      return brandRepository.save(newBrand);
+                    });
     return productRepository.save(
         Product.builder()
             .company(company)
             .sku(sku)
             .name(name)
-            .brand(brand)
+            .brand(brandEntity)
             .description(description)
             .status(status)
             .unit(mainUnit)

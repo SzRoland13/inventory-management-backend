@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 public enum ProductSortField {
   SKU("sku"),
   NAME("name"),
-  BRAND("brand"),
+  BRAND("brand.name"),
   STATUS("status"),
   NET_PRICE("netPrice"),
   VAT_RATE("vatRate"),

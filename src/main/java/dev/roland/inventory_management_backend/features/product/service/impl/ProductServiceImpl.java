@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 
@@ -29,7 +30,11 @@ import lombok.RequiredArgsConstructor;
 public class ProductServiceImpl implements ProductService {
   private final ProductRepository productRepository;
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @return the operation result
+   */
   @Override
   public JpaRepository<Product, Long> getRepository() {
     return productRepository;
@@ -62,7 +67,8 @@ public class ProductServiceImpl implements ProductService {
           if (request.brand() != null && !request.brand().isBlank()) {
             predicates.add(
                 criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("brand")), pattern(request.brand())));
+                    criteriaBuilder.lower(root.join("brand", JoinType.LEFT).get("name")),
+                    pattern(request.brand())));
           }
           if (request.unitId() != null) {
             predicates.add(
@@ -86,7 +92,9 @@ public class ProductServiceImpl implements ProductService {
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("sku")), pattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("ean")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("brand")), pattern),
+                    criteriaBuilder.like(
+                        criteriaBuilder.lower(root.join("brand", JoinType.LEFT).get("name")),
+                        pattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern)));
           }
           return criteriaBuilder.and(predicates.toArray(Predicate[]::new));

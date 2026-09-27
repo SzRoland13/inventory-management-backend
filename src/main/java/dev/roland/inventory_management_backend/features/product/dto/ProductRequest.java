@@ -21,7 +21,7 @@ import dev.roland.inventory_management_backend.features.product.message.ProductV
  * Product create and update payload. Company ownership comes from the current company context.
  *
  * @param attributes attribute values
- * @param brand brand value
+ * @param brandId optional company brand identifier
  * @param categoryIds associated category identifiers
  * @param description descriptive text
  * @param dimensions physical dimensions
@@ -31,6 +31,7 @@ import dev.roland.inventory_management_backend.features.product.message.ProductV
  * @param sku product stock keeping unit
  * @param status product status
  * @param units product unit configuration
+ * @return the operation result
  */
 public record ProductRequest(
     @NotBlank(message = ProductValidationMessage.REQUIRED)
@@ -41,7 +42,7 @@ public record ProductRequest(
         @Size(max = 255, message = ProductValidationMessage.TOO_LONG)
         String name,
     String description,
-    @Size(max = 100, message = ProductValidationMessage.TOO_LONG) String brand,
+    @Positive(message = ProductValidationMessage.POSITIVE) Long brandId,
     ProductStatus status,
     @NotNull(message = ProductValidationMessage.REQUIRED) @Valid Units units,
     @NotNull(message = ProductValidationMessage.REQUIRED) @Valid Pricing pricing,
@@ -85,6 +86,7 @@ public record ProductRequest(
    * @param mainUnitId main unit identifier
    * @param secondaryUnitId optional secondary unit identifier
    * @param secondaryUnitsPerMainUnit number of secondary units in one main unit
+   * @return the operation result
    */
   public record Units(
       @NotNull(message = ProductValidationMessage.REQUIRED)
@@ -118,6 +120,7 @@ public record ProductRequest(
    * @param currencyId currency identifier
    * @param netPrice net price per main unit
    * @param vatRate value added tax rate
+   * @return the operation result
    */
   public record Pricing(
       @Positive(message = ProductValidationMessage.POSITIVE) Long currencyId,
@@ -140,6 +143,7 @@ public record ProductRequest(
    * @param height product height
    * @param weight product weight
    * @param width product width
+   * @return the operation result
    */
   public record Dimensions(
       @DecimalMin(value = "0", message = ProductValidationMessage.NON_NEGATIVE)

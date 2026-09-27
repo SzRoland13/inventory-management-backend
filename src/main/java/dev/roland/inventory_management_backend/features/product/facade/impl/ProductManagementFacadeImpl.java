@@ -19,6 +19,7 @@ import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
@@ -58,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductManagementFacadeImpl implements ProductManagementFacade {
   private final ProductService productService;
+  private final BrandService brandService;
   private final ProductMapper productMapper;
   private final CompanyService companyService;
   private final UnitService unitService;
@@ -192,6 +194,12 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
             ? null
             : findSelectableUnit(request.units().secondaryUnitId(), company));
     product.setSecondaryUnitsPerMainUnit(request.units().secondaryUnitsPerMainUnit());
+    product.setBrand(
+        request.brandId() == null
+            ? null
+            : brandService
+                .findByIdAndCompanyId(request.brandId(), company.getId())
+                .orElseThrow(() -> new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA)));
     product.setCurrency(
         request.pricing().currencyId() == null
             ? null

@@ -9,6 +9,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
+import dev.roland.inventory_management_backend.features.brand.Brand;
+import dev.roland.inventory_management_backend.features.brand.dto.BrandResponse;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductRequest;
@@ -36,7 +38,6 @@ public interface ProductMapper {
   @Mapping(target = "ean", source = "ean")
   @Mapping(target = "name", source = "name")
   @Mapping(target = "description", source = "description")
-  @Mapping(target = "brand", source = "brand")
   @Mapping(target = "netPrice", source = "pricing.netPrice")
   @Mapping(target = "costPrice", source = "pricing.costPrice")
   @Mapping(target = "vatRate", source = "pricing.vatRate")
@@ -84,7 +85,7 @@ public interface ProductMapper {
   @Mapping(target = "ean", source = "product.ean")
   @Mapping(target = "name", source = "product.name")
   @Mapping(target = "description", source = "product.description")
-  @Mapping(target = "brand", source = "product.brand")
+  @Mapping(target = "brand", expression = "java(toBrandResponse(product.getBrand()))")
   @Mapping(target = "status", source = "product.status")
   @Mapping(target = "units", expression = "java(toUnits(product))")
   @Mapping(target = "pricing", expression = "java(toPricing(product, secondaryNetPrice))")
@@ -101,6 +102,16 @@ public interface ProductMapper {
       List<ProductAttributeValueResponse> attributes,
       List<ProductStockResponse> stockByWarehouse,
       BigDecimal secondaryNetPrice);
+
+  /**
+   * Maps an optional brand relation to its API representation.
+   *
+   * @param brand optional brand relation
+   * @return mapped brand, or {@code null} when no brand is assigned
+   */
+  default BrandResponse toBrandResponse(final Brand brand) {
+    return brand == null ? null : new BrandResponse(brand.getId(), brand.getName());
+  }
 
   /**
    * Maps the product's configured units.

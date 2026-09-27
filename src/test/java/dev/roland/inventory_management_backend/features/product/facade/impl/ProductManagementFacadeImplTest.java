@@ -31,6 +31,7 @@ import org.springframework.data.domain.PageRequest;
 import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.currency.Currency;
@@ -69,6 +70,7 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 class ProductManagementFacadeImplTest {
 
   @Mock private ProductService productService;
+  @Mock private BrandService brandService;
   @Mock private ProductMapper productMapper;
   @Mock private CompanyService companyService;
   @Mock private UnitService unitService;
@@ -89,6 +91,7 @@ class ProductManagementFacadeImplTest {
     facade =
         new ProductManagementFacadeImpl(
             productService,
+            brandService,
             productMapper,
             companyService,
             unitService,

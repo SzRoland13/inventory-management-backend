@@ -31,6 +31,8 @@ public enum NotFoundMessageKey implements MessageKey {
   DOCUMENT_RELATION("not-found.document-relation"),
   /** Message key for product. */
   PRODUCT("not-found.product"),
+  /** Message key for brand. */
+  BRAND("not-found.brand"),
   /** Message key for product attribute definition. */
   PRODUCT_ATTRIBUTE_DEFINITION("not-found.product-attribute-definition"),
   /** Message key for product attribute option. */

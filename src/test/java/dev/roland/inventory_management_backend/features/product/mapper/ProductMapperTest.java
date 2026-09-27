@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
+import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
@@ -48,7 +49,7 @@ class ProductMapperTest {
             "EAN-1",
             "Widget",
             "Product description",
-            "Brand",
+            null,
             ProductStatus.DISCONTINUED,
             new ProductRequest.Units(10L, null, null),
             new ProductRequest.Pricing(
@@ -67,7 +68,7 @@ class ProductMapperTest {
     assertEquals("EAN-1", product.getEan());
     assertEquals("Widget", product.getName());
     assertEquals("Product description", product.getDescription());
-    assertEquals("Brand", product.getBrand());
+    assertEquals(null, product.getBrand());
     assertEquals(new BigDecimal("120.00"), product.getNetPrice());
     assertEquals(new BigDecimal("80.00"), product.getCostPrice());
     assertEquals(new BigDecimal("27.000"), product.getVatRate());
@@ -93,7 +94,7 @@ class ProductMapperTest {
             .ean("EAN-15")
             .name("Gloves")
             .description("Work gloves")
-            .brand("Safety")
+            .brand(brand(7L, "Safety"))
             .status(ProductStatus.ACTIVE)
             .unit(mainUnit)
             .secondaryUnit(secondaryUnit)
@@ -258,5 +259,12 @@ class ProductMapperTest {
 
   private Unit unit(final Long id, final String code, final String name, final String symbol) {
     return Unit.builder().id(id).code(code).name(name).symbol(symbol).system(false).build();
+  }
+
+  private Brand brand(final Long id, final String name) {
+    final Brand brand = new Brand();
+    brand.setId(id);
+    brand.setName(name);
+    return brand;
   }
 }

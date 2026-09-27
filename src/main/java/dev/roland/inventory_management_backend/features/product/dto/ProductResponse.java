@@ -4,13 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import dev.roland.inventory_management_backend.features.brand.dto.BrandResponse;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 
 /**
  * Product API representation including its unit, category, and custom-attribute data.
  *
  * @param attributes attribute values
- * @param brand brand value
+ * @param brand selected brand, if any
  * @param categoryIds associated category identifiers
  * @param createdAt creation timestamp
  * @param deletedAt archival timestamp, or null when active
@@ -25,6 +26,7 @@ import dev.roland.inventory_management_backend.features.product.enumeration.Prod
  * @param stockByWarehouse stock balances grouped by warehouse
  * @param units product unit configuration
  * @param updatedAt last update timestamp
+ * @return the operation result
  */
 public record ProductResponse(
     Long id,
@@ -32,7 +34,7 @@ public record ProductResponse(
     String ean,
     String name,
     String description,
-    String brand,
+    BrandResponse brand,
     ProductStatus status,
     Units units,
     Pricing pricing,
@@ -57,6 +59,7 @@ public record ProductResponse(
    * @param main main unit
    * @param secondary optional secondary unit
    * @param secondaryUnitsPerMainUnit number of secondary units in one main unit
+   * @return the operation result
    */
   public record Units(
       UnitResponse main, UnitResponse secondary, BigDecimal secondaryUnitsPerMainUnit) {}
@@ -69,6 +72,7 @@ public record ProductResponse(
    * @param netPrice net price per main unit
    * @param secondaryNetPrice derived net price per secondary unit
    * @param vatRate value added tax rate
+   * @return the operation result
    */
   public record Pricing(
       Long currencyId,
@@ -84,6 +88,7 @@ public record ProductResponse(
    * @param height product height
    * @param weight product weight
    * @param width product width
+   * @return the operation result
    */
   public record Dimensions(
       BigDecimal weight, BigDecimal width, BigDecimal height, BigDecimal depth) {}
