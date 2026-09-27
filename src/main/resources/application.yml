@@ -44,6 +44,8 @@ logging:
         DispatcherServlet: DEBUG
 #App config
 app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:
     secure-cookie: ${SECURE_HTTP}
 #JWT config

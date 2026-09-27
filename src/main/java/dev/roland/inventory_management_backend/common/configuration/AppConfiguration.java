@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.common.configuration;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +11,9 @@ import lombok.Getter;
 @Getter
 @Component
 public class AppConfiguration {
+
+  @Value("${app.cors.allowed-origins}")
+  private List<String> corsAllowedOrigins;
 
   @Value("${app.security.secure-cookie}")
   private boolean secureCookie;
