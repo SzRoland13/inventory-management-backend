@@ -13,7 +13,12 @@ public class CorsConfiguration {
 
   private final AppConfiguration appConfiguration;
 
-  public CorsConfiguration(AppConfiguration appConfiguration) {
+  /**
+   * Creates the CORS configuration using application settings.
+   *
+   * @param appConfiguration application settings
+   */
+  public CorsConfiguration(final AppConfiguration appConfiguration) {
     this.appConfiguration = appConfiguration;
   }
 
