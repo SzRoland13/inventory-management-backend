@@ -49,4 +49,25 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
 
     return ProductCategoryAssignment.builder().id(id).product(product).category(category).build();
   }
+
+  @Override
+  public java.util.List<ProductCategoryAssignment> findAllByProductId(final Long id) {
+    return productCategoryAssignmentRepository.findAllByProductId(id);
+  }
+
+  @Override
+  public java.util.List<ProductCategoryAssignment> findAllByProductIdIn(
+      final java.util.List<Long> productIds) {
+    return productCategoryAssignmentRepository.findAllByProductIdIn(productIds);
+  }
+
+  @Override
+  public ProductCategoryAssignment save(final ProductCategoryAssignment assignment) {
+    return productCategoryAssignmentRepository.save(assignment);
+  }
+
+  @Override
+  public void deleteAllByProductId(final Long id) {
+    productCategoryAssignmentRepository.deleteAllByProductId(id);
+  }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <Match>
+    <Class name="dev.roland.inventory_management_backend.features.product.mapper.ProductMapperImpl" />
+  </Match>
+  <Match>
+    <Class name="dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapperImpl" />
+  </Match>
+</FindBugsFilter>

@@ -1,5 +1,8 @@
 package dev.roland.inventory_management_backend.features.product_category.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -30,5 +33,25 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_CATEGORY;
+  }
+
+  @Override
+  public List<ProductCategory> findAllByCompanyId(final Long id) {
+    return productCategoryRepository.findAllByCompanyId(id);
+  }
+
+  @Override
+  public List<ProductCategory> saveAll(final List<ProductCategory> categories) {
+    return productCategoryRepository.saveAll(categories);
+  }
+
+  @Override
+  public Optional<ProductCategory> findByIdAndCompanyId(final Long id, final Long companyId) {
+    return productCategoryRepository.findByIdAndCompanyId(id, companyId);
+  }
+
+  @Override
+  public boolean existsByCompanyIdAndCode(final Long companyId, final String code) {
+    return productCategoryRepository.existsByCompanyIdAndCode(companyId, code);
   }
 }

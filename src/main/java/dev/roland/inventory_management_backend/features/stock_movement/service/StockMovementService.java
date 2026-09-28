@@ -12,6 +12,14 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 /** Defines operations supported by the stock movement feature. */
 public interface StockMovementService extends BaseService<StockMovement, Long> {
   /**
+   * Checks whether a matching record exists.
+   *
+   * @param productId the product identifier
+   * @return true if a matching record exists
+   */
+  boolean existsByProductId(Long productId);
+
+  /**
    * Creates an immutable stock movement entry and applies its quantity change to the stock balance.
    *
    * @param documentLine source document line for the movement

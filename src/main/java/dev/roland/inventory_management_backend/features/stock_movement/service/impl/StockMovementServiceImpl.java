@@ -84,4 +84,9 @@ public class StockMovementServiceImpl implements StockMovementService {
 
     return stockMovementRepository.save(movement);
   }
+
+  @Override
+  public boolean existsByProductId(final Long id) {
+    return stockMovementRepository.existsByProductId(id);
+  }
 }

@@ -11,6 +11,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class CorsConfiguration {
 
+  private final AppConfiguration appConfiguration;
+
+  /**
+   * Creates the CORS configuration using application settings.
+   *
+   * @param appConfiguration application settings
+   */
+  public CorsConfiguration(final AppConfiguration appConfiguration) {
+    this.appConfiguration = appConfiguration;
+  }
+
   /**
    * Defines the origins and request options allowed by CORS.
    *
@@ -21,7 +32,7 @@ public class CorsConfiguration {
     final org.springframework.web.cors.CorsConfiguration configuration =
         new org.springframework.web.cors.CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of("http://localhost:3001"));
+    configuration.setAllowedOrigins(appConfiguration.getCorsAllowedOrigins());
     configuration.setAllowCredentials(true);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(

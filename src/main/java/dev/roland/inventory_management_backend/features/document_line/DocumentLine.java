@@ -11,16 +11,20 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document_line.message.DocumentLineMessageKey;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.unit.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,17 +60,30 @@ public class DocumentLine implements IdInterface<Long> {
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(nullable = false, precision = 15, scale = 2)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "unit_id_snapshot", nullable = false)
+  private Unit unitSnapshot;
+
+  @Column(name = "unit_code_snapshot", nullable = false, length = 50)
+  private String unitCodeSnapshot;
+
+  @Column(name = "unit_name_snapshot", nullable = false, length = 100)
+  private String unitNameSnapshot;
+
+  @Column(name = "conversion_factor_snapshot", nullable = false, precision = 24, scale = 8)
+  private BigDecimal conversionFactorSnapshot;
+
+  @Column(nullable = false, precision = 24, scale = 8)
   private BigDecimal quantity;
 
-  @Column(name = "fulfilled_quantity", nullable = false, precision = 15, scale = 2)
+  @Column(name = "fulfilled_quantity", nullable = false, precision = 24, scale = 8)
   @Builder.Default
   private BigDecimal fulfilledQuantity = BigDecimal.ZERO;
 
-  @Column(name = "unit_price", nullable = false, precision = 15, scale = 2)
+  @Column(name = "unit_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal unitPrice;
 
-  @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
+  @Column(name = "total_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal totalPrice;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -89,4 +106,59 @@ public class DocumentLine implements IdInterface<Long> {
   @UpdateTimestamp
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  /**
+   * Captures the selected unit label and factor when a new document line is first persisted.
+   *
+   * @throws ApiException if the product or unit configuration is invalid
+   */
+  @PrePersist
+  void initializeUnitSnapshot() {
+    if (product == null) {
+      throw new ApiException(DocumentLineMessageKey.PRODUCT_REQUIRED);
+    }
+    if (unitSnapshot == null) {
+      unitSnapshot = product.getUnit();
+    }
+    if (unitSnapshot == null) {
+      throw new ApiException(DocumentLineMessageKey.UNIT_REQUIRED);
+    }
+    if (unitCodeSnapshot == null) {
+      unitCodeSnapshot = unitSnapshot.getCode();
+    }
+    if (unitNameSnapshot == null) {
+      unitNameSnapshot = unitSnapshot.getName();
+    }
+    final BigDecimal expectedFactor = getExpectedFactor();
+    if (conversionFactorSnapshot == null) {
+      conversionFactorSnapshot = expectedFactor;
+    } else if (conversionFactorSnapshot.compareTo(expectedFactor) != 0) {
+      throw new ApiException(DocumentLineMessageKey.INVALID_CONVERSION_FACTOR);
+    }
+    if (conversionFactorSnapshot.signum() <= 0) {
+      throw new ApiException(DocumentLineMessageKey.INVALID_CONVERSION_FACTOR);
+    }
+    if (productNameSnapshot == null) {
+      productNameSnapshot = product.getName();
+    }
+    if (productSkuSnapshot == null) {
+      productSkuSnapshot = product.getSku();
+    }
+    if (vatRateSnapshot == null) {
+      vatRateSnapshot = product.getVatRate();
+    }
+  }
+
+  private BigDecimal getExpectedFactor() {
+    final boolean mainUnit = unitSnapshot.getId().equals(product.getUnit().getId());
+    final boolean secondaryUnit =
+        product.getSecondaryUnit() != null
+            && unitSnapshot.getId().equals(product.getSecondaryUnit().getId());
+    if (!mainUnit && !secondaryUnit) {
+      throw new ApiException(DocumentLineMessageKey.INVALID_UNIT);
+    }
+    return mainUnit && product.getSecondaryUnit() != null
+        ? product.getSecondaryUnitsPerMainUnit()
+        : BigDecimal.ONE;
+  }
 }

@@ -1,7 +1,6 @@
 package dev.roland.inventory_management_backend.features.company;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -9,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.roland.inventory_management_backend.common.annotation.AdminOnly;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 import dev.roland.inventory_management_backend.features.company.dto.CompanyBaseDataResponse;
@@ -55,7 +55,7 @@ public class CompanyController {
    * @return response containing the extended company profile
    */
   @GetMapping(COMPANY_EXTENDED_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<CompanyExtendedResponse>> getExtendedCompanyData() {
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -69,7 +69,7 @@ public class CompanyController {
    * @return response containing the updated profile
    */
   @PutMapping
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<CompanyBaseDataResponse>> updateCompanyBaseData(
       @RequestBody final CompanyBaseDataUpdateRequest request) {
 
@@ -85,7 +85,7 @@ public class CompanyController {
    * @return response containing the updated billing profile
    */
   @PutMapping(BILLING_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<CompanyBillingDataResponse>> updateCompanyBillingData(
       @RequestBody final CompanyBillingDataUpdateRequest request) {
 
@@ -101,7 +101,7 @@ public class CompanyController {
    * @return confirmation response
    */
   @PostMapping(LOGO_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<Void>> updateLogo(
       @RequestBody final LogoUpdateRequest request) {
     companyFacade.updateLogo(request.getMediaAssetId());
@@ -116,7 +116,7 @@ public class CompanyController {
    * @return response containing the updated currency
    */
   @PostMapping(PREFERRED_CURRENCY_ENDPOINT)
-  @PreAuthorize("hasRole('ADMIN')")
+  @AdminOnly
   public ResponseEntity<ApiResponse<UpdatedPreferredCurrencyResponse>> updatePreferredCurrency(
       @RequestBody final CompanyPreferredCurrencyUpdateRequest request) {
     return ResponseEntity.ok(

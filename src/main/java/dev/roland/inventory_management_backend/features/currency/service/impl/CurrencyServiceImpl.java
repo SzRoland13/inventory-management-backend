@@ -45,4 +45,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         .currencies(currencies.stream().map(CurrencyResponse::toDto).toList())
         .build();
   }
+
+  @Override
+  public java.util.Optional<Currency> findById(final Long id) {
+    return currencyRepository.findById(id);
+  }
 }

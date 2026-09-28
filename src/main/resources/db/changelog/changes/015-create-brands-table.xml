@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="015-create-brands-table" author="roland">
+        <createTable tableName="brands">
+            <column name="id" type="SERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="name" type="VARCHAR(100)"><constraints nullable="false"/></column>
+            <column name="company_id" type="INTEGER"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="brands" baseColumnNames="company_id" referencedTableName="companies" referencedColumnNames="id" constraintName="fk_brands_company" onDelete="CASCADE"/>
+        <sql>INSERT INTO brands (name, company_id)
+             SELECT MIN(TRIM(brand)), company_id FROM products
+             WHERE brand IS NOT NULL AND TRIM(brand) &lt;&gt; '' AND company_id IS NOT NULL
+             GROUP BY LOWER(TRIM(brand)), company_id</sql>
+        <addColumn tableName="products">
+            <column name="brand_id" type="INTEGER"/>
+        </addColumn>
+        <sql>UPDATE products p SET brand_id = b.id FROM brands b
+             WHERE p.company_id = b.company_id AND LOWER(TRIM(p.brand)) = LOWER(b.name)</sql>
+        <addForeignKeyConstraint baseTableName="products" baseColumnNames="brand_id" referencedTableName="brands" referencedColumnNames="id" constraintName="fk_products_brand" onDelete="SET NULL"/>
+        <createIndex tableName="brands" indexName="idx_brands_company_name"><column name="company_id"/><column name="name"/></createIndex>
+        <sql>CREATE UNIQUE INDEX uq_brands_company_name_ci ON brands (company_id, LOWER(name))</sql>
+        <dropColumn tableName="products" columnName="brand"/>
+    </changeSet>
+</databaseChangeLog>

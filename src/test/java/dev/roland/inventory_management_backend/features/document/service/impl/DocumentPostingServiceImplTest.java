@@ -178,7 +178,11 @@ class DocumentPostingServiceImplTest {
             .sourceWarehouse(source)
             .build();
     final DocumentLine line =
-        DocumentLine.builder().document(document).quantity(new BigDecimal(quantity)).build();
+        DocumentLine.builder()
+            .document(document)
+            .quantity(new BigDecimal(quantity))
+            .conversionFactorSnapshot(BigDecimal.ONE)
+            .build();
     document.setLines(List.of(line));
     return document;
   }

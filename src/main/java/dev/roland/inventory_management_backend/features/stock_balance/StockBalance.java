@@ -55,7 +55,7 @@ public class StockBalance implements IdInterface<Long> {
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
 
-  @Column(name = "quantity", precision = 15, scale = 2)
+  @Column(name = "quantity", precision = 24, scale = 8)
   @Builder.Default
   private BigDecimal quantity = BigDecimal.ZERO;
 

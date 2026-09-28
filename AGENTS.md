@@ -86,6 +86,13 @@ annotation/              Custom validation annotations and validators
 
 Controllers generally delegate to services or facades and return `ApiResponse<T>`. `ApiResponse` contains `success`, `messageKey`, `payload`, `params`, and `timestamp`.
 
+### Layering Rules
+
+- Keep controllers thin: they handle HTTP concerns such as routing, request binding/validation, status codes, and response wrapping. Delegate application logic to a facade or service.
+- A model/domain service owns operations for that model and may depend on its own repository only. Its methods expose domain-level persistence operations, not raw repository access to callers.
+- Use facades to coordinate workflows that involve multiple services or models. Facades may depend on services, but must not import or call repositories directly.
+- Keep repositories behind their corresponding model service. Cross-model queries should be exposed through the relevant service and coordinated in a facade when needed.
+
 `BaseService<T, ID>` provides common CRUD helpers for entities implementing `IdInterface<ID>`.
 
 ## API Surface

@@ -31,4 +31,34 @@ public class ProductAttributeOptionServiceImpl implements ProductAttributeOption
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.PRODUCT_ATTRIBUTE_OPTION;
   }
+
+  @Override
+  public java.util.List<ProductAttributeOption> findAllByDefinitionId(final Long id) {
+    return productAttributeOptionRepository.findAllByDefinitionId(id);
+  }
+
+  @Override
+  public java.util.Optional<ProductAttributeOption> findByIdAndDefinitionId(
+      final Long id, final Long definitionId) {
+    return productAttributeOptionRepository
+        .findById(id)
+        .filter(option -> option.getDefinition().getId().equals(definitionId));
+  }
+
+  @Override
+  public boolean existsByDefinitionId(final Long id) {
+    return productAttributeOptionRepository.existsByDefinitionId(id);
+  }
+
+  @Override
+  public boolean existsByDefinitionIdAndValue(final Long id, final String value) {
+    return productAttributeOptionRepository.existsByDefinitionIdAndValue(id, value);
+  }
+
+  @Override
+  public boolean existsByDefinitionIdAndValueAndIdNot(
+      final Long id, final String value, final Long optionId) {
+    return productAttributeOptionRepository.existsByDefinitionIdAndValueAndIdNot(
+        id, value, optionId);
+  }
 }

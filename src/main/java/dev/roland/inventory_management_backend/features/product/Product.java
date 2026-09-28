@@ -23,6 +23,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
+import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
@@ -39,9 +40,10 @@ import lombok.Setter;
 /**
  * Represents an item managed in the product catalog and inventory system.
  *
- * <p>A product references a mandatory {@link Unit}, and may reference a {@link Currency} and {@link
- * Company}. It is referenced by document lines, warehouse-specific {@link StockBalance} rows,
- * {@link StockMovement} rows, product attributes, and product-category assignments.
+ * <p>A product references a mandatory {@link Unit} and {@link Company}, and may reference a
+ * secondary {@link Unit} and {@link Currency}. It is referenced by document lines,
+ * warehouse-specific {@link StockBalance} rows, {@link StockMovement} rows, product attributes, and
+ * product-category assignments.
  */
 @Entity
 @Table(name = "products")
@@ -56,7 +58,7 @@ public class Product implements IdInterface<Long> {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "sku", nullable = false, unique = true, length = 100)
+  @Column(name = "sku", nullable = false, length = 100)
   private String sku;
 
   @Column(name = "ean", length = 20)
@@ -68,8 +70,9 @@ public class Product implements IdInterface<Long> {
   @Column(name = "description")
   private String description;
 
-  @Column(name = "brand", length = 100)
-  private String brand;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "brand_id")
+  private Brand brand;
 
   @Column(name = "status", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
@@ -81,17 +84,24 @@ public class Product implements IdInterface<Long> {
   private Unit unit;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "secondary_unit_id")
+  private Unit secondaryUnit;
+
+  @Column(name = "secondary_units_per_main_unit", precision = 24, scale = 8)
+  private BigDecimal secondaryUnitsPerMainUnit;
+
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "currency_id")
   private Currency currency;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "company_id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "company_id", nullable = false)
   private Company company;
 
-  @Column(name = "net_price", nullable = false, precision = 15, scale = 2)
+  @Column(name = "net_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal netPrice;
 
-  @Column(name = "cost_price", precision = 15, scale = 2)
+  @Column(name = "cost_price", precision = 24, scale = 8)
   private BigDecimal costPrice;
 
   @Column(name = "vat_rate", nullable = false, precision = 5, scale = 3)
@@ -116,6 +126,9 @@ public class Product implements IdInterface<Long> {
   @UpdateTimestamp
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
 
   @OneToMany(mappedBy = "product")
   @MapKey(name = "warehouse")
