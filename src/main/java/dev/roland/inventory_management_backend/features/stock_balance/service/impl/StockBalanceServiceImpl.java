@@ -41,4 +41,9 @@ public class StockBalanceServiceImpl implements StockBalanceService {
   public java.util.List<StockBalance> findAllByProductIdIn(final java.util.List<Long> productIds) {
     return stockBalanceRepository.findAllByProductIdIn(productIds);
   }
+
+  @Override
+  public boolean hasNonZeroBalanceForWarehouse(final Long warehouseId) {
+    return stockBalanceRepository.existsNonZeroOrNullQuantityByWarehouseId(warehouseId);
+  }
 }

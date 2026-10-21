@@ -5,19 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -81,9 +69,15 @@ public class Document implements IdInterface<Long> {
   @JoinColumn(name = "source_warehouse_id")
   private Warehouse sourceWarehouse;
 
+  @Column(name = "source_warehouse_code_snapshot", length = 50)
+  private String sourceWarehouseCodeSnapshot;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "target_warehouse_id")
   private Warehouse targetWarehouse;
+
+  @Column(name = "target_warehouse_code_snapshot", length = 50)
+  private String targetWarehouseCodeSnapshot;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "created_by_user_id")
@@ -125,4 +119,15 @@ public class Document implements IdInterface<Long> {
 
   @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<DocumentLine> lines;
+
+  /** Copies the current warehouse codes into the document snapshots. */
+  @PrePersist
+  void initializeWarehouseCodeSnapshots() {
+    if (sourceWarehouse != null && sourceWarehouseCodeSnapshot == null) {
+      sourceWarehouseCodeSnapshot = sourceWarehouse.getCode();
+    }
+    if (targetWarehouse != null && targetWarehouseCodeSnapshot == null) {
+      targetWarehouseCodeSnapshot = targetWarehouse.getCode();
+    }
+  }
 }
