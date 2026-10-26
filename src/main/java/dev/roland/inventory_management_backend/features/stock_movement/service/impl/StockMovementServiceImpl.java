@@ -1,9 +1,12 @@
 package dev.roland.inventory_management_backend.features.stock_movement.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,7 @@ import dev.roland.inventory_management_backend.features.document_line.DocumentLi
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.dto.StockMovementQueryRow;
 import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.stock_movement.repository.StockMovementRepository;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
@@ -45,6 +49,18 @@ public class StockMovementServiceImpl implements StockMovementService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.STOCK_MOVEMENT;
+  }
+
+  @Override
+  public Page<StockMovementQueryRow> findCompanyMovements(
+      final Long companyId,
+      final Long productId,
+      final Long warehouseId,
+      final LocalDateTime startDate,
+      final LocalDateTime endDate,
+      final Pageable pageable) {
+    return stockMovementRepository.findCompanyMovements(
+        companyId, productId, warehouseId, startDate, endDate, pageable);
   }
 
   /**
