@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="001" author="roland">
+        <sql dbms="postgresql" splitStatements="false"><![CDATA[
+            DO $$
+            DECLARE unique_name_constraint TEXT;
+            BEGIN
+                SELECT conname INTO unique_name_constraint
+                FROM pg_constraint
+                WHERE conrelid = 'warehouses'::regclass
+                  AND contype = 'u'
+                  AND pg_get_constraintdef(oid) ~ '^UNIQUE \(name\)$'
+                LIMIT 1;
+                IF unique_name_constraint IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE warehouses DROP CONSTRAINT %I', unique_name_constraint);
+                END IF;
+            END $$;
+        ]]></sql>
+
+        <renameTable oldTableName="warehouse_locations" newTableName="warehouse_addresses"/>
+        <renameColumn tableName="warehouses" oldColumnName="location_id"
+                      newColumnName="address_id" columnDataType="INTEGER"/>
+        <dropNotNullConstraint tableName="warehouses" columnName="address_id"
+                               columnDataType="INTEGER"/>
+        <dropForeignKeyConstraint baseTableName="warehouses" constraintName="fk_warehouses_location"/>
+        <addForeignKeyConstraint baseTableName="warehouses" baseColumnNames="address_id"
+                                 constraintName="fk_warehouses_address"
+                                 referencedTableName="warehouse_addresses" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        <addUniqueConstraint tableName="warehouses" columnNames="address_id"
+                             constraintName="uq_warehouses_address_id"/>
+        <dropIndex tableName="warehouses" indexName="idx_warehouses_location_id"/>
+        <createIndex tableName="warehouses" indexName="idx_warehouses_address_id">
+            <column name="address_id"/>
+        </createIndex>
+
+        <addColumn tableName="warehouses">
+            <column name="company_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(30)" defaultValue="STANDARD">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addForeignKeyConstraint baseTableName="warehouses" baseColumnNames="company_id"
+                                 constraintName="fk_warehouses_company"
+                                 referencedTableName="companies" referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        <addUniqueConstraint tableName="warehouses" columnNames="company_id, name"
+                             constraintName="uq_warehouses_company_name"/>
+        <addUniqueConstraint tableName="warehouses" columnNames="company_id, code"
+                             constraintName="uq_warehouses_company_code"/>
+        <createIndex tableName="warehouses" indexName="idx_warehouses_company_id">
+            <column name="company_id"/>
+        </createIndex>
+
+        <addColumn tableName="documents">
+            <column name="source_warehouse_code_snapshot" type="VARCHAR(50)"/>
+            <column name="target_warehouse_code_snapshot" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -47,6 +47,8 @@ public enum NotFoundMessageKey implements MessageKey {
   STOCK_MOVEMENT("not-found.stock-movement"),
   /** Message key for unit. */
   UNIT("not-found.unit"),
+  /** Message key for warehouse. */
+  WAREHOUSE("not-found.warehouse"),
   ;
 
   private final String key;

@@ -22,4 +22,12 @@ public interface StockBalanceService extends BaseService<StockBalance, Long> {
    * @return the matching resources
    */
   List<StockBalance> findAllByProductIdIn(List<Long> productIds);
+
+  /**
+   * Returns whether a warehouse has any non-zero or null product balance.
+   *
+   * @param warehouseId warehouse identifier
+   * @return whether a non-zero or null balance exists
+   */
+  boolean hasNonZeroBalanceForWarehouse(Long warehouseId);
 }
