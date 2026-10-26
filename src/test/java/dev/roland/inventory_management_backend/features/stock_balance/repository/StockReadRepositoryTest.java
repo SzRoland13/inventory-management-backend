@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.stock_balance.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -113,9 +114,9 @@ class StockReadRepositoryTest {
   }
 
   @Test
-  void movementQueryReturnsSignedDeltaAndUnitAndDocumentReferencesWhenAvailable() {
+  void movementQueryHandlesEveryDateFilterCombination() {
     final StockMovement movement =
-        stockMovementRepository.save(
+        stockMovementRepository.saveAndFlush(
             StockMovement.builder()
                 .product(product)
                 .warehouse(warehouse)
@@ -123,14 +124,32 @@ class StockReadRepositoryTest {
                 .movementType(StockMovementType.SALE_OUTBOUND)
                 .build());
 
-    final Page<StockMovementQueryRow> result =
+    final LocalDateTime createdAt = movement.getCreatedAt();
+    assertNotNull(createdAt);
+    final LocalDateTime startDate = createdAt.minusSeconds(1);
+    final LocalDateTime endDate = createdAt.plusSeconds(1);
+
+    final Page<StockMovementQueryRow> withoutDates =
         stockMovementRepository.findCompanyMovements(
             company.getId(), null, null, null, null, PageRequest.of(0, 25));
+    final Page<StockMovementQueryRow> withStartOnly =
+        stockMovementRepository.findCompanyMovements(
+            company.getId(), null, null, startDate, null, PageRequest.of(0, 25));
+    final Page<StockMovementQueryRow> withEndOnly =
+        stockMovementRepository.findCompanyMovements(
+            company.getId(), null, null, null, endDate, PageRequest.of(0, 25));
+    final Page<StockMovementQueryRow> withFullRange =
+        stockMovementRepository.findCompanyMovements(
+            company.getId(), null, null, startDate, endDate, PageRequest.of(0, 25));
 
-    assertEquals(1, result.getTotalElements());
-    assertEquals(movement.getId(), result.getContent().getFirst().getId());
-    assertEquals(new BigDecimal("-3.25000000"), result.getContent().getFirst().getQuantityChange());
-    assertEquals("EA", result.getContent().getFirst().getMainUnitCode());
-    assertEquals(LocalDateTime.class, result.getContent().getFirst().getDate().getClass());
+    assertEquals(1, withoutDates.getTotalElements());
+    assertEquals(1, withStartOnly.getTotalElements());
+    assertEquals(1, withEndOnly.getTotalElements());
+    assertEquals(1, withFullRange.getTotalElements());
+    assertEquals(movement.getId(), withFullRange.getContent().getFirst().getId());
+    assertEquals(
+        new BigDecimal("-3.25000000"), withFullRange.getContent().getFirst().getQuantityChange());
+    assertEquals("EA", withFullRange.getContent().getFirst().getMainUnitCode());
+    assertEquals(createdAt, withFullRange.getContent().getFirst().getDate());
   }
 }
