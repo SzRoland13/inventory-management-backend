@@ -40,8 +40,7 @@ import lombok.Setter;
 /**
  * Represents a physical or logical storage location where inventory is held.
  *
- * <p>A warehouse belongs to a {@link Company}, may have one {@link
- * WarehouseAddress}, and may
+ * <p>A warehouse belongs to a {@link Company}, may have one {@link WarehouseAddress}, and may
  * reference the {@link User} who created it. Its stock balances map provides a warehouse-side view
  * of the one-to-many relationship between warehouses and {@link StockBalance} rows.
  */
