@@ -49,6 +49,10 @@ public enum NotFoundMessageKey implements MessageKey {
   UNIT("not-found.unit"),
   /** Message key for warehouse. */
   WAREHOUSE("not-found.warehouse"),
+  /** Message key for partner. */
+  PARTNER("not-found.partner"),
+  /** Message key for contact. */
+  CONTACT("not-found.contact"),
   ;
 
   private final String key;

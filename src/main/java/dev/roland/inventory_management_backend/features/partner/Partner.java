@@ -6,14 +6,18 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.contact.Contact;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.partner.enumeration.PartnerType;
@@ -52,6 +56,13 @@ public class Partner {
 
   @Column(name = "tax_number", length = 50)
   private String taxNumber;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "company_id", nullable = false)
+  private Company company;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

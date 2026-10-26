@@ -3,9 +3,13 @@ package dev.roland.inventory_management_backend.features.user.facade.impl;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.transaction.Transactional;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
@@ -36,6 +40,7 @@ public class UserFacadeImpl implements UserFacade {
   private final MediaAssetFacade mediaAssetFacade;
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public UserDto registerUser(final AddEditUserRequest request) {
     final User user =
@@ -43,6 +48,15 @@ public class UserFacadeImpl implements UserFacade {
             .username(request.getUsername())
             .email(request.getEmail())
             .status(UserStatus.SETUP_REQUIRED)
+            .company(
+                userService
+                    .findByIdOrThrow(
+                        ((CustomUserDetails)
+                                SecurityContextHolder.getContext()
+                                    .getAuthentication()
+                                    .getPrincipal())
+                            .getUserId())
+                    .getCompany())
             .build();
 
     try {

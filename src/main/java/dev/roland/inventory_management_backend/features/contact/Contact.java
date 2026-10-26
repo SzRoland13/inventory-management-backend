@@ -69,6 +69,9 @@ public class Contact {
 
   private String email;
 
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;

@@ -20,26 +20,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandRequest;
 import dev.roland.inventory_management_backend.features.brand.message.BrandMessageKey;
 import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 
 @ExtendWith(MockitoExtension.class)
 class BrandFacadeImplTest {
   @Mock private BrandService brandService;
-  @Mock private CompanyService companyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
 
   private BrandFacadeImpl facade;
   private Company company;
 
   @BeforeEach
   void setUp() {
-    facade = new BrandFacadeImpl(brandService, companyService);
+    facade = new BrandFacadeImpl(brandService, currentCompanyProvider);
     company = Company.builder().id(3L).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
   }
 
   @Test

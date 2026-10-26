@@ -13,8 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import dev.roland.inventory_management_backend.features.warehouse.dto.WarehouseResponse;
@@ -26,7 +26,7 @@ import dev.roland.inventory_management_backend.features.warehouse.service.Wareho
 class WarehouseFacadeImplTest {
 
   @Mock private WarehouseService warehouseService;
-  @Mock private CompanyService companyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
   @Mock private StockBalanceService stockBalanceService;
 
   private WarehouseFacadeImpl facade;
@@ -35,10 +35,10 @@ class WarehouseFacadeImplTest {
 
   @BeforeEach
   void setUp() {
-    facade = new WarehouseFacadeImpl(warehouseService, companyService, stockBalanceService);
+    facade = new WarehouseFacadeImpl(warehouseService, currentCompanyProvider, stockBalanceService);
     company = Company.builder().id(7L).build();
     warehouse = Warehouse.builder().id(11L).company(company).status(WarehouseStatus.ACTIVE).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(warehouseService.findEntityByIdAndCompanyIdForUpdate(11L, company.getId()))
         .thenReturn(warehouse);
   }

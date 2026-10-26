@@ -8,7 +8,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.product.dto.AttributeDefinitionRequest;
 import dev.roland.inventory_management_backend.features.product.dto.AttributeDefinitionResponse;
 import dev.roland.inventory_management_backend.features.product.dto.AttributeOptionRequest;
@@ -31,7 +31,7 @@ public class ProductAttributeFacadeImpl implements ProductAttributeFacade {
   private final ProductAttributeDefinitionService definitionService;
   private final ProductAttributeOptionService optionService;
   private final ProductAttributeValueService valueService;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
   private final ProductSettingsMapper mapper;
 
   @Override
@@ -45,7 +45,7 @@ public class ProductAttributeFacadeImpl implements ProductAttributeFacade {
   @Override
   @Transactional
   public AttributeDefinitionResponse create(final AttributeDefinitionRequest request) {
-    final var company = companyService.getCompanyOrCreateNew();
+    final var company = currentCompanyProvider.getCurrentCompany();
     final String code = request.code().trim();
     if (definitionService.existsByCompanyIdAndCode(company.getId(), code)) {
       throw invalid();
@@ -145,7 +145,7 @@ public class ProductAttributeFacadeImpl implements ProductAttributeFacade {
   }
 
   private Long companyId() {
-    return companyService.getCompanyOrCreateNew().getId();
+    return currentCompanyProvider.getCurrentCompany().getId();
   }
 
   private ApiException invalid() {

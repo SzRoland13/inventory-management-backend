@@ -13,8 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixDto;
@@ -24,18 +24,19 @@ import dev.roland.inventory_management_backend.features.document_prefix.reposito
 class DocumentPrefixServiceImplTest {
 
   @Mock private DocumentPrefixRepository repository;
-  @Mock private CompanyService companyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
 
   private DocumentPrefixServiceImpl service;
 
   @BeforeEach
   void setUp() {
-    service = new DocumentPrefixServiceImpl(repository, companyService);
+    service = new DocumentPrefixServiceImpl(repository, currentCompanyProvider);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(Company.builder().id(2L).build());
   }
 
   @Test
   void emptyPrefixTableReturnsDefaultsForEveryDocumentType() {
-    when(repository.findAll()).thenReturn(List.of());
+    when(repository.findAllByCompanyId(2L)).thenReturn(List.of());
 
     final var response = service.getAllPrefixes();
 
@@ -59,9 +60,8 @@ class DocumentPrefixServiceImplTest {
             .documentType(DocumentType.GOODS_RECEIPT)
             .prefix("OLD")
             .build();
-    when(repository.findAll()).thenReturn(List.of(existing));
-    when(repository.findById(4L)).thenReturn(Optional.of(existing));
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(repository.findAllByCompanyId(2L)).thenReturn(List.of(existing));
+    when(repository.findByIdAndCompanyId(4L, 2L)).thenReturn(Optional.of(existing));
     when(repository.save(any(DocumentPrefix.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -76,7 +76,7 @@ class DocumentPrefixServiceImplTest {
             .build();
     final DocumentPrefixDto create =
         DocumentPrefixDto.builder().documentType(DocumentType.DELIVERY_NOTE).prefix("SHIP").build();
-    when(repository.findAll()).thenReturn(List.of(existing));
+    when(repository.findAllByCompanyId(2L)).thenReturn(List.of(existing));
     final var result = service.updatePrefixes(List.of(update, create));
 
     assertEquals("GR", existing.getPrefix());

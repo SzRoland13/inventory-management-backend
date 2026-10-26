@@ -8,10 +8,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixDto;
@@ -25,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   private final DocumentPrefixRepository documentPrefixRepository;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
 
   /** {@inheritDoc} */
   @Override
@@ -42,7 +43,9 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   /** {@inheritDoc} */
   @Override
   public DocumentPrefixesResponse getAllPrefixes() {
-    final List<DocumentPrefix> prefixes = findAll();
+    final List<DocumentPrefix> prefixes =
+        documentPrefixRepository.findAllByCompanyId(
+            currentCompanyProvider.getCurrentCompany().getId());
     final List<DocumentPrefixDto> dtos;
 
     if (prefixes.isEmpty()) {
@@ -72,12 +75,15 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   @Transactional
   @Override
   public DocumentPrefixesResponse updatePrefixes(final List<DocumentPrefixDto> dtos) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
 
     for (DocumentPrefixDto dto : dtos) {
       final DocumentPrefix entity;
       if (dto.getId() != null) {
-        entity = findByIdOrThrow(dto.getId());
+        entity =
+            documentPrefixRepository
+                .findByIdAndCompanyId(dto.getId(), company.getId())
+                .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.DOCUMENT_PREFIX));
       } else {
         entity =
             DocumentPrefix.builder().company(company).documentType(dto.getDocumentType()).build();

@@ -19,9 +19,9 @@ import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueRequest;
@@ -61,7 +61,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   private final ProductService productService;
   private final BrandService brandService;
   private final ProductMapper productMapper;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
   private final UnitService unitService;
   private final CurrencyService currencyService;
   private final ProductCategoryService categoryService;
@@ -76,7 +76,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Override
   public PageResponse<ProductResponse> list(
       final boolean includeArchived, final ProductListRequest request) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
     final Page<Product> products = productService.search(company.getId(), includeArchived, request);
     final List<Long> productIds = products.getContent().stream().map(Product::getId).toList();
     final Page<ProductResponse> responsePage;
@@ -117,7 +117,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Transactional
   @Override
   public ProductResponse create(final ProductRequest request) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
     if (productService.existsByCompanyIdAndSku(company.getId(), request.sku().trim())) {
       throw new ApiException(ProductMessageKey.PRODUCT_SKU_ALREADY_EXISTS);
     }
@@ -133,7 +133,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Transactional
   @Override
   public ProductResponse update(final Long id, final ProductRequest request) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
     final Product product = findProduct(id);
     if (product.getDeletedAt() != null) {
       throw new ApiException(ProductMessageKey.PRODUCT_ALREADY_ARCHIVED);
@@ -303,7 +303,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
 
   private Product findProduct(final Long id) {
     return productService
-        .findByIdAndCompanyId(id, companyService.getCompanyOrCreateNew().getId())
+        .findByIdAndCompanyId(id, currentCompanyProvider.getCurrentCompany().getId())
         .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
   }
 

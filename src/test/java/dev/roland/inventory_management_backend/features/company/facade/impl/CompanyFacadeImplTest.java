@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.company.facade.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.dto.CompanyBaseDataUpdateRequest;
@@ -41,6 +44,7 @@ class CompanyFacadeImplTest {
   @Mock private MediaAssetService mediaAssetService;
   @Mock private ObjectStorageService objectStorageService;
   @Mock private CurrencyService currencyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
 
   private CompanyFacadeImpl facade;
 
@@ -53,13 +57,14 @@ class CompanyFacadeImplTest {
             mediaAssetFacade,
             mediaAssetService,
             objectStorageService,
-            currencyService);
+            currencyService,
+            currentCompanyProvider);
   }
 
   @Test
   void updatesCompanyBaseAndBillingData() {
     final Company company = Company.builder().id(5L).name("Old").build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(companyService.save(company)).thenReturn(company);
 
     final var base =
@@ -90,10 +95,10 @@ class CompanyFacadeImplTest {
   }
 
   @Test
-  void updatesPreferredCurrencyForTheRequestedCompany() {
+  void updatesPreferredCurrencyForTheCurrentCompany() {
     final Company company = Company.builder().id(2L).build();
     final Currency currency = Currency.builder().id(3L).code("EUR").build();
-    when(companyService.findByIdOrThrow(2L)).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(currencyService.findByIdOrThrow(3L)).thenReturn(currency);
     when(companyService.save(company)).thenReturn(company);
     final CompanyPreferredCurrencyUpdateRequest request =
@@ -109,9 +114,20 @@ class CompanyFacadeImplTest {
   }
 
   @Test
+  void rejectsPreferredCurrencyUpdatesForAnotherCompany() {
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(Company.builder().id(5L).build());
+    final CompanyPreferredCurrencyUpdateRequest request =
+        new CompanyPreferredCurrencyUpdateRequest();
+    request.setCompanyId(99L);
+    request.setCurrencyId(3L);
+
+    assertThrows(NotFoundException.class, () -> facade.updatePreferredCurrency(request));
+  }
+
+  @Test
   void nullOrUnchangedLogoDoesNotMoveOrDeleteMedia() {
     final Company company = Company.builder().id(12L).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
 
     facade.updateLogo(null);
     when(mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
@@ -133,7 +149,7 @@ class CompanyFacadeImplTest {
     final MediaAsset newAsset =
         MediaAsset.builder().id(45L).filename("logo.png").objectPath("temp/logo.png").build();
     final MediaUsage oldUsage = MediaUsage.builder().mediaAsset(oldAsset).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.COMPANY, 12L, MediaUsageType.LOGO))
         .thenReturn(Optional.of(oldUsage));
@@ -162,7 +178,7 @@ class CompanyFacadeImplTest {
     final MediaAsset logo = MediaAsset.builder().id(30L).build();
     final MediaUsage usage = MediaUsage.builder().mediaAsset(logo).build();
     final Instant expiry = Instant.parse("2030-01-01T00:00:00Z");
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.COMPANY, 12L, MediaUsageType.LOGO))
         .thenReturn(Optional.of(usage));
@@ -184,7 +200,7 @@ class CompanyFacadeImplTest {
     final Company company = Company.builder().id(12L).build();
     final MediaAsset newAsset =
         MediaAsset.builder().id(45L).filename("logo.png").objectPath("temp/logo.png").build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.COMPANY, 12L, MediaUsageType.LOGO))
         .thenReturn(Optional.empty());

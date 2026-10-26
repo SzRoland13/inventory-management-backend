@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandRequest;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandResponse;
 import dev.roland.inventory_management_backend.features.brand.facade.BrandFacade;
 import dev.roland.inventory_management_backend.features.brand.message.BrandMessageKey;
 import dev.roland.inventory_management_backend.features.brand.service.BrandService;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 
 /** Implements company-scoped brand search orchestration. */
@@ -23,11 +23,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BrandFacadeImpl implements BrandFacade {
   private final BrandService brandService;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
 
   @Override
   public List<BrandResponse> search(final String query) {
-    final Long companyId = companyService.getCompanyOrCreateNew().getId();
+    final Long companyId = currentCompanyProvider.getCurrentCompany().getId();
     return brandService.search(companyId, query).stream()
         .map(brand -> new BrandResponse(brand.getId(), brand.getName()))
         .toList();
@@ -36,7 +36,7 @@ public class BrandFacadeImpl implements BrandFacade {
   @Transactional
   @Override
   public BrandResponse create(final BrandRequest request) {
-    final var company = companyService.getCompanyOrCreateNew();
+    final var company = currentCompanyProvider.getCurrentCompany();
     final String name = request.name().trim();
     if (brandService.existsByCompanyIdAndNameIgnoreCase(company.getId(), name)) {
       throw new ApiException(BrandMessageKey.BRAND_ALREADY_EXISTS);
@@ -50,7 +50,7 @@ public class BrandFacadeImpl implements BrandFacade {
   @Transactional
   @Override
   public BrandResponse update(final Long id, final BrandRequest request) {
-    final var company = companyService.getCompanyOrCreateNew();
+    final var company = currentCompanyProvider.getCurrentCompany();
     final Brand brand = findBrand(id, company.getId());
     final String name = request.name().trim();
     if (brandService.existsByCompanyIdAndNameIgnoreCaseAndIdNot(company.getId(), name, id)) {
@@ -63,7 +63,7 @@ public class BrandFacadeImpl implements BrandFacade {
   @Transactional
   @Override
   public void delete(final Long id) {
-    final Long companyId = companyService.getCompanyOrCreateNew().getId();
+    final Long companyId = currentCompanyProvider.getCurrentCompany().getId();
     brandService.delete(findBrand(id, companyId));
   }
 

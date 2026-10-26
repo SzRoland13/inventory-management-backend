@@ -1,7 +1,5 @@
 package dev.roland.inventory_management_backend.features.company.service.impl;
 
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,21 +26,5 @@ public class CompanyServiceImpl implements CompanyService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.COMPANY;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public Optional<Company> findFirstByOrderByIdAsc() {
-    return companyRepository.findFirstByOrderByIdAsc();
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @return get company or create new result
-   */
-  @Override
-  public Company getCompanyOrCreateNew() {
-    return findFirstByOrderByIdAsc().orElseGet(() -> save(Company.builder().name("").build()));
   }
 }

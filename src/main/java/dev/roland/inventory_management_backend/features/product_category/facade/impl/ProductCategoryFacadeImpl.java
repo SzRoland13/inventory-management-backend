@@ -15,7 +15,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryRequest;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryResponse;
 import dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapper;
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductCategoryFacadeImpl implements ProductCategoryFacade {
   private final ProductCategoryService categoryService;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
   private final ProductSettingsMapper mapper;
 
   @Override
@@ -90,7 +90,7 @@ public class ProductCategoryFacadeImpl implements ProductCategoryFacade {
   @Override
   @Transactional
   public CategoryResponse create(final CategoryRequest request) {
-    final var company = companyService.getCompanyOrCreateNew();
+    final var company = currentCompanyProvider.getCurrentCompany();
     final String code = request.code().trim();
     if (categoryService.existsByCompanyIdAndCode(company.getId(), code)) {
       throw invalid();
@@ -150,7 +150,7 @@ public class ProductCategoryFacadeImpl implements ProductCategoryFacade {
   }
 
   private Long companyId() {
-    return companyService.getCompanyOrCreateNew().getId();
+    return currentCompanyProvider.getCurrentCompany().getId();
   }
 
   private static Long parentId(final ProductCategory category) {
