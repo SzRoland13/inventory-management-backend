@@ -9,13 +9,17 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
@@ -44,6 +48,24 @@ class UserFacadeImplTest {
   void setUp() {
     facade =
         new UserFacadeImpl(userService, mediaAssetService, mediaUsageService, mediaAssetFacade);
+    SecurityContextHolder.getContext()
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken(
+                new CustomUserDetails(9L, "admin", "", UserRole.ADMIN, UserStatus.ACTIVE), null));
+    org.mockito.Mockito.lenient()
+        .when(userService.findByIdOrThrow(9L))
+        .thenReturn(
+            User.builder()
+                .company(
+                    dev.roland.inventory_management_backend.features.company.Company.builder()
+                        .id(2L)
+                        .build())
+                .build());
+  }
+
+  @AfterEach
+  void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
   }
 
   @Test

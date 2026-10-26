@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="001" author="roland">
+        <addColumn tableName="users">
+            <column name="company_id" type="INTEGER"/>
+        </addColumn>
+        <sql dbms="postgresql"><![CDATA[
+            INSERT INTO companies(name, created_at, updated_at)
+            SELECT '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            WHERE NOT EXISTS (SELECT 1 FROM companies);
+            UPDATE users SET company_id = (SELECT id FROM companies ORDER BY id LIMIT 1)
+            WHERE company_id IS NULL;
+        ]]></sql>
+        <addNotNullConstraint tableName="users" columnName="company_id" columnDataType="INTEGER"/>
+        <addForeignKeyConstraint baseTableName="users" baseColumnNames="company_id"
+                                 constraintName="fk_users_company" referencedTableName="companies"
+                                 referencedColumnNames="id" onDelete="RESTRICT"/>
+
+        <addColumn tableName="partners">
+            <column name="company_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted_at" type="TIMESTAMP"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="partners" baseColumnNames="company_id"
+                                 constraintName="fk_partners_company" referencedTableName="companies"
+                                 referencedColumnNames="id" onDelete="RESTRICT"/>
+        <addUniqueConstraint tableName="partners" columnNames="company_id,tax_number"
+                             constraintName="uq_partners_company_tax_number"/>
+        <createIndex tableName="partners" indexName="idx_partners_company_id">
+            <column name="company_id"/>
+        </createIndex>
+        <addColumn tableName="contacts">
+            <column name="deleted_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

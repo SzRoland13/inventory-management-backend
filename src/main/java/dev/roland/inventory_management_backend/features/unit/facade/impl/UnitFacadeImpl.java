@@ -7,7 +7,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.product.dto.UnitRequest;
 import dev.roland.inventory_management_backend.features.product.dto.UnitResponse;
@@ -26,7 +26,7 @@ public class UnitFacadeImpl implements UnitFacade {
   private final UnitService unitService;
   private final ProductService productService;
   private final DocumentLineService documentLineService;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
   private final ProductSettingsMapper mapper;
 
   @Override
@@ -40,7 +40,7 @@ public class UnitFacadeImpl implements UnitFacade {
   @Override
   @Transactional
   public UnitResponse create(final UnitRequest request) {
-    final var company = companyService.getCompanyOrCreateNew();
+    final var company = currentCompanyProvider.getCurrentCompany();
     if (unitService.existsByCompanyIdAndCode(company.getId(), request.code().trim())) {
       throw invalid();
     }
@@ -90,7 +90,7 @@ public class UnitFacadeImpl implements UnitFacade {
   }
 
   private Long companyId() {
-    return companyService.getCompanyOrCreateNew().getId();
+    return currentCompanyProvider.getCurrentCompany().getId();
   }
 
   private ApiException invalid() {

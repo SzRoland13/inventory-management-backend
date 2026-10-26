@@ -9,9 +9,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -19,6 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
+import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
@@ -79,6 +83,10 @@ public class User implements IdInterface<Long> {
   @Column(name = "status", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
   private UserStatus status;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "company_id", nullable = false)
+  private Company company;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

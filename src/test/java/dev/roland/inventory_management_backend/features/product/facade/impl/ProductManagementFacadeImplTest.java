@@ -31,9 +31,9 @@ import org.springframework.data.domain.PageRequest;
 import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.product.Product;
@@ -72,7 +72,7 @@ class ProductManagementFacadeImplTest {
   @Mock private ProductService productService;
   @Mock private BrandService brandService;
   @Mock private ProductMapper productMapper;
-  @Mock private CompanyService companyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
   @Mock private UnitService unitService;
   @Mock private CurrencyService currencyService;
   @Mock private ProductCategoryService categoryService;
@@ -93,7 +93,7 @@ class ProductManagementFacadeImplTest {
             productService,
             brandService,
             productMapper,
-            companyService,
+            currentCompanyProvider,
             unitService,
             currencyService,
             categoryService,
@@ -126,7 +126,7 @@ class ProductManagementFacadeImplTest {
 
   @Test
   void rejectsDuplicateSkuAndArchivedStatusOnCreation() {
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.existsByCompanyIdAndSku(1L, "SKU-1")).thenReturn(true);
     final ApiException duplicate =
         assertThrows(
@@ -148,7 +148,7 @@ class ProductManagementFacadeImplTest {
   void rejectsACompanyUnitOwnedByAnotherCompany() {
     final ProductRequest request = productRequest(null, null, List.of(), List.of());
     final Company otherCompany = Company.builder().id(2L).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.existsByCompanyIdAndSku(1L, "SKU-1")).thenReturn(false);
     when(unitService.findById(10L)).thenReturn(Optional.of(unit(10L, "EA", false, otherCompany)));
 
@@ -161,7 +161,7 @@ class ProductManagementFacadeImplTest {
   @Test
   void rejectsACompanyUnitWithoutAnOwner() {
     final ProductRequest request = productRequest(null, null, List.of(), List.of());
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.existsByCompanyIdAndSku(1L, "SKU-1")).thenReturn(false);
     when(unitService.findById(10L)).thenReturn(Optional.of(unit(10L, "EA", false, null)));
 
@@ -243,7 +243,7 @@ class ProductManagementFacadeImplTest {
   @Test
   void preventsChangingProductUnitsAfterStockMovementsExist() {
     final Product existing = Product.builder().id(50L).unit(unit(10L, "EA", true, null)).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(existing));
     when(productService.existsByCompanyIdAndSkuAndIdNot(1L, "SKU-1", 50L)).thenReturn(false);
     when(unitService.findById(11L)).thenReturn(Optional.of(unit(11L, "BOX", true, null)));
@@ -274,7 +274,7 @@ class ProductManagementFacadeImplTest {
             .secondaryUnit(currentSecondary)
             .secondaryUnitsPerMainUnit(new BigDecimal("12"))
             .build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(existing));
     when(productService.existsByCompanyIdAndSkuAndIdNot(1L, "SKU-1", 50L)).thenReturn(false);
     when(unitService.findById(10L)).thenReturn(Optional.of(mainUnit));
@@ -312,7 +312,7 @@ class ProductManagementFacadeImplTest {
             .sku("OLD")
             .status(ProductStatus.ACTIVE)
             .build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(product));
     when(productService.existsByCompanyIdAndSkuAndIdNot(1L, "SKU-1", 50L)).thenReturn(false);
     when(unitService.findById(10L)).thenReturn(Optional.of(mainUnit));
@@ -343,7 +343,7 @@ class ProductManagementFacadeImplTest {
 
   @Test
   void listsEmptyPagesWithoutLoadingRelatedProductData() {
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.search(eq(1L), eq(false), any()))
         .thenReturn(new PageImpl<>(List.of(), PageRequest.of(2, 5), 0));
 
@@ -383,7 +383,7 @@ class ProductManagementFacadeImplTest {
             null,
             null,
             null);
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.search(eq(1L), eq(false), any()))
         .thenReturn(new PageImpl<>(products, PageRequest.of(0, 10), 2));
     when(assignmentService.findAllByProductIdIn(List.of(50L, 51L))).thenReturn(List.of(assignment));
@@ -422,7 +422,7 @@ class ProductManagementFacadeImplTest {
   void hidesArchivedProductsUnlessExplicitlyIncluded() {
     final Product archived =
         Product.builder().id(50L).deletedAt(java.time.LocalDateTime.now()).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(archived));
 
     assertThrows(NotFoundException.class, () -> facade.get(50L, false));
@@ -499,7 +499,7 @@ class ProductManagementFacadeImplTest {
   @Test
   void archivesAndRestoresProductsAndRejectsInvalidLifecycleTransitions() {
     final Product product = Product.builder().id(50L).deletedAt(null).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(product));
 
     facade.archive(50L);
@@ -532,7 +532,7 @@ class ProductManagementFacadeImplTest {
   }
 
   private void stubProductCreation(final ProductRequest request, final Unit mainUnit) {
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.existsByCompanyIdAndSku(1L, "SKU-1")).thenReturn(false);
     when(unitService.findById(request.units().mainUnitId())).thenReturn(Optional.of(mainUnit));
     when(productService.save(any(Product.class)))
@@ -545,7 +545,7 @@ class ProductManagementFacadeImplTest {
   }
 
   private void stubGetProduct(final Product product, final List<StockBalance> balances) {
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(product.getId(), 1L)).thenReturn(Optional.of(product));
     when(assignmentService.findAllByProductId(product.getId())).thenReturn(List.of());
     when(valueService.findAllByProductId(product.getId())).thenReturn(List.of());

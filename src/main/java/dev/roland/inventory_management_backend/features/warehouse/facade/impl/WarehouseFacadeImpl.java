@@ -7,8 +7,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import dev.roland.inventory_management_backend.features.warehouse.dto.WarehouseRequest;
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WarehouseFacadeImpl implements WarehouseFacade {
   private final WarehouseService warehouseService;
-  private final CompanyService companyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
   private final StockBalanceService stockBalanceService;
 
   @Override
@@ -68,6 +68,6 @@ public class WarehouseFacadeImpl implements WarehouseFacade {
   }
 
   private Company currentCompany() {
-    return companyService.getCompanyOrCreateNew();
+    return currentCompanyProvider.getCurrentCompany();
   }
 }

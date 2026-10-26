@@ -7,6 +7,9 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.company.dto.CompanyBaseDataResponse;
@@ -42,11 +45,12 @@ public class CompanyFacadeImpl implements CompanyFacade {
   private final MediaAssetService mediaAssetService;
   private final ObjectStorageService objectStorageService;
   private final CurrencyService currencyService;
+  private final CurrentCompanyProvider currentCompanyProvider;
 
   /** {@inheritDoc} */
   @Override
   public CompanyMinimalResponse getMinimalCompanyData() {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
 
     return buildMinimalResponse(company);
   }
@@ -54,7 +58,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   /** {@inheritDoc} */
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
 
     return buildExtendedResponse(company);
   }
@@ -64,7 +68,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Transactional
   public CompanyBaseDataResponse updateCompanyBaseData(final CompanyBaseDataUpdateRequest request) {
 
-    Company company = companyService.getCompanyOrCreateNew();
+    Company company = currentCompanyProvider.getCurrentCompany();
 
     company.setName(request.getName());
     company.setDescription(request.getDescription());
@@ -82,7 +86,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Override
   @Transactional
   public void updateLogo(final Long mediaAssetId) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
 
     handleLogoUpdate(company, mediaAssetId);
   }
@@ -92,7 +96,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Transactional
   public CompanyBillingDataResponse updateCompanyBillingData(
       final CompanyBillingDataUpdateRequest request) {
-    final Company company = companyService.getCompanyOrCreateNew();
+    final Company company = currentCompanyProvider.getCurrentCompany();
 
     company.setTaxNumber(request.getTaxNumber());
     company.setVatNumber(request.getVatNumber());
@@ -113,7 +117,10 @@ public class CompanyFacadeImpl implements CompanyFacade {
   @Transactional
   public UpdatedPreferredCurrencyResponse updatePreferredCurrency(
       final CompanyPreferredCurrencyUpdateRequest request) {
-    final Company company = companyService.findByIdOrThrow(request.getCompanyId());
+    final Company company = currentCompanyProvider.getCurrentCompany();
+    if (!company.getId().equals(request.getCompanyId())) {
+      throw new NotFoundException(NotFoundMessageKey.COMPANY);
+    }
     final Currency currency = currencyService.findByIdOrThrow(request.getCurrencyId());
 
     company.setPreferredCurrency(currency);

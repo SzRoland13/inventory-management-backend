@@ -19,8 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
-import dev.roland.inventory_management_backend.features.company.service.CompanyService;
 import dev.roland.inventory_management_backend.features.product.dto.CategoryRequest;
 import dev.roland.inventory_management_backend.features.product.mapper.ProductSettingsMapperImpl;
 import dev.roland.inventory_management_backend.features.product.message.ProductMessageKey;
@@ -32,7 +32,7 @@ import dev.roland.inventory_management_backend.features.product_category.service
 class ProductCategoryFacadeImplTest {
 
   @Mock private ProductCategoryService categoryService;
-  @Mock private CompanyService companyService;
+  @Mock private CurrentCompanyProvider currentCompanyProvider;
 
   private ProductCategoryFacadeImpl categoryFacade;
   private Company company;
@@ -41,9 +41,9 @@ class ProductCategoryFacadeImplTest {
   void setUp() {
     categoryFacade =
         new ProductCategoryFacadeImpl(
-            categoryService, companyService, new ProductSettingsMapperImpl());
+            categoryService, currentCompanyProvider, new ProductSettingsMapperImpl());
     company = Company.builder().id(1L).build();
-    when(companyService.getCompanyOrCreateNew()).thenReturn(company);
+    when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
   }
 
   @Test
