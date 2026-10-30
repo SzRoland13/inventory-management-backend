@@ -202,7 +202,7 @@ public class ObjectStorageService {
 
   private S3Presigner createPresigner() {
     return S3Presigner.builder()
-        .endpointOverride(URI.create(appConfiguration.getS3Endpoint()))
+        .endpointOverride(URI.create(appConfiguration.getS3PublicEndpoint()))
         .region(Region.of(appConfiguration.getS3Region()))
         .credentialsProvider(
             StaticCredentialsProvider.create(

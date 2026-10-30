@@ -39,6 +39,9 @@ public class AppConfiguration {
   @Value("${app.storage.endpoint}")
   private String s3Endpoint;
 
+  @Value("${app.storage.public-endpoint:${app.storage.endpoint}}")
+  private String s3PublicEndpoint;
+
   @Value("${app.storage.region}")
   private String s3Region;
 
