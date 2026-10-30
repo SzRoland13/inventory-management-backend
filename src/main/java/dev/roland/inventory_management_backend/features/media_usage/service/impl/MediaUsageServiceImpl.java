@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.repository.MediaUsageRepository;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 /** Implements the media usage service operations. */
@@ -22,6 +23,10 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   private final MediaUsageRepository mediaUsageRepository;
 
   /** {@inheritDoc} */
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP",
+      justification =
+          "BaseService CRUD methods use this accessor to reach the Spring Data repository.")
   @Override
   public JpaRepository<MediaUsage, Long> getRepository() {
     return mediaUsageRepository;

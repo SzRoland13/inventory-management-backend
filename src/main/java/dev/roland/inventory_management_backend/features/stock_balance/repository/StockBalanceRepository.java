@@ -18,21 +18,35 @@ import dev.roland.inventory_management_backend.features.warehouse.enumeration.Wa
 
 /** Looks up inventory balances by warehouse and product. */
 public interface StockBalanceRepository extends JpaRepository<StockBalance, Long> {
-  /** Paged balance rows, including zero rows for active product/warehouse pairs. */
+  /**
+   * Paged balance rows, including zero rows for active product/warehouse pairs.
+   *
+   * @param companyId company owning the requested inventory
+   * @param activeProduct product status included in the result
+   * @param activeWarehouse warehouse status included in the result
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param search optional SKU or name search
+   * @param pageable page and sort settings
+   * @return matching balance rows
+   */
   @Query(
       value =
           "select p.id as productId, p.sku as productSku, p.name as productName, "
-              + "w.id as warehouseId, w.name as warehouseName, coalesce(b.quantity, 0) as quantity, "
+              + "w.id as warehouseId, w.name as warehouseName, "
+              + "coalesce(b.quantity, 0) as quantity, "
               + "p.unit.id as mainUnitId, p.unit.code as mainUnitCode, "
               + "p.unit.name as mainUnitName, p.unit.symbol as mainUnitSymbol, "
               + "p.unit.system as mainUnitSystem, secondary.id as secondaryUnitId, "
               + "secondary.code as secondaryUnitCode, secondary.name as secondaryUnitName, "
-              + "secondary.symbol as secondaryUnitSymbol, secondary.system as secondaryUnitSystem, "
+              + "secondary.symbol as secondaryUnitSymbol, "
+              + "secondary.system as secondaryUnitSystem, "
               + "p.secondaryUnitsPerMainUnit as secondaryUnitsPerMainUnit "
               + "from Product p cross join Warehouse w "
               + "left join p.secondaryUnit secondary "
               + "left join StockBalance b on b.product = p and b.warehouse = w "
-              + "where p.company.id = :companyId and p.deletedAt is null and p.status = :activeProduct "
+              + "where p.company.id = :companyId and p.deletedAt is null "
+              + "and p.status = :activeProduct "
               + "and w.company.id = :companyId and w.status = :activeWarehouse "
               + "and (:productId is null or p.id = :productId) "
               + "and (:warehouseId is null or w.id = :warehouseId) "
@@ -42,7 +56,8 @@ public interface StockBalanceRepository extends JpaRepository<StockBalance, Long
               + "order by p.name asc, p.id asc, w.name asc, w.id asc",
       countQuery =
           "select count(p.id) from Product p cross join Warehouse w "
-              + "where p.company.id = :companyId and p.deletedAt is null and p.status = :activeProduct "
+              + "where p.company.id = :companyId and p.deletedAt is null "
+              + "and p.status = :activeProduct "
               + "and w.company.id = :companyId and w.status = :activeWarehouse "
               + "and (:productId is null or p.id = :productId) "
               + "and (:warehouseId is null or w.id = :warehouseId) "
@@ -59,18 +74,18 @@ public interface StockBalanceRepository extends JpaRepository<StockBalance, Long
       Pageable pageable);
 
   /**
-   * Finds matching records using the supplied criteria.
+   * Finds balances for one product.
    *
    * @param productId the product identifier
-   * @return the matching resources
+   * @return balances for the product
    */
   List<StockBalance> findAllByProductId(Long productId);
 
   /**
-   * Finds matching records using the supplied criteria.
+   * Finds balances for several products.
    *
    * @param productIds the product identifiers
-   * @return the matching resources
+   * @return balances for the products
    */
   List<StockBalance> findAllByProductIdIn(List<Long> productIds);
 

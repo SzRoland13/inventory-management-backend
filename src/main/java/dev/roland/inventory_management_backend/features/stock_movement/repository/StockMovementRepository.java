@@ -36,7 +36,17 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
   String MOVEMENT_COUNT_SELECT = "select count(m.id) ";
   String MOVEMENT_COUNT_JOINS = "from StockMovement m join m.product p join m.warehouse w ";
 
-  /** Adds date predicates only for the dates supplied by the caller. */
+  /**
+   * Adds date predicates only for the dates supplied by the caller.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param startDate inclusive lower timestamp, if supplied
+   * @param endDate exclusive upper timestamp, if supplied
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   default Page<StockMovementQueryRow> findCompanyMovements(
       final Long companyId,
       final Long productId,
@@ -44,20 +54,30 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
       final LocalDateTime startDate,
       final LocalDateTime endDate,
       final Pageable pageable) {
+    final Page<StockMovementQueryRow> result;
     if (startDate == null && endDate == null) {
-      return findCompanyMovementsWithoutDates(companyId, productId, warehouseId, pageable);
+      result = findCompanyMovementsWithoutDates(companyId, productId, warehouseId, pageable);
+    } else if (startDate == null) {
+      result = findCompanyMovementsBeforeDate(companyId, productId, warehouseId, endDate, pageable);
+    } else if (endDate == null) {
+      result = findCompanyMovementsFromDate(companyId, productId, warehouseId, startDate, pageable);
+    } else {
+      result =
+          findCompanyMovementsBetweenDates(
+              companyId, productId, warehouseId, startDate, endDate, pageable);
     }
-    if (startDate == null) {
-      return findCompanyMovementsBeforeDate(companyId, productId, warehouseId, endDate, pageable);
-    }
-    if (endDate == null) {
-      return findCompanyMovementsFromDate(companyId, productId, warehouseId, startDate, pageable);
-    }
-    return findCompanyMovementsBetweenDates(
-        companyId, productId, warehouseId, startDate, endDate, pageable);
+    return result;
   }
 
-  /** Queries company movements without date restrictions. */
+  /**
+   * Queries company movements without date restrictions.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   @Query(
       value = MOVEMENT_SELECT + MOVEMENT_JOINS + MOVEMENT_FILTERS + MOVEMENT_ORDER,
       countQuery = MOVEMENT_COUNT_SELECT + MOVEMENT_COUNT_JOINS + MOVEMENT_FILTERS)
@@ -67,7 +87,16 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
       @Param("warehouseId") Long warehouseId,
       Pageable pageable);
 
-  /** Queries company movements from the inclusive start timestamp. */
+  /**
+   * Queries company movements from the inclusive start timestamp.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param startDate inclusive lower timestamp
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   @Query(
       value =
           MOVEMENT_SELECT
@@ -87,7 +116,16 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
       @Param("startDate") LocalDateTime startDate,
       Pageable pageable);
 
-  /** Queries company movements before the exclusive end timestamp. */
+  /**
+   * Queries company movements before the exclusive end timestamp.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param endDate exclusive upper timestamp
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   @Query(
       value =
           MOVEMENT_SELECT
@@ -107,7 +145,17 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
       @Param("endDate") LocalDateTime endDate,
       Pageable pageable);
 
-  /** Queries company movements within the inclusive start and exclusive end timestamps. */
+  /**
+   * Queries company movements within the inclusive start and exclusive end timestamps.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param startDate inclusive lower timestamp
+   * @param endDate exclusive upper timestamp
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   @Query(
       value =
           MOVEMENT_SELECT

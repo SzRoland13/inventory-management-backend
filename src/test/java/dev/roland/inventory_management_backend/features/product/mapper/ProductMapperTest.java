@@ -60,7 +60,8 @@ class ProductMapperTest {
                 new BigDecimal("4.000"),
                 new BigDecimal("5.000")),
             List.of(7L),
-            List.of());
+            List.of(),
+            null);
 
     productMapper.updateScalarFields(request, product);
 
@@ -136,7 +137,12 @@ class ProductMapperTest {
 
     final ProductResponse response =
         productMapper.toProductResponse(
-            product, List.of(9L), List.of(attribute), List.of(stock), new BigDecimal("10.00"));
+            product,
+            List.of(9L),
+            List.of(attribute),
+            List.of(stock),
+            List.of(),
+            new BigDecimal("10.00"));
 
     assertEquals(15L, response.id());
     assertEquals("SKU-15", response.sku());
@@ -212,7 +218,7 @@ class ProductMapperTest {
             .build();
 
     final ProductResponse response =
-        productMapper.toProductResponse(product, List.of(), List.of(), List.of(), null);
+        productMapper.toProductResponse(product, List.of(), List.of(), List.of(), List.of(), null);
 
     assertEquals(null, response.units().secondary());
     assertEquals(null, response.units().secondaryUnitsPerMainUnit());

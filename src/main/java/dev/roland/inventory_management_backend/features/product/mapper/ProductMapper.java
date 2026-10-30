@@ -77,6 +77,7 @@ public interface ProductMapper {
    * @param categoryIds associated category identifiers
    * @param attributes mapped attribute values
    * @param stockByWarehouse mapped stock balances
+   * @param images ordered product images
    * @param secondaryNetPrice calculated secondary-unit price
    * @return mapped product response
    */
@@ -105,17 +106,6 @@ public interface ProductMapper {
       List<ProductStockResponse> stockByWarehouse,
       List<ProductImageResponse> images,
       BigDecimal secondaryNetPrice);
-
-  /** Maps a product response without images for callers using the legacy mapper signature. */
-  default ProductResponse toProductResponse(
-      final Product product,
-      final List<Long> categoryIds,
-      final List<ProductAttributeValueResponse> attributes,
-      final List<ProductStockResponse> stockByWarehouse,
-      final BigDecimal secondaryNetPrice) {
-    return toProductResponse(
-        product, categoryIds, attributes, stockByWarehouse, List.of(), secondaryNetPrice);
-  }
 
   /**
    * Maps an optional brand relation to its API representation.

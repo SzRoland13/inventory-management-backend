@@ -30,15 +30,35 @@ public interface MediaUsageRepository extends JpaRepository<MediaUsage, Long> {
   Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
       MediaEntityType type, Long entityId, MediaUsageType usageType);
 
-  /** Finds usages for one entity ordered by their configured position. */
+  /**
+   * Finds usages for one entity ordered by their configured position.
+   *
+   * @param type owning entity type
+   * @param entityId owning entity identifier
+   * @param usageType usage role
+   * @return ordered media usages
+   */
   List<MediaUsage> findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
       MediaEntityType type, Long entityId, MediaUsageType usageType);
 
-  /** Finds usages for several entities ordered by entity and configured position. */
+  /**
+   * Finds usages for several entities ordered by entity and configured position.
+   *
+   * @param type owning entity type
+   * @param entityIds owning entity identifiers
+   * @param usageType usage role
+   * @return ordered media usages
+   */
   List<MediaUsage> findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
       MediaEntityType type, List<Long> entityIds, MediaUsageType usageType);
 
-  /** Deletes usages for one entity and usage role. */
+  /**
+   * Deletes usages for one entity and usage role.
+   *
+   * @param type owning entity type
+   * @param entityId owning entity identifier
+   * @param usageType usage role
+   */
   void deleteAllByEntityTypeAndEntityIdAndUsageType(
       MediaEntityType type, Long entityId, MediaUsageType usageType);
 

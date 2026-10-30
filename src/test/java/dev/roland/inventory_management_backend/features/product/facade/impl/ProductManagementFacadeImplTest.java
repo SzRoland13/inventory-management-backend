@@ -604,7 +604,8 @@ class ProductManagementFacadeImplTest {
         new ProductRequest.Pricing(null, new BigDecimal("10"), null, BigDecimal.ZERO),
         null,
         categoryIds,
-        attributes);
+        attributes,
+        null);
   }
 
   private ProductResponse response(final Long productId) {
@@ -621,6 +622,7 @@ class ProductManagementFacadeImplTest {
         new ProductResponse.Dimensions(null, null, null, null),
         List.of(),
         List.<ProductAttributeValueResponse>of(),
+        List.of(),
         List.of(),
         null,
         null,

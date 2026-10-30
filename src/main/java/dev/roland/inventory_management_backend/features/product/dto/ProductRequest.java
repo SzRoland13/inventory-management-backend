@@ -26,6 +26,7 @@ import dev.roland.inventory_management_backend.features.product.message.ProductV
  * @param description descriptive text
  * @param dimensions physical dimensions
  * @param ean product European Article Number
+ * @param imageAssetIds ordered image asset identifiers; null preserves images on update
  * @param name display name
  * @param pricing product pricing configuration
  * @param sku product stock keeping unit
@@ -57,34 +58,6 @@ public record ProductRequest(
     categoryIds = immutableCopy(categoryIds);
     attributes = immutableCopy(attributes);
     imageAssetIds = immutableCopy(imageAssetIds);
-  }
-
-  /** Backwards-compatible constructor for product requests without image references. */
-  public ProductRequest(
-      String sku,
-      String ean,
-      String name,
-      String description,
-      Long brandId,
-      ProductStatus status,
-      Units units,
-      Pricing pricing,
-      Dimensions dimensions,
-      List<Long> categoryIds,
-      List<ProductAttributeValueRequest> attributes) {
-    this(
-        sku,
-        ean,
-        name,
-        description,
-        brandId,
-        status,
-        units,
-        pricing,
-        dimensions,
-        categoryIds,
-        attributes,
-        null);
   }
 
   /**

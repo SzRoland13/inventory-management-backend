@@ -16,7 +16,17 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
 /** Defines operations supported by the stock movement feature. */
 public interface StockMovementService extends BaseService<StockMovement, Long> {
-  /** Searches posted movements within a company and optional filters. */
+  /**
+   * Searches posted movements within a company and optional filters.
+   *
+   * @param companyId owning company identifier
+   * @param productId optional product filter
+   * @param warehouseId optional warehouse filter
+   * @param startDate inclusive lower timestamp, if supplied
+   * @param endDate exclusive upper timestamp, if supplied
+   * @param pageable page and sort settings
+   * @return matching movement rows
+   */
   Page<StockMovementQueryRow> findCompanyMovements(
       Long companyId,
       Long productId,

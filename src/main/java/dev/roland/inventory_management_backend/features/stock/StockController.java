@@ -31,7 +31,12 @@ public class StockController {
 
   private final StockFacade stockFacade;
 
-  /** Lists current on-hand quantities. */
+  /**
+   * Lists current on-hand quantities.
+   *
+   * @param request validated paging and filter values
+   * @return page of current balances
+   */
   @GetMapping(BALANCES_PATH)
   public ResponseEntity<ApiResponse<PageResponse<StockBalanceResponse>>> listBalances(
       @Valid @ModelAttribute final StockBalanceListRequest request) {
@@ -39,7 +44,12 @@ public class StockController {
         ApiResponse.success(StockMessageKey.BALANCES_RETRIEVED, stockFacade.listBalances(request)));
   }
 
-  /** Lists posted stock ledger entries. */
+  /**
+   * Lists posted stock ledger entries.
+   *
+   * @param request validated paging and filter values
+   * @return page of posted movements
+   */
   @GetMapping(MOVEMENTS_PATH)
   public ResponseEntity<ApiResponse<PageResponse<StockMovementResponse>>> listMovements(
       @Valid @ModelAttribute final StockMovementListRequest request) {

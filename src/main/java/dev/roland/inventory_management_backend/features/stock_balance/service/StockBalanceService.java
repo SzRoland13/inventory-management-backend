@@ -12,7 +12,14 @@ import dev.roland.inventory_management_backend.features.stock_balance.dto.StockB
 
 /** Defines operations supported by the stock balance feature. */
 public interface StockBalanceService extends BaseService<StockBalance, Long> {
-  /** Finds company balance rows, including computed zero rows for active pairs. */
+  /**
+   * Finds company balance rows, including computed zero rows for active pairs.
+   *
+   * @param companyId owning company identifier
+   * @param request requested filters
+   * @param pageable page and sort settings
+   * @return matching balance rows
+   */
   Page<StockBalanceQueryRow> findCompanyStockRows(
       Long companyId, StockBalanceListRequest request, Pageable pageable);
 

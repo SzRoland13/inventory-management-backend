@@ -18,20 +18,25 @@ public class CurrentCompanyProvider {
   private final UserService userService;
   private final CompanyService companyService;
 
-  /** Returns the company of the authenticated principal. */
+  /**
+   * Returns the company of the authenticated principal.
+   *
+   * @return authenticated user's company
+   * @throws NotFoundException when the principal or company cannot be resolved
+   */
   public Company getCurrentCompany() {
-    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    final var authentication = SecurityContextHolder.getContext().getAuthentication();
 
     if (authentication == null) {
       throw new NotFoundException(NotFoundMessageKey.COMPANY);
     }
 
-    Object principal = authentication.getPrincipal();
+    final Object principal = authentication.getPrincipal();
 
     if (!(principal instanceof CustomUserDetails details)) {
       throw new NotFoundException(NotFoundMessageKey.COMPANY);
     }
-    var user = userService.findByIdOrThrow(details.getUserId());
+    final var user = userService.findByIdOrThrow(details.getUserId());
 
     if (user.getCompany() == null || user.getCompany().getId() == null) {
       throw new NotFoundException(NotFoundMessageKey.COMPANY);
