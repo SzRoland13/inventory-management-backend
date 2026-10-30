@@ -48,12 +48,43 @@ public record ProductRequest(
     @NotNull(message = ProductValidationMessage.REQUIRED) @Valid Pricing pricing,
     @Valid Dimensions dimensions,
     List<@Positive(message = ProductValidationMessage.POSITIVE) Long> categoryIds,
-    List<@Valid ProductAttributeValueRequest> attributes) {
+    List<@Valid ProductAttributeValueRequest> attributes,
+    @Size(max = 10, message = ProductValidationMessage.TOO_LONG)
+        List<@Positive(message = ProductValidationMessage.POSITIVE) Long> imageAssetIds) {
 
   /** Copies request collections while preserving their optional null state. */
   public ProductRequest {
     categoryIds = immutableCopy(categoryIds);
     attributes = immutableCopy(attributes);
+    imageAssetIds = immutableCopy(imageAssetIds);
+  }
+
+  /** Backwards-compatible constructor for product requests without image references. */
+  public ProductRequest(
+      String sku,
+      String ean,
+      String name,
+      String description,
+      Long brandId,
+      ProductStatus status,
+      Units units,
+      Pricing pricing,
+      Dimensions dimensions,
+      List<Long> categoryIds,
+      List<ProductAttributeValueRequest> attributes) {
+    this(
+        sku,
+        ean,
+        name,
+        description,
+        brandId,
+        status,
+        units,
+        pricing,
+        dimensions,
+        categoryIds,
+        attributes,
+        null);
   }
 
   /**
@@ -74,6 +105,14 @@ public record ProductRequest(
   @Override
   public List<ProductAttributeValueRequest> attributes() {
     return attributes == null ? null : Collections.unmodifiableList(new ArrayList<>(attributes));
+  }
+
+  /** Returns the requested product image order, or null when omitted. */
+  @Override
+  public List<Long> imageAssetIds() {
+    return imageAssetIds == null
+        ? null
+        : Collections.unmodifiableList(new ArrayList<>(imageAssetIds));
   }
 
   private static <T> List<T> immutableCopy(final List<T> values) {

@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.media_asset;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +38,7 @@ public class MediaAssetController {
    */
   @PostMapping
   public ResponseEntity<ApiResponse<MediaUploadInitResponse>> initializeUpload(
-      @RequestBody final MediaUploadInitRequest request) {
+      @Valid @RequestBody final MediaUploadInitRequest request) {
     return ResponseEntity.accepted()
         .body(
             ApiResponse.success(

@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.media_usage.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +28,18 @@ public interface MediaUsageRepository extends JpaRepository<MediaUsage, Long> {
       WHERE u.entityType = :type AND u.entityId = :entityId AND u.usageType = :usageType
       """)
   Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
+      MediaEntityType type, Long entityId, MediaUsageType usageType);
+
+  /** Finds usages for one entity ordered by their configured position. */
+  List<MediaUsage> findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
+      MediaEntityType type, Long entityId, MediaUsageType usageType);
+
+  /** Finds usages for several entities ordered by entity and configured position. */
+  List<MediaUsage> findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+      MediaEntityType type, List<Long> entityIds, MediaUsageType usageType);
+
+  /** Deletes usages for one entity and usage role. */
+  void deleteAllByEntityTypeAndEntityIdAndUsageType(
       MediaEntityType type, Long entityId, MediaUsageType usageType);
 
   /**
