@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,7 @@ class LoginSessionServiceTest {
     final var result = service.createTemporarySessionWithExpiry("alice@example.com");
 
     assertTrue(result.getToken().matches("[0-9a-f-]{36}"));
-    assertTrue(result.getExpiresAt().isAfter(java.time.Instant.now()));
+    assertTrue(result.getExpiresAt().isAfter(Instant.now()));
     verify(valueOperations).set(result.getToken(), "alice@example.com", 8L, TimeUnit.MINUTES);
   }
 

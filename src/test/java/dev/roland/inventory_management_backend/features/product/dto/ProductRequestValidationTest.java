@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -90,8 +92,8 @@ class ProductRequestValidationTest {
 
   @Test
   void defensivelyCopiesOptionalProductCollections() {
-    var categories = new java.util.ArrayList<>(java.util.List.of(1L));
-    var attributes = new java.util.ArrayList<ProductAttributeValueRequest>();
+    var categories = new ArrayList<>(List.of(1L));
+    var attributes = new ArrayList<ProductAttributeValueRequest>();
     ProductRequest request =
         new ProductRequest(
             "SKU",
@@ -108,7 +110,7 @@ class ProductRequestValidationTest {
             null);
 
     categories.add(2L);
-    assertTrue(request.categoryIds().equals(java.util.List.of(1L)));
+    assertTrue(request.categoryIds().equals(List.of(1L)));
     assertFalse(request.categoryIds() == categories);
     assertTrue(request.attributes().isEmpty());
     assertTrue(request.categoryIds() != request.categoryIds());

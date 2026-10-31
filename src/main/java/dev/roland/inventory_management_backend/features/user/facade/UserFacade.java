@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.user.facade;
 
+import java.util.List;
+
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
 import dev.roland.inventory_management_backend.features.user.dto.AllUserResponse;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
@@ -54,7 +56,7 @@ public interface UserFacade {
   /**
    * Returns all the saved users.
    *
-   * @return a {@link java.util.List} of {@link UserDto}
+   * @return a {@link List} of {@link UserDto}
    */
   AllUserResponse getAllUsers();
 }

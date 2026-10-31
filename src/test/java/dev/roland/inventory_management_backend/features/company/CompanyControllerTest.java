@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,11 +40,11 @@ class CompanyControllerTest {
     final CompanyExtendedResponse extended = new CompanyExtendedResponse();
     when(companyFacade.getMinimalCompanyData()).thenReturn(minimal);
     when(companyFacade.getExtendedCompanyData()).thenReturn(extended);
-    when(companyFacade.updateCompanyBaseData(org.mockito.ArgumentMatchers.any()))
+    when(companyFacade.updateCompanyBaseData(ArgumentMatchers.any()))
         .thenReturn(CompanyBaseDataResponse.builder().id(1L).name("Acme").build());
-    when(companyFacade.updateCompanyBillingData(org.mockito.ArgumentMatchers.any()))
+    when(companyFacade.updateCompanyBillingData(ArgumentMatchers.any()))
         .thenReturn(CompanyBillingDataResponse.builder().id(1L).taxNumber("T1").build());
-    when(companyFacade.updatePreferredCurrency(org.mockito.ArgumentMatchers.any()))
+    when(companyFacade.updatePreferredCurrency(ArgumentMatchers.any()))
         .thenReturn(UpdatedPreferredCurrencyResponse.builder().companyId(1L).build());
     final CompanyBaseDataUpdateRequest baseRequest = new CompanyBaseDataUpdateRequest();
     final CompanyBillingDataUpdateRequest billingRequest = new CompanyBillingDataUpdateRequest();

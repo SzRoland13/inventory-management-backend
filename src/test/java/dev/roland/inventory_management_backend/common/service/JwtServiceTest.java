@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.core.userdetails.User.withUsername;
 
 import java.util.Map;
 
@@ -45,15 +46,9 @@ class JwtServiceTest {
     assertEquals("ADMIN", service.extractRole(token));
     assertTrue(service.isTokenValid(token, user));
     final UserDetails matchingDetails =
-        org.springframework.security.core.userdetails.User.withUsername("alice")
-            .password("ignored")
-            .authorities("ROLE_ADMIN")
-            .build();
+        withUsername("alice").password("ignored").authorities("ROLE_ADMIN").build();
     final UserDetails otherDetails =
-        org.springframework.security.core.userdetails.User.withUsername("bob")
-            .password("ignored")
-            .authorities("ROLE_ADMIN")
-            .build();
+        withUsername("bob").password("ignored").authorities("ROLE_ADMIN").build();
     assertTrue(service.isTokenValid(token, matchingDetails));
     assertFalse(service.isTokenValid(token, otherDetails));
   }

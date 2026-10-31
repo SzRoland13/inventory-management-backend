@@ -7,13 +7,16 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,7 +55,7 @@ class UserFacadeImplTest {
         .setAuthentication(
             new UsernamePasswordAuthenticationToken(
                 new CustomUserDetails(9L, "admin", "", UserRole.ADMIN, UserStatus.ACTIVE), null));
-    org.mockito.Mockito.lenient()
+    Mockito.lenient()
         .when(userService.findByIdOrThrow(9L))
         .thenReturn(
             User.builder()
@@ -71,7 +74,7 @@ class UserFacadeImplTest {
   @Test
   void registrationCreatesSetupRequiredUserWithRequestedRole() {
     final AddEditUserRequest request = request("new-user", "new@example.com", "MANAGER");
-    when(userService.save(org.mockito.ArgumentMatchers.any(User.class)))
+    when(userService.save(ArgumentMatchers.any(User.class)))
         .thenAnswer(
             invocation -> {
               final User savedUser = invocation.getArgument(0);
@@ -84,7 +87,7 @@ class UserFacadeImplTest {
     assertEquals("new-user", response.getUsername());
     verify(userService)
         .save(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 user ->
                     user.getRole() == UserRole.MANAGER
                         && user.getStatus() == UserStatus.SETUP_REQUIRED
@@ -99,7 +102,7 @@ class UserFacadeImplTest {
             () -> facade.registerUser(request("user", "user@example.com", "OWNER")));
 
     assertEquals(UserMessageKey.INVALID_ROLE, exception.getMessageKey());
-    verify(userService, never()).save(org.mockito.ArgumentMatchers.any(User.class));
+    verify(userService, never()).save(ArgumentMatchers.any(User.class));
   }
 
   @Test
@@ -202,7 +205,7 @@ class UserFacadeImplTest {
     final ApiException exception = assertThrows(ApiException.class, () -> facade.activateUser(10L));
 
     assertEquals(UserMessageKey.USER_NOT_SUSPENDED, exception.getMessageKey());
-    verify(userService, never()).save(org.mockito.ArgumentMatchers.any(User.class));
+    verify(userService, never()).save(ArgumentMatchers.any(User.class));
   }
 
   @Test
@@ -223,10 +226,10 @@ class UserFacadeImplTest {
     facade.updateAvatar(11L, 21L);
 
     verify(mediaAssetFacade, never()).deleteAsset(20L);
-    verify(mediaUsageService).delete(org.mockito.ArgumentMatchers.any(MediaUsage.class));
+    verify(mediaUsageService).delete(ArgumentMatchers.any(MediaUsage.class));
     verify(mediaUsageService)
         .save(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 usage ->
                     usage.getMediaAsset() == newAsset
                         && usage.getEntityType() == MediaEntityType.USER
@@ -239,7 +242,7 @@ class UserFacadeImplTest {
     final User user = User.builder().id(12L).username("bob").build();
     final MediaAsset asset = MediaAsset.builder().id(22L).build();
     final MediaUsage usage = MediaUsage.builder().mediaAsset(asset).build();
-    when(userService.findAll()).thenReturn(java.util.List.of(user));
+    when(userService.findAll()).thenReturn(List.of(user));
     when(mediaUsageService.findByEntityTypeAndEntityIdAndUsageType(
             MediaEntityType.USER, 12L, MediaUsageType.AVATAR))
         .thenReturn(Optional.of(usage));

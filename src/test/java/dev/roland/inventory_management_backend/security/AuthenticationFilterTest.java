@@ -13,7 +13,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -58,9 +60,8 @@ class AuthenticationFilterTest {
     filter.doFilter(request, response, filterChain);
     filter.doFilter(request, response, filterChain);
 
-    verify(filterChain, org.mockito.Mockito.times(2)).doFilter(request, response);
-    verify(userDetailsService, never())
-        .loadUserByUsername(org.mockito.ArgumentMatchers.anyString());
+    verify(filterChain, Mockito.times(2)).doFilter(request, response);
+    verify(userDetailsService, never()).loadUserByUsername(ArgumentMatchers.anyString());
   }
 
   @Test
@@ -68,8 +69,7 @@ class AuthenticationFilterTest {
     when(cookieService.extractAccessTokenFromCookie(request)).thenReturn("jwt", "other-jwt");
     when(jwtService.extractUsername("jwt")).thenReturn("alice");
     when(jwtService.isTokenValid(
-            org.mockito.ArgumentMatchers.eq("jwt"),
-            org.mockito.ArgumentMatchers.any(UserDetails.class)))
+            ArgumentMatchers.eq("jwt"), ArgumentMatchers.any(UserDetails.class)))
         .thenReturn(true);
     final UserDetails user =
         User.withUsername("alice").password("hash").authorities("ROLE_ADMIN").build();
@@ -80,7 +80,7 @@ class AuthenticationFilterTest {
 
     filter.doFilter(request, response, filterChain);
     verify(userDetailsService).loadUserByUsername("alice");
-    verify(filterChain, org.mockito.Mockito.times(2)).doFilter(request, response);
+    verify(filterChain, Mockito.times(2)).doFilter(request, response);
   }
 
   @Test
@@ -90,8 +90,7 @@ class AuthenticationFilterTest {
     when(userDetailsService.loadUserByUsername("alice"))
         .thenReturn(User.withUsername("alice").password("hash").authorities("ROLE_ADMIN").build());
     when(jwtService.isTokenValid(
-            org.mockito.ArgumentMatchers.eq("jwt"),
-            org.mockito.ArgumentMatchers.any(UserDetails.class)))
+            ArgumentMatchers.eq("jwt"), ArgumentMatchers.any(UserDetails.class)))
         .thenReturn(false);
 
     filter.doFilter(request, response, filterChain);

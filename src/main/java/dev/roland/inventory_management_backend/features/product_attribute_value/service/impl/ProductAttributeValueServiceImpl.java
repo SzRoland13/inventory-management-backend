@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.product_attribute_value.service.impl;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -33,13 +35,12 @@ public class ProductAttributeValueServiceImpl implements ProductAttributeValueSe
   }
 
   @Override
-  public java.util.List<ProductAttributeValue> findAllByProductId(final Long id) {
+  public List<ProductAttributeValue> findAllByProductId(final Long id) {
     return productAttributeValueRepository.findAllByProductId(id);
   }
 
   @Override
-  public java.util.List<ProductAttributeValue> findAllByProductIdIn(
-      final java.util.List<Long> productIds) {
+  public List<ProductAttributeValue> findAllByProductIdIn(final List<Long> productIds) {
     return productAttributeValueRepository.findAllByProductIdIn(productIds);
   }
 

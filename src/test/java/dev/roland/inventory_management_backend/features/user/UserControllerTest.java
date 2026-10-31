@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +36,7 @@ class UserControllerTest {
   void registerUpdateAndListEndpointsDelegateToTheMatchingComponent() {
     final AddEditUserRequest request = new AddEditUserRequest();
     final UserDto user = UserDto.builder().id(7L).username("alice").build();
-    final AllUserResponse allUsers = new AllUserResponse(java.util.List.of(userWithAvatar()));
+    final AllUserResponse allUsers = new AllUserResponse(List.of(userWithAvatar()));
     when(userFacade.registerUser(request)).thenReturn(user);
     when(userService.updateUser(7L, request)).thenReturn(user);
     when(userFacade.getAllUsers()).thenReturn(allUsers);

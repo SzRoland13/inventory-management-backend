@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -80,7 +81,7 @@ class AuthServiceImplTest {
             ApiException.class,
             () -> service.handleSetupOfNewPassword(passwordRequest("Correct!42", "Correct!42")));
     assertEquals(AuthMessageKey.NOT_FIRST_LOGIN, alreadySetup.getMessageKey());
-    verify(userService, never()).save(org.mockito.ArgumentMatchers.any(User.class));
+    verify(userService, never()).save(ArgumentMatchers.any(User.class));
   }
 
   @Test

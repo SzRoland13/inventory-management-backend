@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.document.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.transaction.Transactional;
@@ -50,7 +51,7 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
 
   private void postLine(final Document document, final DocumentLine line) {
     final DocumentType type = document.getType();
-    final java.math.BigDecimal stockQuantity =
+    final BigDecimal stockQuantity =
         line.getQuantity().multiply(line.getConversionFactorSnapshot());
     if (type == DocumentType.GOODS_RECEIPT) {
       post(line, document.getTargetWarehouse(), stockQuantity, StockMovementType.PURCHASE_INBOUND);
@@ -84,7 +85,7 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
   private void post(
       final DocumentLine line,
       final Warehouse warehouse,
-      final java.math.BigDecimal quantityChange,
+      final BigDecimal quantityChange,
       final StockMovementType movementType) {
     if (warehouse == null) {
       throw new IllegalStateException("Stock-affecting documents require a warehouse");

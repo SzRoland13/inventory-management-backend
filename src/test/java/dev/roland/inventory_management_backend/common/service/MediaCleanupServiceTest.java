@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
@@ -49,7 +50,7 @@ class MediaCleanupServiceTest {
     final MediaAsset successful = MediaAsset.builder().id(2L).objectPath("temp/good").build();
     when(mediaAssetService.findOrphanAssetsOlderThan(any()))
         .thenReturn(List.of(failed, successful), List.of());
-    org.mockito.Mockito.doThrow(new IllegalStateException("storage unavailable"))
+    Mockito.doThrow(new IllegalStateException("storage unavailable"))
         .when(objectStorageService)
         .delete("temp/failed");
 

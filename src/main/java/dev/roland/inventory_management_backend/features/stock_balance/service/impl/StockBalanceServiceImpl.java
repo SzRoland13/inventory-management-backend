@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.stock_balance.service.impl;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,12 +56,12 @@ public class StockBalanceServiceImpl implements StockBalanceService {
   }
 
   @Override
-  public java.util.List<StockBalance> findAllByProductId(final Long id) {
+  public List<StockBalance> findAllByProductId(final Long id) {
     return stockBalanceRepository.findAllByProductId(id);
   }
 
   @Override
-  public java.util.List<StockBalance> findAllByProductIdIn(final java.util.List<Long> productIds) {
+  public List<StockBalance> findAllByProductIdIn(final List<Long> productIds) {
     return stockBalanceRepository.findAllByProductIdIn(productIds);
   }
 

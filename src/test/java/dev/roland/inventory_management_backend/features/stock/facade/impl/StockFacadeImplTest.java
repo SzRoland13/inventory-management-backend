@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -142,7 +143,7 @@ class StockFacadeImplTest {
             eq(8L),
             eq(LocalDateTime.of(2026, 10, 1, 0, 0)),
             eq(LocalDateTime.of(2026, 10, 3, 0, 0)),
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 (Pageable pageable) ->
                     pageable.getPageNumber() == 1 && pageable.getPageSize() == 10)))
         .thenReturn(result);
@@ -162,7 +163,7 @@ class StockFacadeImplTest {
             eq(8L),
             eq(LocalDateTime.of(2026, 10, 1, 0, 0)),
             eq(LocalDateTime.of(2026, 10, 3, 0, 0)),
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 pageable -> pageable.getPageNumber() == 1 && pageable.getPageSize() == 10));
   }
 }
