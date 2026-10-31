@@ -33,8 +33,23 @@ import dev.roland.inventory_management_backend.features.contact.enumeration.Cont
 import dev.roland.inventory_management_backend.features.contact.service.ContactService;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
-import dev.roland.inventory_management_backend.features.document.dto.DocumentApiDtos.*;
-import dev.roland.inventory_management_backend.features.document.dto.DocumentApiDtos.DocumentTotals;
+import dev.roland.inventory_management_backend.features.document.dto.Activity;
+import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
+import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
+import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.DocumentTotals;
+import dev.roland.inventory_management_backend.features.document.dto.Draft;
+import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.FileEntry;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentDraft;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentLine;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
+import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
+import dev.roland.inventory_management_backend.features.document.dto.LineResponse;
+import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
+import dev.roland.inventory_management_backend.features.document.dto.PreviewLine;
+import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.RelatedDocument;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentAction;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentQueueView;
@@ -179,10 +194,12 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   public DocumentResponse createDraft(final Draft draft) {
     final Company company = companyProvider.getCurrentCompany();
     validateType(draft.type());
-    if (!canCreateType(draft.type(), actor()))
+    if (!canCreateType(draft.type(), actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (isDirectOperation(draft.type()) && !directAllowed(draft.type(), actor()))
+    }
+    if (isDirectOperation(draft.type()) && !directAllowed(draft.type(), actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
+    }
     final Document document = new Document();
     document.setCompany(company);
     document.setType(draft.type());
@@ -201,8 +218,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       document.setPartnerNameSnapshot(partner.getName());
       snapshotPartner(document, partner, company.getId());
     }
-    if (draft.warehouseId() != null)
+    if (draft.warehouseId() != null) {
       setWarehouse(document, draft.type(), draft.warehouseId(), company.getId());
+    }
     if (isDirectOperation(draft.type()) && draft.warehouseId() == null) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
     }
@@ -219,17 +237,21 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   public DocumentResponse updateDraft(final Long id, final DraftUpdate update) {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = lock(id, company.getId());
-    if (document.getStatus() != DocumentStatus.DRAFT)
+    if (document.getStatus() != DocumentStatus.DRAFT) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (!canManageDocument(document, actor()))
+    }
+    if (!canManageDocument(document, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     checkVersion(document, update.version());
     final Draft draft = update.draft();
     validateType(draft.type());
-    if (!canCreateType(draft.type(), actor()))
+    if (!canCreateType(draft.type(), actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (isDirectOperation(draft.type()) && !directAllowed(draft.type(), actor()))
+    }
+    if (isDirectOperation(draft.type()) && !directAllowed(draft.type(), actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
+    }
     document.setType(draft.type());
     document.setCategory(category(draft.type()));
     document.setDocumentDate(draft.date() == null ? document.getDocumentDate() : draft.date());
@@ -253,10 +275,12 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     document.setSourceWarehouseNameSnapshot(null);
     document.setTargetWarehouseCodeSnapshot(null);
     document.setTargetWarehouseNameSnapshot(null);
-    if (draft.warehouseId() != null)
+    if (draft.warehouseId() != null) {
       setWarehouse(document, draft.type(), draft.warehouseId(), company.getId());
-    if (isDirectOperation(draft.type()) && draft.warehouseId() == null)
+    }
+    if (isDirectOperation(draft.type()) && draft.warehouseId() == null) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     applyLines(document, draft.lines(), company.getId());
     addActivity(document, DocumentActivityEvent.EDITED, null);
     touch(document);
@@ -270,18 +294,22 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   public DocumentResponse createFulfillmentDraft(final FulfillmentDraft request) {
     final Company company = companyProvider.getCurrentCompany();
     if (request.type() != DocumentType.GOODS_RECEIPT
-        && request.type() != DocumentType.DELIVERY_NOTE)
+        && request.type() != DocumentType.DELIVERY_NOTE) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (!directAllowed(request.type(), actor()))
+    }
+    if (!directAllowed(request.type(), actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
+    }
     final Document source =
         request.sourceDocumentId() == null ? null : find(request.sourceDocumentId());
-    if (source != null && !isMatchingOrder(source, request.type()))
+    if (source != null && !isMatchingOrder(source, request.type())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (source != null
         && source.getStatus() != DocumentStatus.CONFIRMED
-        && source.getStatus() != DocumentStatus.PARTIALLY_COMPLETED)
+        && source.getStatus() != DocumentStatus.PARTIALLY_COMPLETED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final Long warehouseId =
         request.warehouseId() != null
             ? request.warehouseId()
@@ -294,7 +322,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                     : source.getSourceWarehouse() == null
                         ? null
                         : source.getSourceWarehouse().getId();
-    if (warehouseId == null) throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    if (warehouseId == null) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     final Document operation = new Document();
     operation.setCompany(company);
     operation.setCreatedByUser(actor());
@@ -323,9 +353,13 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     }
     final Document saved = documentService.save(operation);
     for (FulfillmentLine input : safe(request.lines())) {
-      if (input.quantity() == null || input.quantity().signum() <= 0) continue;
+      if (input.quantity() == null || input.quantity().signum() <= 0) {
+        continue;
+      }
       if (source == null) {
-        if (input.productId() == null) continue;
+        if (input.productId() == null) {
+          continue;
+        }
         final Product product =
             productService
                 .findByIdAndCompanyId(input.productId(), company.getId())
@@ -333,7 +367,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         final Unit unit = product.getUnit();
         addLine(saved, product, unit, input.quantity(), BigDecimal.ZERO);
       } else {
-        if (input.sourceLineId() == null) continue;
+        if (input.sourceLineId() == null) {
+          continue;
+        }
         final DocumentLine sourceLine =
             source.getLines().stream()
                 .filter(l -> Objects.equals(l.getId(), input.sourceLineId()))
@@ -369,209 +405,229 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Document operation = request.documentId() == null ? null : find(request.documentId());
     Long warehouseId = request.warehouseId();
     DocumentType type = operation == null ? request.type() : operation.getType();
-    if (source != null)
+    if (source != null) {
       type =
           source.getType() == DocumentType.PURCHASE_ORDER
               ? DocumentType.GOODS_RECEIPT
               : DocumentType.DELIVERY_NOTE;
-    if (operation != null && !Objects.equals(operation.getCompany().getId(), company.getId()))
+    }
+    if (operation != null && !Objects.equals(operation.getCompany().getId(), company.getId())) {
       throw notFound();
-    if (warehouseId == null && operation != null)
+    }
+    if (warehouseId == null && operation != null) {
       warehouseId =
           operation.getType() == DocumentType.GOODS_RECEIPT
               ? idOf(operation.getTargetWarehouse())
               : idOf(operation.getSourceWarehouse());
-    if (warehouseId == null) return new PreviewResponse(false, List.of());
-    final Warehouse warehouse =
-        warehouseService.findEntityByIdAndCompanyId(warehouseId, company.getId());
+    }
     final List<PreviewLine> lines = new ArrayList<>();
-    for (FulfillmentLine input : safe(request.lines())) {
-      final DocumentLine line =
-          source == null
-              ? operation == null
-                  ? null
-                  : operation.getLines().stream()
-                      .filter(l -> Objects.equals(l.getId(), input.sourceLineId()))
-                      .findFirst()
-                      .orElse(null)
-              : source.getLines().stream()
-                  .filter(l -> Objects.equals(l.getId(), input.sourceLineId()))
-                  .findFirst()
-                  .orElse(null);
-      final DocumentLine allocatedSourceLine =
-          line == null || source != null
-              ? null
-              : allocationRepository.findAllByFulfillmentLineId(line.getId()).stream()
-                  .map(DocumentLineAllocation::getSourceOrderLine)
-                  .findFirst()
-                  .orElse(null);
-      final Long productId =
-          input.productId() != null
-              ? input.productId()
-              : line == null ? null : line.getProduct().getId();
-      if (productId == null) continue;
-      final Product product =
-          productService
-              .findByIdAndCompanyId(productId, company.getId())
-              .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
-      final BigDecimal operationQty =
-          input.quantity() == null && line != null ? line.getQuantity() : nz(input.quantity());
-      final BigDecimal stockQty =
-          operationQty.multiply(
-              line == null ? BigDecimal.ONE : nz(line.getConversionFactorSnapshot()));
-      final BigDecimal delta = type == DocumentType.DELIVERY_NOTE ? stockQty.negate() : stockQty;
-      final BigDecimal available =
-          balanceRepository
-              .findByWarehouseAndProduct(warehouse, product)
-              .map(b -> nz(b.getQuantity()))
-              .orElse(BigDecimal.ZERO);
-      final BigDecimal result = available.add(delta);
-      BigDecimal shortfall = result.signum() < 0 ? result.abs() : BigDecimal.ZERO;
-      String error =
-          shortfall.signum() > 0
-              ? DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK.getKey()
-              : null;
-      final DocumentLine orderLine = source != null ? line : allocatedSourceLine;
-      if (operationQty.signum() <= 0) error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
-      if (orderLine != null) {
-        final BigDecimal remaining =
-            nz(orderLine.getQuantity())
-                .subtract(fulfilledFor(orderLine))
-                .subtract(nz(orderLine.getClosedQuantity()));
-        if (operationQty.compareTo(remaining) > 0) {
-          shortfall = operationQty.subtract(remaining);
+    if (warehouseId != null) {
+      final Warehouse warehouse =
+          warehouseService.findEntityByIdAndCompanyId(warehouseId, company.getId());
+      for (FulfillmentLine input : safe(request.lines())) {
+        final DocumentLine line =
+            source == null
+                ? operation == null
+                    ? null
+                    : operation.getLines().stream()
+                        .filter(l -> Objects.equals(l.getId(), input.sourceLineId()))
+                        .findFirst()
+                        .orElse(null)
+                : source.getLines().stream()
+                    .filter(l -> Objects.equals(l.getId(), input.sourceLineId()))
+                    .findFirst()
+                    .orElse(null);
+        final DocumentLine allocatedSourceLine =
+            line == null || source != null
+                ? null
+                : allocationRepository.findAllByFulfillmentLineId(line.getId()).stream()
+                    .map(DocumentLineAllocation::getSourceOrderLine)
+                    .findFirst()
+                    .orElse(null);
+        final Long productId =
+            input.productId() != null
+                ? input.productId()
+                : line == null ? null : line.getProduct().getId();
+        if (productId == null) {
+          continue;
+        }
+        final Product product =
+            productService
+                .findByIdAndCompanyId(productId, company.getId())
+                .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+        final BigDecimal operationQty =
+            input.quantity() == null && line != null ? line.getQuantity() : nz(input.quantity());
+        final BigDecimal stockQty =
+            operationQty.multiply(
+                line == null ? BigDecimal.ONE : nz(line.getConversionFactorSnapshot()));
+        final BigDecimal delta = type == DocumentType.DELIVERY_NOTE ? stockQty.negate() : stockQty;
+        final BigDecimal available =
+            balanceRepository
+                .findByWarehouseAndProduct(warehouse, product)
+                .map(b -> nz(b.getQuantity()))
+                .orElse(BigDecimal.ZERO);
+        final BigDecimal result = available.add(delta);
+        BigDecimal shortfall = result.signum() < 0 ? result.abs() : BigDecimal.ZERO;
+        String error =
+            shortfall.signum() > 0
+                ? DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK.getKey()
+                : null;
+        final DocumentLine orderLine = source != null ? line : allocatedSourceLine;
+        if (operationQty.signum() <= 0) {
           error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
         }
+        if (orderLine != null) {
+          final BigDecimal remaining =
+              nz(orderLine.getQuantity())
+                  .subtract(fulfilledFor(orderLine))
+                  .subtract(nz(orderLine.getClosedQuantity()));
+          if (operationQty.compareTo(remaining) > 0) {
+            shortfall = operationQty.subtract(remaining);
+            error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
+          }
+        }
+        if (line != null
+            && input.productId() != null
+            && !input.productId().equals(line.getProduct().getId())) {
+          error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
+        }
+        lines.add(
+            new PreviewLine(
+                orderLine == null ? input.sourceLineId() : orderLine.getId(),
+                productId,
+                line == null || line.getProductNameSnapshot() == null
+                    ? product.getName()
+                    : line.getProductNameSnapshot(),
+                warehouse.getName(),
+                available,
+                delta,
+                result,
+                shortfall,
+                error));
       }
-      if (line != null
-          && input.productId() != null
-          && !input.productId().equals(line.getProduct().getId()))
-        error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
-      lines.add(
-          new PreviewLine(
-              orderLine == null ? input.sourceLineId() : orderLine.getId(),
-              productId,
-              line == null || line.getProductNameSnapshot() == null
-                  ? product.getName()
-                  : line.getProductNameSnapshot(),
-              warehouse.getName(),
-              available,
-              delta,
-              result,
-              shortfall,
-              error));
     }
-    return new PreviewResponse(lines.stream().noneMatch(l -> l.errorMessageKey() != null), lines);
+    return new PreviewResponse(
+        warehouseId != null && lines.stream().noneMatch(l -> l.errorMessageKey() != null), lines);
   }
 
   @Transactional
   @Override
   public DocumentResponse post(
       final Long id, final String idempotencyKey, final String expectedVersion) {
-    if (idempotencyKey == null || idempotencyKey.isBlank())
+    if (idempotencyKey == null || idempotencyKey.isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED);
+    }
     final Company company = companyProvider.getCurrentCompany();
     final Document document = lock(id, company.getId());
-    if (postingKeyRepository.existsByDocumentIdAndIdempotencyKey(id, idempotencyKey))
-      return toResponse(document);
-    checkVersion(document, expectedVersion);
-    if (!directAllowed(document.getType(), actor()))
-      throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
-    if (document.getStatus() == DocumentStatus.COMPLETED
-        || document.getStatus() == DocumentStatus.CANCELLED)
-      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (!isDirectOperation(document.getType())
-        || document.getLines() == null
-        || document.getLines().isEmpty())
-      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (document.getLines().stream()
-        .anyMatch(l -> l.getQuantity() == null || l.getQuantity().signum() <= 0))
-      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
-    final List<DocumentLineAllocation> allocations =
-        document.getLines().stream()
-            .flatMap(l -> allocationRepository.findAllByFulfillmentLineId(l.getId()).stream())
-            .toList();
-    if (!allocations.isEmpty()) {
-      final Map<Long, BigDecimal> requested = new HashMap<>();
-      allocations.forEach(
-          a -> requested.merge(a.getSourceOrderLine().getId(), a.getQuantity(), BigDecimal::add));
-      for (DocumentLineAllocation allocation : allocations) {
-        final Document source =
-            lock(allocation.getSourceOrderLine().getDocument().getId(), company.getId());
-        final DocumentLine sourceLine =
-            source.getLines().stream()
-                .filter(l -> l.getId().equals(allocation.getSourceOrderLine().getId()))
-                .findFirst()
-                .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
-        final BigDecimal remaining =
-            sourceLine
-                .getQuantity()
-                .subtract(fulfilledFor(sourceLine))
-                .subtract(nz(sourceLine.getClosedQuantity()));
-        final BigDecimal requestQty = requested.get(sourceLine.getId());
-        if (requestQty.compareTo(remaining) > 0)
-          throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    DocumentResponse result = toResponse(document);
+    if (!postingKeyRepository.existsByDocumentIdAndIdempotencyKey(id, idempotencyKey)) {
+      checkVersion(document, expectedVersion);
+      if (!directAllowed(document.getType(), actor())) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
       }
-    }
-    final PreviewResponse preview =
-        preview(
-            new FulfillmentPreview(
-                null,
-                id,
-                document.getType(),
-                document.getType() == DocumentType.GOODS_RECEIPT
-                    ? idOf(document.getTargetWarehouse())
-                    : idOf(document.getSourceWarehouse()),
-                document.getLines().stream()
-                    .map(
-                        l ->
-                            new FulfillmentLine(l.getId(), l.getProduct().getId(), l.getQuantity()))
-                    .toList()));
-    if (!preview.valid()) {
-      final boolean insufficientStock =
-          preview.lines().stream()
-              .anyMatch(
-                  line ->
-                      DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK
-                          .getKey()
-                          .equals(line.errorMessageKey()));
-      throw new ApiException(
-          insufficientStock
-              ? DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK
-              : DocumentApiMessageKey.DOCUMENT_INVALID_LINES,
-          Map.of(
-              "lines",
-              preview.lines().stream().filter(line -> line.errorMessageKey() != null).toList()));
-    }
-    allocateNumber(document);
-    postingKeyRepository.save(postingKey(document, idempotencyKey));
-    for (DocumentLine line : document.getLines()) {
-      final List<DocumentLineAllocation> lineAllocations =
-          allocationRepository.findAllByFulfillmentLineId(line.getId());
-      for (DocumentLineAllocation allocation : lineAllocations) {
-        final DocumentLine sourceLine = allocation.getSourceOrderLine();
-        sourceLine.setFulfilledQuantity(
-            nz(sourceLine.getFulfilledQuantity()).add(allocation.getQuantity()));
-        lineService.save(sourceLine);
+      if (document.getStatus() == DocumentStatus.COMPLETED
+          || document.getStatus() == DocumentStatus.CANCELLED) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
       }
-    }
-    document.setStatus(DocumentStatus.CONFIRMED);
-    final Document posted = postingService.complete(document);
-    for (DocumentRelation relation :
-        relationRepository.findAllBySourceDocumentIdOrTargetDocumentId(id, id)) {
-      final Document source = relation.getSourceDocument();
-      if (!source.getId().equals(id)
-          && (source.getType() == DocumentType.PURCHASE_ORDER
-              || source.getType() == DocumentType.SALES_ORDER)) {
-        source.setStatus(
-            remaining(source) ? DocumentStatus.PARTIALLY_COMPLETED : DocumentStatus.COMPLETED);
-        documentService.save(source);
+      if (!isDirectOperation(document.getType())
+          || document.getLines() == null
+          || document.getLines().isEmpty()) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
       }
+      if (document.getLines().stream()
+          .anyMatch(l -> l.getQuantity() == null || l.getQuantity().signum() <= 0)) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final List<DocumentLineAllocation> allocations =
+          document.getLines().stream()
+              .flatMap(l -> allocationRepository.findAllByFulfillmentLineId(l.getId()).stream())
+              .toList();
+      if (!allocations.isEmpty()) {
+        final Map<Long, BigDecimal> requested = new HashMap<>();
+        allocations.forEach(
+            a -> requested.merge(a.getSourceOrderLine().getId(), a.getQuantity(), BigDecimal::add));
+        for (DocumentLineAllocation allocation : allocations) {
+          final Document source =
+              lock(allocation.getSourceOrderLine().getDocument().getId(), company.getId());
+          final DocumentLine sourceLine =
+              source.getLines().stream()
+                  .filter(l -> l.getId().equals(allocation.getSourceOrderLine().getId()))
+                  .findFirst()
+                  .orElseThrow(
+                      () -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+          final BigDecimal remaining =
+              sourceLine
+                  .getQuantity()
+                  .subtract(fulfilledFor(sourceLine))
+                  .subtract(nz(sourceLine.getClosedQuantity()));
+          final BigDecimal requestQty = requested.get(sourceLine.getId());
+          if (requestQty.compareTo(remaining) > 0) {
+            throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+          }
+        }
+      }
+      final PreviewResponse preview =
+          preview(
+              new FulfillmentPreview(
+                  null,
+                  id,
+                  document.getType(),
+                  document.getType() == DocumentType.GOODS_RECEIPT
+                      ? idOf(document.getTargetWarehouse())
+                      : idOf(document.getSourceWarehouse()),
+                  document.getLines().stream()
+                      .map(
+                          l ->
+                              new FulfillmentLine(
+                                  l.getId(), l.getProduct().getId(), l.getQuantity()))
+                      .toList()));
+      if (!preview.valid()) {
+        final boolean insufficientStock =
+            preview.lines().stream()
+                .anyMatch(
+                    line ->
+                        DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK
+                            .getKey()
+                            .equals(line.errorMessageKey()));
+        throw new ApiException(
+            insufficientStock
+                ? DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK
+                : DocumentApiMessageKey.DOCUMENT_INVALID_LINES,
+            Map.of(
+                "lines",
+                preview.lines().stream().filter(line -> line.errorMessageKey() != null).toList()));
+      }
+      allocateNumber(document);
+      postingKeyRepository.save(postingKey(document, idempotencyKey));
+      for (DocumentLine line : document.getLines()) {
+        final List<DocumentLineAllocation> lineAllocations =
+            allocationRepository.findAllByFulfillmentLineId(line.getId());
+        for (DocumentLineAllocation allocation : lineAllocations) {
+          final DocumentLine sourceLine = allocation.getSourceOrderLine();
+          sourceLine.setFulfilledQuantity(
+              nz(sourceLine.getFulfilledQuantity()).add(allocation.getQuantity()));
+          lineService.save(sourceLine);
+        }
+      }
+      document.setStatus(DocumentStatus.CONFIRMED);
+      final Document posted = postingService.complete(document);
+      for (DocumentRelation relation :
+          relationRepository.findAllBySourceDocumentIdOrTargetDocumentId(id, id)) {
+        final Document source = relation.getSourceDocument();
+        if (!source.getId().equals(id)
+            && (source.getType() == DocumentType.PURCHASE_ORDER
+                || source.getType() == DocumentType.SALES_ORDER)) {
+          source.setStatus(
+              remaining(source) ? DocumentStatus.PARTIALLY_COMPLETED : DocumentStatus.COMPLETED);
+          documentService.save(source);
+        }
+      }
+      addActivity(posted, DocumentActivityEvent.POSTED, idempotencyKey);
+      final Document saved = documentService.save(posted);
+      documentRepository.flush();
+      result = toResponse(saved);
     }
-    addActivity(posted, DocumentActivityEvent.POSTED, idempotencyKey);
-    final Document saved = documentService.save(posted);
-    documentRepository.flush();
-    return toResponse(saved);
+    return result;
   }
 
   @Transactional
@@ -580,18 +636,23 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = lock(id, company.getId());
     checkVersion(document, expectedVersion);
-    if (!canManageDocument(document, actor()))
+    if (!canManageDocument(document, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (document.getType() != DocumentType.PURCHASE_ORDER
-        && document.getType() != DocumentType.SALES_ORDER)
+        && document.getType() != DocumentType.SALES_ORDER) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (document.getStatus() != DocumentStatus.DRAFT && document.getStatus() != DocumentStatus.SENT)
+    }
+    if (document.getStatus() != DocumentStatus.DRAFT
+        && document.getStatus() != DocumentStatus.SENT) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (document.getLines() == null
         || document.getLines().isEmpty()
         || document.getLines().stream()
-            .anyMatch(l -> l.getQuantity() == null || l.getQuantity().signum() <= 0))
+            .anyMatch(l -> l.getQuantity() == null || l.getQuantity().signum() <= 0)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     allocateNumber(document);
     document.setStatus(DocumentStatus.CONFIRMED);
     addActivity(document, DocumentActivityEvent.CONFIRMED, null);
@@ -607,16 +668,20 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Company company = companyProvider.getCurrentCompany();
     final Document order = lock(id, company.getId());
     checkVersion(order, expectedVersion);
-    if (!canManageDocument(order, actor()))
+    if (!canManageDocument(order, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (request == null || request.reason() == null || request.reason().isBlank())
+    }
+    if (request == null || request.reason() == null || request.reason().isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED);
+    }
     if (order.getType() != DocumentType.PURCHASE_ORDER
-        && order.getType() != DocumentType.SALES_ORDER)
+        && order.getType() != DocumentType.SALES_ORDER) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (order.getStatus() != DocumentStatus.CONFIRMED
-        && order.getStatus() != DocumentStatus.PARTIALLY_COMPLETED)
+        && order.getStatus() != DocumentStatus.PARTIALLY_COMPLETED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     for (DocumentLine line : order.getLines()) {
       final BigDecimal remaining =
           nz(line.getQuantity())
@@ -640,19 +705,20 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   @Transactional
   @Override
   public DocumentResponse uploadFile(final Long id, final MultipartFile file) {
-    final Company company = companyProvider.getCurrentCompany();
     final Document document = find(id);
-    if (!canManageDocument(document, actor()))
+    if (!canManageDocument(document, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (document.getStatus() == DocumentStatus.CANCELLED)
+    }
+    if (document.getStatus() == DocumentStatus.CANCELLED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
-    if (file == null || file.isEmpty())
+    }
+    if (file == null || file.isEmpty()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     try {
+      final String filename = file.getOriginalFilename();
       final String original =
-          file.getOriginalFilename() == null
-              ? "upload"
-              : file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_");
+          filename == null ? "upload" : filename.replaceAll("[^a-zA-Z0-9._-]", "_");
       final String objectName = UUID.randomUUID() + "-" + original;
       final String path =
           objectStorage.generateSolidObjectPath(
@@ -711,59 +777,67 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       final Long id, final String idempotencyKey, final String requestedLanguage) {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = find(id);
-    if (!canManageDocument(document, actor()))
+    if (!canManageDocument(document, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (document.getStatus() == DocumentStatus.DRAFT
-        || document.getStatus() == DocumentStatus.CANCELLED)
+        || document.getStatus() == DocumentStatus.CANCELLED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final String key =
         idempotencyKey == null || idempotencyKey.isBlank()
             ? UUID.randomUUID().toString()
             : idempotencyKey;
-    if (idempotencyKey != null
-        && fileRepository.findByDocumentIdAndIdempotencyKey(id, idempotencyKey).isPresent())
-      return toResponse(document);
+    final boolean duplicateRequest =
+        idempotencyKey != null
+            && fileRepository.findByDocumentIdAndIdempotencyKey(id, idempotencyKey).isPresent();
     final boolean busy =
         fileRepository.existsByDocumentIdAndSourceAndStatusIn(
             id,
             DocumentFileSource.GENERATED_PDF,
             List.of(DocumentFileStatus.QUEUED, DocumentFileStatus.PROCESSING));
-    if (busy) return toResponse(document);
-    final List<DocumentFile> prior =
-        fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(id).stream()
-            .filter(f -> f.getSource() == DocumentFileSource.GENERATED_PDF)
-            .toList();
-    final String languageTag =
-        requestedLanguage == null
-            ? prior.stream()
-                .map(DocumentFile::getLanguageTag)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse("en")
-            : requestedLanguage;
-    final DocumentFile attempt = new DocumentFile();
-    attempt.setDocument(document);
-    attempt.setSource(DocumentFileSource.GENERATED_PDF);
-    attempt.setStatus(DocumentFileStatus.QUEUED);
-    attempt.setLanguageTag(languageTag);
-    attempt.setIdempotencyKey(key);
-    attempt.setAttempt(prior.size() + 1);
-    if (!prior.isEmpty()) attempt.setParentFile(prior.getFirst());
-    final DocumentFile saved = fileRepository.save(attempt);
-    outboxService.enqueue(
-        AsyncJobType.DOCUMENT_PDF,
-        Map.of("documentId", id, "fileId", saved.getId(), "idempotencyKey", key),
-        company.getId(),
-        id);
-    addActivity(document, DocumentActivityEvent.PDF_QUEUED, String.valueOf(saved.getId()));
+    if (!duplicateRequest && !busy) {
+      final List<DocumentFile> prior =
+          fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(id).stream()
+              .filter(f -> f.getSource() == DocumentFileSource.GENERATED_PDF)
+              .toList();
+      final String languageTag =
+          requestedLanguage == null
+              ? prior.stream()
+                  .map(DocumentFile::getLanguageTag)
+                  .filter(Objects::nonNull)
+                  .findFirst()
+                  .orElse("en")
+              : requestedLanguage;
+      final DocumentFile attempt = new DocumentFile();
+      attempt.setDocument(document);
+      attempt.setSource(DocumentFileSource.GENERATED_PDF);
+      attempt.setStatus(DocumentFileStatus.QUEUED);
+      attempt.setLanguageTag(languageTag);
+      attempt.setIdempotencyKey(key);
+      attempt.setAttempt(prior.size() + 1);
+      if (!prior.isEmpty()) {
+        attempt.setParentFile(prior.getFirst());
+      }
+      final DocumentFile saved = fileRepository.save(attempt);
+      outboxService.enqueue(
+          AsyncJobType.DOCUMENT_PDF,
+          Map.of("documentId", id, "fileId", saved.getId(), "idempotencyKey", key),
+          company.getId(),
+          id);
+      addActivity(document, DocumentActivityEvent.PDF_QUEUED, String.valueOf(saved.getId()));
+    }
     return toResponse(document);
   }
 
-  private String normalizePdfLanguage(String language) {
-    if (language == null || language.isBlank()) return "en";
-    final String languageTag = Locale.forLanguageTag(language.trim()).getLanguage();
-    if (!"en".equals(languageTag) && !"hu".equals(languageTag))
+  private String normalizePdfLanguage(final String language) {
+    final String languageTag =
+        language == null || language.isBlank()
+            ? "en"
+            : Locale.forLanguageTag(language.trim()).getLanguage();
+    if (!"en".equals(languageTag) && !"hu".equals(languageTag)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_PDF_LANGUAGE);
+    }
     return languageTag;
   }
 
@@ -771,7 +845,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       final Document document, final List<LineDraft> drafts, final Long companyId) {
     final List<DocumentLine> lines = new ArrayList<>();
     for (LineDraft draft : safe(drafts)) {
-      if (draft == null || draft.productId() == null || draft.unitId() == null) continue;
+      if (draft == null || draft.productId() == null || draft.unitId() == null) {
+        continue;
+      }
       final Product product =
           productService
               .findByIdAndCompanyId(draft.productId(), companyId)
@@ -780,8 +856,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
           unitService
               .findById(draft.unitId())
               .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.UNIT));
-      if (unit.getCompany() != null && !companyId.equals(unit.getCompany().getId()))
+      if (unit.getCompany() != null && !companyId.equals(unit.getCompany().getId())) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_CROSS_COMPANY_REFERENCE);
+      }
       final BigDecimal quantity = nz(draft.quantity());
       final BigDecimal price = nz(draft.unitPrice());
       lines.add(buildLine(document, product, unit, quantity, price));
@@ -790,13 +867,18 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   }
 
   private void addLine(
-      Document doc, Product product, Unit unit, BigDecimal quantity, BigDecimal price) {
+      final Document doc,
+      final Product product,
+      final Unit unit,
+      final BigDecimal quantity,
+      final BigDecimal price) {
     final DocumentLine line = buildLine(doc, product, unit, quantity, price);
     doc.getLines().add(line);
     lineService.save(line);
   }
 
-  private DocumentLine copyOperationLine(Document doc, DocumentLine source, BigDecimal quantity) {
+  private DocumentLine copyOperationLine(
+      final Document doc, final DocumentLine source, final BigDecimal quantity) {
     final DocumentLine line =
         DocumentLine.builder()
             .document(doc)
@@ -820,7 +902,11 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   }
 
   private DocumentLine buildLine(
-      Document doc, Product product, Unit unit, BigDecimal quantity, BigDecimal price) {
+      final Document doc,
+      final Product product,
+      final Unit unit,
+      final BigDecimal quantity,
+      final BigDecimal price) {
     return DocumentLine.builder()
         .document(doc)
         .product(product)
@@ -838,15 +924,19 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         .build();
   }
 
-  private BigDecimal expectedFactor(Product product, Unit unit) {
-    if (product.getUnit() != null
-        && product.getUnit().getId().equals(unit.getId())
-        && product.getSecondaryUnit() != null) return product.getSecondaryUnitsPerMainUnit();
-    return BigDecimal.ONE;
+  private BigDecimal expectedFactor(final Product product, final Unit unit) {
+    return product.getUnit() != null
+            && product.getUnit().getId().equals(unit.getId())
+            && product.getSecondaryUnit() != null
+        ? product.getSecondaryUnitsPerMainUnit()
+        : BigDecimal.ONE;
   }
 
   private void setWarehouse(
-      Document document, DocumentType type, Long warehouseId, Long companyId) {
+      final Document document,
+      final DocumentType type,
+      final Long warehouseId,
+      final Long companyId) {
     final Warehouse warehouse = warehouseService.findEntityByIdAndCompanyId(warehouseId, companyId);
     if (type == DocumentType.GOODS_RECEIPT || type == DocumentType.PURCHASE_ORDER) {
       document.setTargetWarehouse(warehouse);
@@ -859,7 +949,8 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     }
   }
 
-  private void snapshotPartner(Document document, Partner partner, Long companyId) {
+  private void snapshotPartner(
+      final Document document, final Partner partner, final Long companyId) {
     document.setPartnerTaxNumberSnapshot(partner.getTaxNumber());
     final Contact address =
         contactService.list(partner.getId(), companyId).stream()
@@ -960,7 +1051,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
               asset.getCreatedAt()));
     }
     for (DocumentFile file : fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(doc.getId())) {
-      if (file.getSource() != DocumentFileSource.GENERATED_PDF) continue;
+      if (file.getSource() != DocumentFileSource.GENERATED_PDF) {
+        continue;
+      }
       final MediaAsset asset = file.getMediaAsset();
       files.add(
           new FileEntry(
@@ -1009,20 +1102,26 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         files);
   }
 
-  private List<DocumentAction> allowedActions(Document doc) {
+  private List<DocumentAction> allowedActions(final Document doc) {
     final List<DocumentAction> actions = new ArrayList<>();
     final User user = actor();
-    if (doc.getStatus() == DocumentStatus.DRAFT && canManageDocument(doc, user))
+    if (doc.getStatus() == DocumentStatus.DRAFT && canManageDocument(doc, user)) {
       actions.add(DocumentAction.EDIT);
+    }
     if (doc.getStatus() == DocumentStatus.DRAFT
         && canManageDocument(doc, user)
         && (doc.getType() == DocumentType.PURCHASE_ORDER
-            || doc.getType() == DocumentType.SALES_ORDER)) actions.add(DocumentAction.CONFIRM);
+            || doc.getType() == DocumentType.SALES_ORDER)) {
+      actions.add(DocumentAction.CONFIRM);
+    }
     if ((doc.getType() == DocumentType.GOODS_RECEIPT || doc.getType() == DocumentType.DELIVERY_NOTE)
         && doc.getStatus() == DocumentStatus.DRAFT
-        && directAllowed(doc.getType(), user)) actions.add(DocumentAction.POST);
-    if (doc.getStatus() != DocumentStatus.CANCELLED && canManageDocument(doc, user))
+        && directAllowed(doc.getType(), user)) {
+      actions.add(DocumentAction.POST);
+    }
+    if (doc.getStatus() != DocumentStatus.CANCELLED && canManageDocument(doc, user)) {
       actions.add(DocumentAction.UPLOAD_FILE);
+    }
     if (doc.getStatus() != DocumentStatus.DRAFT
         && doc.getStatus() != DocumentStatus.CANCELLED
         && canManageDocument(doc, user)) {
@@ -1033,17 +1132,23 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
               .findFirst()
               .map(file -> file.getStatus() == DocumentFileStatus.FAILED)
               .orElse(false);
-      if (latestPdfFailed) actions.add(DocumentAction.RETRY_PDF);
+      if (latestPdfFailed) {
+        actions.add(DocumentAction.RETRY_PDF);
+      }
     }
     if ((doc.getType() == DocumentType.PURCHASE_ORDER || doc.getType() == DocumentType.SALES_ORDER)
         && (doc.getStatus() == DocumentStatus.CONFIRMED
             || doc.getStatus() == DocumentStatus.PARTIALLY_COMPLETED)
-        && canManageDocument(doc, user)) actions.add(DocumentAction.CLOSE_REMAINING);
+        && canManageDocument(doc, user)) {
+      actions.add(DocumentAction.CLOSE_REMAINING);
+    }
     return actions;
   }
 
-  private void allocateNumber(Document document) {
-    if (document.getDocumentNumber() != null) return;
+  private void allocateNumber(final Document document) {
+    if (document.getDocumentNumber() != null) {
+      return;
+    }
     final Long companyId = document.getCompany().getId();
     final int year = document.getDocumentDate().getYear();
     final DocumentPrefix prefix =
@@ -1070,7 +1175,8 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         prefixText + "-" + year + "-" + String.format("%05d", sequence.getCounter()));
   }
 
-  private void addActivity(Document doc, DocumentActivityEvent type, String details) {
+  private void addActivity(
+      final Document doc, final DocumentActivityEvent type, final String details) {
     final DocumentActivity event = new DocumentActivity();
     event.setDocument(doc);
     event.setActor(actor());
@@ -1079,26 +1185,27 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     activityRepository.save(event);
   }
 
-  private void touch(Document document) {
+  private void touch(final Document document) {
     document.setUpdatedAt(LocalDateTime.now());
   }
 
-  private DocumentPostingKey postingKey(Document document, String key) {
+  private DocumentPostingKey postingKey(final Document document, final String key) {
     final DocumentPostingKey value = new DocumentPostingKey();
     value.setDocument(document);
     value.setIdempotencyKey(key);
     return value;
   }
 
-  private DocumentQueueView queueView(String view) {
-    if (view == null || view.isBlank()) return DocumentQueueView.ALL;
-    for (DocumentQueueView queueView : VIEWS) {
-      if (queueView.name().equals(view)) return queueView;
-    }
-    throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_QUEUE_VIEW);
+  private DocumentQueueView queueView(final String view) {
+    return view == null || view.isBlank()
+        ? DocumentQueueView.ALL
+        : VIEWS.stream()
+            .filter(queueView -> queueView.name().equals(view))
+            .findFirst()
+            .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_QUEUE_VIEW));
   }
 
-  private boolean matchesView(Document d, DocumentQueueView view, User actor) {
+  private boolean matchesView(final Document d, final DocumentQueueView view, final User actor) {
     return switch (view) {
       case MY_DRAFTS -> d.getStatus() == DocumentStatus.DRAFT
           && d.getCreatedByUser() != null
@@ -1116,42 +1223,44 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     };
   }
 
-  private boolean remaining(Document d) {
+  private boolean remaining(final Document d) {
     return safe(d.getLines()).stream()
         .anyMatch(
             l -> nz(l.getQuantity()).compareTo(fulfilledFor(l).add(nz(l.getClosedQuantity()))) > 0);
   }
 
-  private BigDecimal fulfilledFor(DocumentLine line) {
+  private BigDecimal fulfilledFor(final DocumentLine line) {
     return line.getId() == null
         ? nz(line.getFulfilledQuantity())
         : nz(allocationRepository.sumPostedAllocated(line.getId(), DocumentStatus.COMPLETED));
   }
 
-  private boolean isMatchingOrder(Document source, DocumentType operation) {
+  private boolean isMatchingOrder(final Document source, final DocumentType operation) {
     return operation == DocumentType.GOODS_RECEIPT
         ? source.getType() == DocumentType.PURCHASE_ORDER
         : source.getType() == DocumentType.SALES_ORDER;
   }
 
-  private boolean isDirectOperation(DocumentType type) {
+  private boolean isDirectOperation(final DocumentType type) {
     return type == DocumentType.GOODS_RECEIPT || type == DocumentType.DELIVERY_NOTE;
   }
 
-  private boolean directAllowed(DocumentType type, User user) {
-    if (user == null) return false;
-    if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER) return true;
-    return type == DocumentType.DELIVERY_NOTE && user.getRole() == UserRole.SALES;
+  private boolean directAllowed(final DocumentType type, final User user) {
+    return user != null
+        && (user.getRole() == UserRole.ADMIN
+            || user.getRole() == UserRole.MANAGER
+            || (type == DocumentType.DELIVERY_NOTE && user.getRole() == UserRole.SALES));
   }
 
-  private boolean canCreateType(DocumentType type, User user) {
-    if (user == null) return false;
-    if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER) return true;
-    return user.getRole() == UserRole.SALES
-        && (type == DocumentType.SALES_ORDER || type == DocumentType.DELIVERY_NOTE);
+  private boolean canCreateType(final DocumentType type, final User user) {
+    return user != null
+        && (user.getRole() == UserRole.ADMIN
+            || user.getRole() == UserRole.MANAGER
+            || (user.getRole() == UserRole.SALES
+                && (type == DocumentType.SALES_ORDER || type == DocumentType.DELIVERY_NOTE)));
   }
 
-  private boolean canManageDocument(Document document, User user) {
+  private boolean canManageDocument(final Document document, final User user) {
     return user != null
         && (user.getRole() == UserRole.ADMIN
             || user.getRole() == UserRole.MANAGER
@@ -1159,60 +1268,67 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                 && document.getCreatedByUser().getId().equals(user.getId())));
   }
 
-  private void checkVersion(Document document, String suppliedVersion) {
-    if (suppliedVersion == null || suppliedVersion.isBlank())
+  private void checkVersion(final Document document, final String suppliedVersion) {
+    if (suppliedVersion == null || suppliedVersion.isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_VERSION_REQUIRED);
+    }
     String version = suppliedVersion.trim();
-    if (version.startsWith("W/")) version = version.substring(2);
+    if (version.startsWith("W/")) {
+      version = version.substring(2);
+    }
     version = version.replace("\"", "");
-    if (!Objects.equals(String.valueOf(document.getVersion()), version))
+    if (!Objects.equals(String.valueOf(document.getVersion()), version)) {
       throw new DocumentConflictException(toResponse(document));
+    }
   }
 
-  private DocumentCategory category(DocumentType type) {
+  private DocumentCategory category(final DocumentType type) {
     return type == DocumentType.PURCHASE_ORDER || type == DocumentType.GOODS_RECEIPT
         ? DocumentCategory.PROCUREMENT
         : DocumentCategory.SALES;
   }
 
-  private String number(Document d) {
+  private String number(final Document d) {
     return d.getDocumentNumber() == null
         ? d.getReferenceNumber() == null ? "" : d.getReferenceNumber()
         : d.getDocumentNumber();
   }
 
-  private Long idOf(Warehouse w) {
+  private Long idOf(final Warehouse w) {
     return w == null ? null : w.getId();
   }
 
-  private BigDecimal nz(BigDecimal value) {
+  private BigDecimal nz(final BigDecimal value) {
     return value == null ? BigDecimal.ZERO : value;
   }
 
-  private <T> List<T> safe(List<T> values) {
+  private <T> List<T> safe(final List<T> values) {
     return values == null ? List.of() : values;
   }
 
-  private void validateType(DocumentType type) {
-    if (!RELEASE_ONE_TYPES.contains(type))
+  private void validateType(final DocumentType type) {
+    if (!RELEASE_ONE_TYPES.contains(type)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
   }
 
   private User actor() {
     final var authentication = SecurityContextHolder.getContext().getAuthentication();
+    User result = null;
     if (authentication != null
-        && authentication.getPrincipal() instanceof CustomUserDetails principal)
-      return userService.findByIdOrThrow(principal.getUserId());
-    return null;
+        && authentication.getPrincipal() instanceof CustomUserDetails principal) {
+      result = userService.findByIdOrThrow(principal.getUserId());
+    }
+    return result;
   }
 
-  private Document find(Long id) {
+  private Document find(final Long id) {
     return documentRepository
         .findByIdAndCompanyId(id, companyProvider.getCurrentCompany().getId())
         .orElseThrow(this::notFound);
   }
 
-  private Document lock(Long id, Long companyId) {
+  private Document lock(final Long id, final Long companyId) {
     return documentRepository.lockByIdAndCompanyId(id, companyId).orElseThrow(this::notFound);
   }
 

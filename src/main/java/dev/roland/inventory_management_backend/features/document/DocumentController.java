@@ -15,7 +15,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
-import dev.roland.inventory_management_backend.features.document.dto.DocumentApiDtos.*;
+import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
+import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
+import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.Draft;
+import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentDraft;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
+import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
+import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
 import dev.roland.inventory_management_backend.features.document.facade.DocumentWorkflowFacade;
 import lombok.RequiredArgsConstructor;
 
@@ -40,88 +48,179 @@ public class DocumentController {
 
   private final DocumentWorkflowFacade facade;
 
+  /**
+   * Returns the document operations available to the current user.
+   *
+   * @return the requested result
+   */
   @GetMapping(CAPABILITIES_ENDPOINT)
   public ResponseEntity<ApiResponse<Capabilities>> capabilities() {
     return success(facade.capabilities());
   }
 
+  /**
+   * Lists documents visible to the current user.
+   *
+   * @param page page value
+   * @param pageSize page size value
+   * @param search search value
+   * @param view view value
+   * @return the requested result
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<PageResponse>> list(
-      @RequestParam(required = false) String view,
-      @RequestParam(required = false) String search,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int pageSize) {
+      @RequestParam(required = false) final String view,
+      @RequestParam(required = false) final String search,
+      @RequestParam(defaultValue = "0") final int page,
+      @RequestParam(defaultValue = "20") final int pageSize) {
     return success(facade.list(view, search, page, pageSize));
   }
 
+  /**
+   * Returns the requested document.
+   *
+   * @param id id value
+   * @return the requested result
+   */
   @GetMapping(ID_PARAM)
-  public ResponseEntity<ApiResponse<DocumentResponse>> get(@PathVariable Long id) {
+  public ResponseEntity<ApiResponse<DocumentResponse>> get(@PathVariable final Long id) {
     return success(facade.get(id));
   }
 
+  /**
+   * Creates a document draft.
+   *
+   * @param draft draft value
+   * @return the requested result
+   */
   @PostMapping(DRAFTS_ENDPOINT)
-  public ResponseEntity<ApiResponse<DocumentResponse>> createDraft(@RequestBody Draft draft) {
+  public ResponseEntity<ApiResponse<DocumentResponse>> createDraft(@RequestBody final Draft draft) {
     return success(facade.createDraft(draft));
   }
 
+  /**
+   * Updates a document draft.
+   *
+   * @param id id value
+   * @param request request value
+   * @return the requested result
+   */
   @PutMapping(DRAFT_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> updateDraft(
-      @PathVariable Long id, @RequestBody DraftUpdate request) {
+      @PathVariable final Long id, @RequestBody final DraftUpdate request) {
     return success(facade.updateDraft(id, request));
   }
 
+  /**
+   * Creates a fulfillment draft.
+   *
+   * @param request request value
+   * @return the requested result
+   */
   @PostMapping(FULFILLMENT_DRAFTS_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> fulfillmentDraft(
-      @RequestBody FulfillmentDraft request) {
+      @RequestBody final FulfillmentDraft request) {
     return success(facade.createFulfillmentDraft(request));
   }
 
+  /**
+   * Previews the requested document operation.
+   *
+   * @param request request value
+   * @return the requested result
+   */
   @PostMapping(FULFILLMENT_PREVIEW_ENDPOINT)
   public ResponseEntity<ApiResponse<PreviewResponse>> preview(
-      @RequestBody FulfillmentPreview request) {
+      @RequestBody final FulfillmentPreview request) {
     return success(facade.preview(request));
   }
 
+  /**
+   * Posts the requested document.
+   *
+   * @param id id value
+   * @param idempotencyKey idempotency key value
+   * @param version version value
+   * @return the requested result
+   */
   @PostMapping(POST_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> post(
-      @PathVariable Long id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-      @RequestHeader(value = "If-Match", required = false) String version) {
+      @PathVariable final Long id,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String idempotencyKey,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(facade.post(id, idempotencyKey, version));
   }
 
+  /**
+   * Confirms the requested document.
+   *
+   * @param id id value
+   * @param version version value
+   * @return the requested result
+   */
   @PostMapping(CONFIRM_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> confirm(
-      @PathVariable Long id, @RequestHeader(value = "If-Match", required = false) String version) {
+      @PathVariable final Long id,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(facade.confirm(id, version));
   }
 
+  /**
+   * Closes the remaining quantity on a document.
+   *
+   * @param id id value
+   * @param request request value
+   * @param version version value
+   * @return the requested result
+   */
   @PostMapping(CLOSE_REMAINING_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> closeRemaining(
-      @PathVariable Long id,
-      @RequestBody CloseRemaining request,
-      @RequestHeader(value = "If-Match", required = false) String version) {
+      @PathVariable final Long id,
+      @RequestBody final CloseRemaining request,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(facade.closeRemaining(id, request, version));
   }
 
+  /**
+   * Uploads a file for the requested document.
+   *
+   * @param file file value
+   * @param id id value
+   * @return the requested result
+   */
   @PostMapping(FILES_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> uploadFile(
-      @PathVariable Long id, @RequestPart("file") MultipartFile file) {
+      @PathVariable final Long id, @RequestPart("file") final MultipartFile file) {
     return success(facade.uploadFile(id, file));
   }
 
+  /**
+   * Queues PDF generation for the requested document.
+   *
+   * @param id id value
+   * @param key key value
+   * @param language language value
+   * @return the requested result
+   */
   @PostMapping(PDF_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> generatePdf(
-      @PathVariable Long id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String key,
-      @RequestParam(defaultValue = "en") String language) {
+      @PathVariable final Long id,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestParam(defaultValue = "en") final String language) {
     return success(facade.generatePdf(id, key, language));
   }
 
+  /**
+   * Retries PDF generation for the requested document.
+   *
+   * @param id id value
+   * @param key key value
+   * @return the requested result
+   */
   @PostMapping(PDF_RETRY_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> retryPdf(
-      @PathVariable Long id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String key) {
+      @PathVariable final Long id,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
     return success(facade.retryPdf(id, key));
   }
 
