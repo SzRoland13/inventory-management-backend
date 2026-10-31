@@ -1,12 +1,13 @@
 package dev.roland.inventory_management_backend.common.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
 import jakarta.mail.Session;
@@ -18,65 +19,52 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
-import dev.roland.inventory_management_backend.common.enumeration.MailTemplate;
+import dev.roland.inventory_management_backend.common.mail.ComposedMail;
+import dev.roland.inventory_management_backend.common.mail.MailComposer;
+import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
 
   @Mock private JavaMailSender mailSender;
+  @Mock private MailComposer mailComposer;
 
   private EmailService service;
 
   @BeforeEach
   void setUp() {
-    service = new EmailService(mailSender);
+    service = new EmailService(mailSender, mailComposer);
     ReflectionTestUtils.setField(service, "sender", "noreply@example.com");
   }
 
   @Test
-  void sendsSimpleAndTemplatedEmail() throws Exception {
-    final EmailDetails simple =
-        EmailDetails.builder()
-            .recipient("alice@example.com")
-            .subject("Welcome")
-            .msgBody("Hello")
-            .build();
+  void composesAndSendsTypedMailable() throws Exception {
+    final OneTimeCodeMailable mailable =
+        new OneTimeCodeMailable("alice@example.com", "Alice", "123456", "en");
+    final ComposedMail composed =
+        new ComposedMail("alice@example.com", "Code", "<p>Code</p>", List.of());
+    when(mailComposer.compose(mailable)).thenReturn(composed);
     when(mailSender.createMimeMessage())
         .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
 
-    assertEquals(true, service.sendSimpleMail(simple));
-    assertEquals(
-        true,
-        service.sendMailWithTemplate(
-            EmailDetails.builder()
-                .recipient("alice@example.com")
-                .subject("Code")
-                .templateName(MailTemplate.ONE_TIME_CODE_MAIL)
-                .templateModel(Map.of("username", "Alice", "oneTimeCode", "123456"))
-                .build()));
+    assertTrue(service.send(mailable));
 
-    verify(mailSender).send(any(SimpleMailMessage.class));
+    verify(mailComposer).compose(mailable);
     verify(mailSender).send(any(MimeMessage.class));
   }
 
   @Test
-  void returnsFalseWhenSimpleEmailCannotBeSent() {
+  void returnsFalseWhenTransportFails() throws Exception {
+    when(mailSender.createMimeMessage())
+        .thenReturn(new MimeMessage(Session.getInstance(new Properties())));
     doThrow(new MailSendException("mail unavailable"))
         .when(mailSender)
-        .send(any(SimpleMailMessage.class));
+        .send(any(MimeMessage.class));
 
-    assertEquals(
-        false,
-        service.sendSimpleMail(
-            EmailDetails.builder()
-                .recipient("alice@example.com")
-                .subject("Welcome")
-                .msgBody("Hello")
-                .build()));
+    assertFalse(
+        service.send(new ComposedMail("alice@example.com", "Code", "<p>Code</p>", List.of())));
   }
 }

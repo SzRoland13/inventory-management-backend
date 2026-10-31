@@ -22,6 +22,14 @@ services:
     volumes:
       - redis_data:/data
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ims-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   seaweedfs:
     image: chrislusf/seaweedfs:latest
     container_name: ims-seaweedfs

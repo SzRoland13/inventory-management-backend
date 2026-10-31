@@ -34,6 +34,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerify
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
+import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
 import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
@@ -81,7 +82,7 @@ class AuthFacadeImplTest {
     final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    when(emailService.sendMailWithTemplate(any())).thenReturn(true);
+    when(emailService.send(any(OneTimeCodeMailable.class))).thenReturn(true);
 
     facade.sendOneTimeCode(email("alice@example.com"));
 
@@ -104,7 +105,7 @@ class AuthFacadeImplTest {
         assertThrows(ApiException.class, () -> facade.sendOneTimeCode(email("alice@example.com")));
 
     assertEquals(AuthMessageKey.NOT_FIRST_LOGIN, exception.getMessageKey());
-    verify(emailService, never()).sendMailWithTemplate(any());
+    verify(emailService, never()).send(any(OneTimeCodeMailable.class));
     verify(oneTimeCodeService, never()).save(any());
   }
 
@@ -113,7 +114,7 @@ class AuthFacadeImplTest {
     final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    when(emailService.sendMailWithTemplate(any())).thenReturn(false);
+    when(emailService.send(any(OneTimeCodeMailable.class))).thenReturn(false);
 
     final ApiException exception =
         assertThrows(ApiException.class, () -> facade.sendOneTimeCode(email("alice@example.com")));
