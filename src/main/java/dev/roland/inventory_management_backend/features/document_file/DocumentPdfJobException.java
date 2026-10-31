@@ -9,6 +9,13 @@ public class DocumentPdfJobException extends RuntimeException {
   private final MessageKey messageKey;
   private final boolean permanent;
 
+  /**
+   * Represents the document pdf job failure.
+   *
+   * @param cause cause value
+   * @param messageKey message key value
+   * @param permanent permanent value
+   */
   public DocumentPdfJobException(
       final MessageKey messageKey, final boolean permanent, final Throwable cause) {
     super(messageKey.getKey(), cause);
@@ -16,6 +23,12 @@ public class DocumentPdfJobException extends RuntimeException {
     this.permanent = permanent;
   }
 
+  /**
+   * Represents the document pdf job failure.
+   *
+   * @param messageKey message key value
+   * @param permanent permanent value
+   */
   public DocumentPdfJobException(final MessageKey messageKey, final boolean permanent) {
     this(messageKey, permanent, null);
   }

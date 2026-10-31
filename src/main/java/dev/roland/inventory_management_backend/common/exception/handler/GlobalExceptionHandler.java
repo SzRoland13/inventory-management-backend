@@ -23,6 +23,12 @@ import dev.roland.inventory_management_backend.features.document.message.Documen
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  /**
+   * Builds an API response for the document conflict.
+   *
+   * @param ex ex value
+   * @return the requested result
+   */
   @ExceptionHandler(DocumentConflictException.class)
   public ResponseEntity<ApiResponse<Object>> handleDocumentConflict(
       final DocumentConflictException ex) {

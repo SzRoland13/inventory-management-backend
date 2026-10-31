@@ -11,6 +11,12 @@ import lombok.experimental.UtilityClass;
 public final class DocumentTotalsCalculator {
   private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
+  /**
+   * Calculates monetary amounts for a document line.
+   *
+   * @param line line value
+   * @return the requested result
+   */
   public static LineAmounts line(final DocumentLine line) {
     final BigDecimal quantity = line.getQuantity() == null ? BigDecimal.ZERO : line.getQuantity();
     final BigDecimal price = line.getUnitPrice() == null ? BigDecimal.ZERO : line.getUnitPrice();
@@ -21,6 +27,12 @@ public final class DocumentTotalsCalculator {
     return new LineAmounts(net, tax, net.add(tax));
   }
 
+  /**
+   * Calculates totals for the supplied document lines.
+   *
+   * @param lines lines value
+   * @return the requested result
+   */
   public static Totals calculate(final Iterable<DocumentLine> lines) {
     BigDecimal net = BigDecimal.ZERO;
     BigDecimal tax = BigDecimal.ZERO;
@@ -37,7 +49,21 @@ public final class DocumentTotalsCalculator {
         gross.setScale(2, RoundingMode.HALF_UP));
   }
 
+  /**
+   * Defines the line amounts document API contract.
+   *
+   * @param gross gross value
+   * @param net net value
+   * @param tax tax value
+   */
   public record LineAmounts(BigDecimal net, BigDecimal tax, BigDecimal gross) {}
 
+  /**
+   * Defines the totals document API contract.
+   *
+   * @param gross gross value
+   * @param net net value
+   * @param tax tax value
+   */
   public record Totals(BigDecimal net, BigDecimal tax, BigDecimal gross) {}
 }

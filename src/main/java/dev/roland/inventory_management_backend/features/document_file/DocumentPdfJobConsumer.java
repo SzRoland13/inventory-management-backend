@@ -71,6 +71,11 @@ public class DocumentPdfJobConsumer {
   @Value("${app.outbox.retry-delay-ms:3000}")
   private int retryDelayMs;
 
+  /**
+   * Processes a queued document PDF job.
+   *
+   * @param envelope envelope value
+   */
   @RabbitListener(queues = "inventory.document-pdf")
   @Transactional
   public void consume(final AsyncJobEnvelope envelope) {
@@ -83,16 +88,20 @@ public class DocumentPdfJobConsumer {
                         DocumentApiMessageKey.DOCUMENT_PDF_JOB_NOT_FOUND, true));
     if (terminal(message)
         || (message.getNextAttemptAt() != null
-            && message.getNextAttemptAt().isAfter(Instant.now()))) return;
+            && message.getNextAttemptAt().isAfter(Instant.now()))) {
+      return;
+    }
     try {
-      if (!matches(message, envelope) || message.getJobType() != AsyncJobType.DOCUMENT_PDF)
+      if (!matches(message, envelope) || message.getJobType() != AsyncJobType.DOCUMENT_PDF) {
         throw new DocumentPdfJobException(DocumentApiMessageKey.DOCUMENT_PDF_JOB_INVALID, true);
+      }
       final JsonNode payload = readPayload(message);
       final long documentId = payload.path("documentId").asLong();
       final long fileId = payload.path("fileId").asLong();
       if (!Objects.equals(message.getDocumentId(), documentId)
-          || !Objects.equals(message.getCompanyId(), envelope.companyId()))
+          || !Objects.equals(message.getCompanyId(), envelope.companyId())) {
         throw new DocumentPdfJobException(DocumentApiMessageKey.DOCUMENT_PDF_JOB_INVALID, true);
+      }
       final Document document =
           documentRepository
               .findByIdAndCompanyId(documentId, message.getCompanyId())
@@ -153,7 +162,7 @@ public class DocumentPdfJobConsumer {
       if (permanent || attempts >= Math.max(1, maxAttempts)) {
         message.setStatus(OutboxStatus.DLQ_PENDING);
         final Long fileId = extractFileId(message);
-        if (fileId != null)
+        if (fileId != null) {
           fileRepository
               .findById(fileId)
               .ifPresent(
@@ -161,6 +170,7 @@ public class DocumentPdfJobConsumer {
                     file.setStatus(DocumentFileStatus.FAILED);
                     file.setErrorMessage(details);
                   });
+        }
         log.error(
             "Document PDF job {} failed permanently after {} attempts",
             message.getId(),
@@ -198,8 +208,9 @@ public class DocumentPdfJobConsumer {
             .uri(rendererPath)
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PDF);
-    if (rendererToken != null && !rendererToken.isBlank())
+    if (rendererToken != null && !rendererToken.isBlank()) {
       call.header("Authorization", "Bearer " + rendererToken);
+    }
     final byte[] result;
     try {
       result = call.body(request).retrieve().body(byte[].class);
@@ -212,47 +223,60 @@ public class DocumentPdfJobConsumer {
       throw new DocumentPdfJobException(
           DocumentApiMessageKey.DOCUMENT_PDF_RENDER_FAILED, false, error);
     }
-    if (result == null || result.length == 0)
+    if (result == null || result.length == 0) {
       throw new DocumentPdfJobException(DocumentApiMessageKey.DOCUMENT_PDF_EMPTY_RESULT, false);
+    }
     return result;
   }
 
-  private String value(String value) {
+  private String value(final String value) {
     return value == null ? "" : value;
   }
 
   private String diagnostic(final RuntimeException error) {
+    String diagnostic;
     if (error instanceof DocumentPdfJobException jobException) {
       final Throwable cause = jobException.getCause();
-      return jobException.getMessageKey().getKey()
-          + (cause instanceof RuntimeException runtimeCause ? ": " + diagnostic(runtimeCause) : "");
-    }
-    if (error instanceof RestClientResponseException response) {
+      diagnostic =
+          jobException.getMessageKey().getKey()
+              + (cause instanceof RuntimeException runtimeCause
+                  ? ": " + diagnostic(runtimeCause)
+                  : "");
+    } else if (error instanceof RestClientResponseException response) {
       try {
         final JsonNode body = objectMapper.readTree(response.getResponseBodyAsByteArray());
         final JsonNode detail = body.path("error");
         if (!detail.isMissingNode()) {
-          return detail.path("code").asText("HTTP_" + response.getStatusCode().value())
-              + ": "
-              + detail.path("message").asText("Renderer request failed");
+          diagnostic =
+              detail.path("code").asText("HTTP_" + response.getStatusCode().value())
+                  + ": "
+                  + detail.path("message").asText("Renderer request failed");
+        } else {
+          diagnostic = error.getClass().getSimpleName() + ": " + value(error.getMessage());
         }
       } catch (IOException ignored) {
         // Fall back to the bounded exception description for non-JSON responses.
+        diagnostic = error.getClass().getSimpleName() + ": " + value(error.getMessage());
       }
+    } else {
+      diagnostic = error.getClass().getSimpleName() + ": " + value(error.getMessage());
     }
-    final String message = error.getClass().getSimpleName() + ": " + value(error.getMessage());
-    return message.length() <= 1000 ? message : message.substring(0, 1000);
+    return diagnostic.length() <= 1000 ? diagnostic : diagnostic.substring(0, 1000);
   }
 
   private Long extractFileId(final OutboxMessage message) {
+    Long result;
     try {
-      return objectMapper
-          .readTree(encryptionService.decrypt(message.getEncryptedPayload()))
-          .path("fileId")
-          .asLong();
+      result =
+          objectMapper
+              .readTree(encryptionService.decrypt(message.getEncryptedPayload()))
+              .path("fileId")
+              .asLong();
     } catch (RuntimeException | IOException ignored) {
-      return null;
+      // Return null when the queued payload cannot be decoded.
+      result = null;
     }
+    return result;
   }
 
   private JsonNode readPayload(final OutboxMessage message) {

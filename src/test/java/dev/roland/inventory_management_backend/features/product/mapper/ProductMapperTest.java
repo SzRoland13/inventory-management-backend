@@ -238,6 +238,19 @@ class ProductMapperTest {
   }
 
   @Test
+  void mapperMethodsReturnNullForNullSourceValues() {
+    productMapper.updateScalarFields(null, new Product());
+    assertEquals(null, productMapper.toAttributeValueResponse(null));
+    assertEquals(null, productMapper.toProductResponse(null, null, null, null, null, null));
+    assertEquals(null, productMapper.toUnits(null));
+    assertEquals(null, productMapper.toPricing(null, null));
+    assertEquals(null, productMapper.toDimensions(null));
+    assertEquals(null, productMapper.toStockQuantity(null, null));
+    assertEquals(null, productMapper.toStockBreakdown(null, null));
+    assertEquals(null, productMapper.toStockResponse(null, null, null));
+  }
+
+  @Test
   void mapsStockQuantitiesAndWarehouseDetails() {
     final Unit mainUnit = unit(1L, "BOX", "Box", "box");
     final Unit secondaryUnit = unit(2L, "PAIR", "Pair", "pair");

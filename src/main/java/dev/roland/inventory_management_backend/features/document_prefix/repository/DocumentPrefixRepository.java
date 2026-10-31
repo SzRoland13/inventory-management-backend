@@ -29,9 +29,23 @@ public interface DocumentPrefixRepository extends JpaRepository<DocumentPrefix, 
    */
   Optional<DocumentPrefix> findByIdAndCompanyId(Long id, Long companyId);
 
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param companyId company identifier value
+   * @param documentType document type value
+   * @return the requested result
+   */
   Optional<DocumentPrefix> findByCompanyIdAndDocumentType(
       Long companyId, DocumentType documentType);
 
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param companyId company identifier value
+   * @param documentType document type value
+   * @return the requested result
+   */
   Optional<DocumentPrefix> findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
       Long companyId, DocumentType documentType);
 }

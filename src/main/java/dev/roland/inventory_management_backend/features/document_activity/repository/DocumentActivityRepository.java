@@ -8,5 +8,11 @@ import dev.roland.inventory_management_backend.features.document_activity.Docume
 
 /** Reads document audit history. */
 public interface DocumentActivityRepository extends JpaRepository<DocumentActivity, Long> {
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param documentId document identifier value
+   * @return the requested result
+   */
   List<DocumentActivity> findAllByDocumentIdOrderByOccurredAtAsc(Long documentId);
 }

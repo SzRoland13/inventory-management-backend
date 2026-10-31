@@ -10,7 +10,7 @@ import java.util.Map;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.context.Context;
 
 import dev.roland.inventory_management_backend.features.document.Document;
@@ -24,9 +24,16 @@ import lombok.RequiredArgsConstructor;
 public class DocumentPdfFactory {
   private static final String TEMPLATE = "documents/document";
 
-  private final TemplateEngine templateEngine;
+  private final ITemplateEngine templateEngine;
   private final MessageSource documentMessages;
 
+  /**
+   * Creates the HTML representation of a document.
+   *
+   * @param document document value
+   * @param languageTag language tag value
+   * @return the requested result
+   */
   public String createHtml(final Document document, final String languageTag) {
     final Locale locale = Locale.forLanguageTag(languageTag == null ? "en" : languageTag);
     final Context context = new Context(locale);

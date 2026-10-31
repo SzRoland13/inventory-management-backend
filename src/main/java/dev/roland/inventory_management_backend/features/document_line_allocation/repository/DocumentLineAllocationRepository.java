@@ -13,8 +13,21 @@ import dev.roland.inventory_management_backend.features.document_line_allocation
 /** Queries source allocations for fulfillment calculations. */
 public interface DocumentLineAllocationRepository
     extends JpaRepository<DocumentLineAllocation, Long> {
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param lineId line identifier value
+   * @return the requested result
+   */
   List<DocumentLineAllocation> findAllByFulfillmentLineId(Long lineId);
 
+  /**
+   * Sums allocations matching the supplied criteria.
+   *
+   * @param lineId line identifier value
+   * @param status status value
+   * @return the requested result
+   */
   @Query(
       "select coalesce(sum(a.quantity), 0) from DocumentLineAllocation a "
           + "where a.sourceOrderLine.id = :lineId and a.fulfillmentLine.document.status = "
