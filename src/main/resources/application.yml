@@ -45,7 +45,7 @@ logging:
 #App config
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://192.168.1.117:3001}
   security:
     secure-cookie: ${SECURE_HTTP}
 #JWT config
@@ -59,6 +59,7 @@ app:
   storage:
     bucket: ${STORAGE_BUCKET}
     endpoint: ${STORAGE_ENDPOINT}
+    public-endpoint: ${STORAGE_PUBLIC_ENDPOINT:${STORAGE_ENDPOINT}}
     region: ${STORAGE_REGION}
     access-key: ${STORAGE_ACCESS_KEY}
     secret-key: ${STORAGE_SECRET_KEY}

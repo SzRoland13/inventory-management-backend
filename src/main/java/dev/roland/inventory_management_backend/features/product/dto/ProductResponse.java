@@ -17,6 +17,7 @@ import dev.roland.inventory_management_backend.features.product.enumeration.Prod
  * @param deletedAt archival timestamp, or null when active
  * @param description descriptive text
  * @param dimensions physical dimensions
+ * @param images ordered product image references
  * @param ean product European Article Number
  * @param id unique identifier
  * @param name display name
@@ -42,6 +43,7 @@ public record ProductResponse(
     List<Long> categoryIds,
     List<ProductAttributeValueResponse> attributes,
     List<ProductStockResponse> stockByWarehouse,
+    List<ProductImageResponse> images,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     LocalDateTime deletedAt) {
@@ -51,6 +53,7 @@ public record ProductResponse(
     categoryIds = List.copyOf(categoryIds);
     attributes = List.copyOf(attributes);
     stockByWarehouse = List.copyOf(stockByWarehouse);
+    images = List.copyOf(images);
   }
 
   /**

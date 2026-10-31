@@ -8,9 +8,19 @@ import dev.roland.inventory_management_backend.features.stock_movement.dto.Stock
 
 /** Coordinates company-scoped stock read operations. */
 public interface StockFacade {
-  /** Lists current company stock balances. */
+  /**
+   * Lists current company stock balances.
+   *
+   * @param request paging and filter values
+   * @return requested page of balances
+   */
   PageResponse<StockBalanceResponse> listBalances(StockBalanceListRequest request);
 
-  /** Lists posted current company stock movements. */
+  /**
+   * Lists posted current company stock movements.
+   *
+   * @param request paging and filter values
+   * @return requested page of movements
+   */
   PageResponse<StockMovementResponse> listMovements(StockMovementListRequest request);
 }

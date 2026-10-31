@@ -23,9 +23,16 @@ import dev.roland.inventory_management_backend.common.service.CurrentCompanyProv
 import dev.roland.inventory_management_backend.features.brand.service.BrandService;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
+import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
+import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
+import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
+import dev.roland.inventory_management_backend.features.product.dto.ProductImageResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductListRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductResponse;
@@ -71,6 +78,8 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   private final ProductAttributeValueService valueService;
   private final StockMovementService movementService;
   private final StockBalanceService stockBalanceService;
+  private final MediaAssetService mediaAssetService;
+  private final MediaUsageService mediaUsageService;
 
   @Transactional
   @Override
@@ -80,9 +89,19 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     final Page<Product> products = productService.search(company.getId(), includeArchived, request);
     final List<Long> productIds = products.getContent().stream().map(Product::getId).toList();
     final Page<ProductResponse> responsePage;
+
     if (productIds.isEmpty()) {
       responsePage = products.map(this::toResponse);
     } else {
+      final Map<Long, List<ProductImageResponse>> imagesByProduct =
+          mediaUsageService
+              .findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+                  MediaEntityType.PRODUCT, productIds, MediaUsageType.IMAGE)
+              .stream()
+              .collect(
+                  Collectors.groupingBy(
+                      MediaUsage::getEntityId,
+                      Collectors.mapping(this::toImageResponse, Collectors.toList())));
       final Map<Long, List<ProductCategoryAssignment>> assignmentsByProduct =
           assignmentService.findAllByProductIdIn(productIds).stream()
               .collect(Collectors.groupingBy(assignment -> assignment.getProduct().getId()));
@@ -92,6 +111,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
       final Map<Long, List<StockBalance>> balancesByProduct =
           stockBalanceService.findAllByProductIdIn(productIds).stream()
               .collect(Collectors.groupingBy(balance -> balance.getProduct().getId()));
+
       responsePage =
           products.map(
               product ->
@@ -99,8 +119,10 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
                       product,
                       assignmentsByProduct.getOrDefault(product.getId(), List.of()),
                       valuesByProduct.getOrDefault(product.getId(), List.of()),
-                      balancesByProduct.getOrDefault(product.getId(), List.of())));
+                      balancesByProduct.getOrDefault(product.getId(), List.of()),
+                      imagesByProduct.getOrDefault(product.getId(), List.of())));
     }
+
     return PageResponse.from(responsePage);
   }
 
@@ -108,9 +130,11 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Override
   public ProductResponse get(final Long id, final boolean includeArchived) {
     final Product product = findProduct(id);
+
     if (!includeArchived && product.getDeletedAt() != null) {
       throw new NotFoundException(NotFoundMessageKey.PRODUCT);
     }
+
     return toResponse(product);
   }
 
@@ -118,15 +142,21 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Override
   public ProductResponse create(final ProductRequest request) {
     final Company company = currentCompanyProvider.getCurrentCompany();
+
     if (productService.existsByCompanyIdAndSku(company.getId(), request.sku().trim())) {
       throw new ApiException(ProductMessageKey.PRODUCT_SKU_ALREADY_EXISTS);
     }
+
     final Product product = new Product();
+
     product.setCompany(company);
     product.setStatus(ProductStatus.ACTIVE);
     apply(product, request, company);
     final Product saved = productService.save(product);
+
     replaceAssignments(saved, request, company);
+    replaceImages(saved, request.imageAssetIds());
+
     return toResponse(saved);
   }
 
@@ -135,25 +165,37 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   public ProductResponse update(final Long id, final ProductRequest request) {
     final Company company = currentCompanyProvider.getCurrentCompany();
     final Product product = findProduct(id);
+
     if (product.getDeletedAt() != null) {
       throw new ApiException(ProductMessageKey.PRODUCT_ALREADY_ARCHIVED);
     }
+
     if (productService.existsByCompanyIdAndSkuAndIdNot(company.getId(), request.sku().trim(), id)) {
       throw new ApiException(ProductMessageKey.PRODUCT_SKU_ALREADY_EXISTS);
     }
+
     final Unit requestedMain = findSelectableUnit(request.units().mainUnitId(), company);
     final Unit requestedSecondary =
         request.units().secondaryUnitId() == null
             ? null
             : findSelectableUnit(request.units().secondaryUnitId(), company);
+
     if (movementService.existsByProductId(id)
         && (!Objects.equals(idOf(product.getUnit()), idOf(requestedMain))
             || !Objects.equals(idOf(product.getSecondaryUnit()), idOf(requestedSecondary)))) {
       throw new ApiException(ProductMessageKey.PRODUCT_UNIT_IN_USE);
     }
+
     apply(product, request, company);
+
     final Product saved = productService.save(product);
+
     replaceAssignments(saved, request, company);
+
+    if (request.imageAssetIds() != null) {
+      replaceImages(saved, request.imageAssetIds());
+    }
+
     return toResponse(saved);
   }
 
@@ -161,10 +203,13 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Override
   public void archive(final Long id) {
     final Product product = findProduct(id);
+
     if (product.getDeletedAt() != null) {
       throw new ApiException(ProductMessageKey.PRODUCT_ALREADY_ARCHIVED);
     }
+
     product.setDeletedAt(LocalDateTime.now());
+
     productService.save(product);
   }
 
@@ -172,22 +217,27 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   @Override
   public ProductResponse restore(final Long id) {
     final Product product = findProduct(id);
+
     if (product.getDeletedAt() == null) {
       throw new ApiException(ProductMessageKey.PRODUCT_NOT_ARCHIVED);
     }
+
     product.setDeletedAt(null);
+
     return toResponse(productService.save(product));
   }
 
   private void apply(final Product product, final ProductRequest request, final Company company) {
     productMapper.updateScalarFields(request, product);
     product.setSku(request.sku().trim());
+
     if (request.status() != null) {
       if (request.status() == ProductStatus.ARCHIVED) {
         throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
       }
       product.setStatus(request.status());
     }
+
     product.setUnit(findSelectableUnit(request.units().mainUnitId(), company));
     product.setSecondaryUnit(
         request.units().secondaryUnitId() == null
@@ -218,10 +268,12 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
             request.categoryIds() == null
                 ? List.of()
                 : Objects.requireNonNull(request.categoryIds()));
+
     if (request.categoryIds() != null
         && categoryIds.size() != Objects.requireNonNull(request.categoryIds()).size()) {
       throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
     }
+
     for (Long categoryId : categoryIds) {
       final ProductCategory category =
           categoryService
@@ -240,10 +292,12 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         request.attributes() == null ? List.of() : request.attributes();
     final Set<Long> providedIds = new HashSet<>();
     assert attributes != null;
+
     for (ProductAttributeValueRequest input : attributes) {
       if (input == null || input.definitionId() == null || !providedIds.add(input.definitionId())) {
         throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
       }
+
       final ProductAttributeDefinition definition =
           definitionService
               .findByIdAndCompanyId(input.definitionId(), company.getId())
@@ -251,6 +305,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
       final ProductAttributeValue value = makeAttributeValue(product, definition, input);
       valueService.save(value);
     }
+
     for (ProductAttributeDefinition definition :
         definitionService.findAllByCompanyId(company.getId())) {
       if (definition.isRequired() && !providedIds.contains(definition.getId())) {
@@ -259,12 +314,50 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     }
   }
 
+  private void replaceImages(final Product product, final List<Long> imageAssetIds) {
+    final List<Long> ids = imageAssetIds == null ? List.of() : imageAssetIds;
+    if (ids.size() > 10 || new HashSet<>(ids).size() != ids.size()) {
+      throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
+    }
+    final List<MediaAsset> assets =
+        ids.stream()
+            .map(mediaAssetService::findByIdOrThrow)
+            .peek(
+                asset -> {
+                  if (!isSupportedProductImage(asset)) {
+                    throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
+                  }
+                })
+            .toList();
+    mediaUsageService.deleteAllByEntityTypeAndEntityIdAndUsageType(
+        MediaEntityType.PRODUCT, product.getId(), MediaUsageType.IMAGE);
+
+    for (int index = 0; index < assets.size(); index++) {
+      mediaUsageService.save(
+          MediaUsage.builder()
+              .mediaAsset(assets.get(index))
+              .entityType(MediaEntityType.PRODUCT)
+              .entityId(product.getId())
+              .usageType(MediaUsageType.IMAGE)
+              .sortOrder(index + 1)
+              .build());
+    }
+  }
+
+  private boolean isSupportedProductImage(final MediaAsset asset) {
+    return asset.getFileSize() != null
+        && asset.getFileSize() > 0
+        && asset.getFileSize() <= 5_242_880
+        && List.of("image/jpeg", "image/png", "image/webp").contains(asset.getMimeType());
+  }
+
   private ProductAttributeValue makeAttributeValue(
       final Product product,
       final ProductAttributeDefinition definition,
       final ProductAttributeValueRequest input) {
     final ProductAttributeValue value =
         ProductAttributeValue.builder().product(product).definition(definition).build();
+
     if (definition.getValueType() == ProductAttributeValueType.FIXED && input.optionId() != null) {
       final ProductAttributeOption option =
           optionService
@@ -286,6 +379,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     } else {
       throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
     }
+
     return value;
   }
 
@@ -294,10 +388,12 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         unitService
             .findById(id)
             .orElseThrow(() -> new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA));
+
     if (!unit.isSystem()
         && (unit.getCompany() == null || !unit.getCompany().getId().equals(company.getId()))) {
       throw new ApiException(ProductMessageKey.INVALID_PRODUCT_DATA);
     }
+
     return unit;
   }
 
@@ -312,14 +408,21 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         product,
         assignmentService.findAllByProductId(product.getId()),
         valueService.findAllByProductId(product.getId()),
-        stockBalanceService.findAllByProductId(product.getId()));
+        stockBalanceService.findAllByProductId(product.getId()),
+        mediaUsageService
+            .findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
+                MediaEntityType.PRODUCT, product.getId(), MediaUsageType.IMAGE)
+            .stream()
+            .map(this::toImageResponse)
+            .toList());
   }
 
   private ProductResponse toResponse(
       final Product product,
       final List<ProductCategoryAssignment> assignments,
       final List<ProductAttributeValue> attributeValues,
-      final List<StockBalance> stockBalances) {
+      final List<StockBalance> stockBalances,
+      final List<ProductImageResponse> images) {
     final List<Long> categoryIds = assignments.stream().map(a -> a.getCategory().getId()).toList();
     final List<ProductAttributeValueResponse> attributes =
         attributeValues.stream().map(productMapper::toAttributeValueResponse).toList();
@@ -327,7 +430,17 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     final List<ProductStockResponse> stockByWarehouse =
         stockBalances.stream().map(balance -> stockResponse(product, balance)).toList();
     return productMapper.toProductResponse(
-        product, categoryIds, attributes, stockByWarehouse, secondaryNetPrice(product, secondary));
+        product,
+        categoryIds,
+        attributes,
+        stockByWarehouse,
+        images,
+        secondaryNetPrice(product, secondary));
+  }
+
+  private ProductImageResponse toImageResponse(final MediaUsage usage) {
+    return new ProductImageResponse(
+        usage.getMediaAsset().getId(), usage.getSortOrder(), usage.getMediaAsset().getFilename());
   }
 
   private BigDecimal secondaryNetPrice(final Product product, final Unit secondaryUnit) {
@@ -347,6 +460,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
             quantity, secondaryUnit == null ? product.getUnit() : secondaryUnit);
     final ProductStockResponse.Quantity fullMainUnits;
     final ProductStockResponse.Quantity secondaryUnitRemainder;
+
     if (secondaryUnit == null) {
       fullMainUnits = stockQuantity;
       secondaryUnitRemainder = null;
@@ -358,8 +472,10 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
       secondaryUnitRemainder =
           productMapper.toStockQuantity(quantity.remainder(conversion), secondaryUnit);
     }
+
     final ProductStockResponse.StockBreakdown displayQuantity =
         productMapper.toStockBreakdown(fullMainUnits, secondaryUnitRemainder);
+
     return productMapper.toStockResponse(balance, stockQuantity, displayQuantity);
   }
 

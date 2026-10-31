@@ -36,6 +36,8 @@ import dev.roland.inventory_management_backend.features.brand.service.BrandServi
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
+import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
@@ -82,6 +84,8 @@ class ProductManagementFacadeImplTest {
   @Mock private ProductAttributeValueService valueService;
   @Mock private StockMovementService movementService;
   @Mock private StockBalanceService stockBalanceService;
+  @Mock private MediaAssetService mediaAssetService;
+  @Mock private MediaUsageService mediaUsageService;
 
   private ProductManagementFacadeImpl facade;
   private Company company;
@@ -102,7 +106,9 @@ class ProductManagementFacadeImplTest {
             optionService,
             valueService,
             movementService,
-            stockBalanceService);
+            stockBalanceService,
+            mediaAssetService,
+            mediaUsageService);
     company = Company.builder().id(1L).build();
   }
 
@@ -400,7 +406,12 @@ class ProductManagementFacadeImplTest {
         .thenAnswer(
             call -> new ProductStockResponse(3L, "Main", call.getArgument(1), call.getArgument(2)));
     when(productMapper.toProductResponse(
-            any(Product.class), anyList(), anyList(), anyList(), nullable(BigDecimal.class)))
+            any(Product.class),
+            anyList(),
+            anyList(),
+            anyList(),
+            anyList(),
+            nullable(BigDecimal.class)))
         .thenAnswer(call -> response(((Product) call.getArgument(0)).getId()));
 
     final PageResponse<ProductResponse> response = facade.list(false, listRequest());
@@ -412,10 +423,16 @@ class ProductManagementFacadeImplTest {
             eq(List.of(301L)),
             eq(List.of(attribute)),
             anyList(),
+            anyList(),
             nullable(BigDecimal.class));
     verify(productMapper)
         .toProductResponse(
-            eq(second), eq(List.of()), eq(List.of()), eq(List.of()), nullable(BigDecimal.class));
+            eq(second),
+            eq(List.of()),
+            eq(List.of()),
+            eq(List.of()),
+            eq(List.of()),
+            nullable(BigDecimal.class));
   }
 
   @Test
@@ -486,6 +503,7 @@ class ProductManagementFacadeImplTest {
             eq(List.of()),
             eq(List.of()),
             stockCaptor.capture(),
+            anyList(),
             secondaryPriceCaptor.capture());
     assertEquals(new BigDecimal("10.00000000"), secondaryPriceCaptor.getValue());
     final ProductStockResponse stock = stockCaptor.getValue().getFirst();
@@ -561,7 +579,12 @@ class ProductManagementFacadeImplTest {
 
   private void stubResponseMapping(final ProductResponse response) {
     when(productMapper.toProductResponse(
-            any(Product.class), anyList(), anyList(), anyList(), nullable(BigDecimal.class)))
+            any(Product.class),
+            anyList(),
+            anyList(),
+            anyList(),
+            anyList(),
+            nullable(BigDecimal.class)))
         .thenReturn(response);
   }
 
@@ -581,7 +604,8 @@ class ProductManagementFacadeImplTest {
         new ProductRequest.Pricing(null, new BigDecimal("10"), null, BigDecimal.ZERO),
         null,
         categoryIds,
-        attributes);
+        attributes,
+        null);
   }
 
   private ProductResponse response(final Long productId) {
@@ -598,6 +622,7 @@ class ProductManagementFacadeImplTest {
         new ProductResponse.Dimensions(null, null, null, null),
         List.of(),
         List.<ProductAttributeValueResponse>of(),
+        List.of(),
         List.of(),
         null,
         null,

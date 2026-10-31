@@ -125,7 +125,6 @@ public class StockFacadeImpl implements StockFacade {
 
   private static BigDecimal toMainQuantity(
       final BigDecimal quantity, final Long secondaryUnitId, final BigDecimal factor) {
-    if (secondaryUnitId == null) return quantity;
-    return quantity.divide(factor, 8, RoundingMode.HALF_UP);
+    return secondaryUnitId == null ? quantity : quantity.divide(factor, 8, RoundingMode.HALF_UP);
   }
 }

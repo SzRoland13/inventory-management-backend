@@ -17,17 +17,17 @@ public class ContactServiceImpl implements ContactService {
   private final ContactRepository repository;
 
   @Override
-  public List<Contact> list(Long partnerId, Long companyId) {
+  public List<Contact> list(final Long partnerId, final Long companyId) {
     return repository.findAllByPartnerIdAndPartnerCompanyIdOrderByIdAsc(partnerId, companyId);
   }
 
   @Override
-  public Optional<Contact> find(Long id, Long partnerId, Long companyId) {
+  public Optional<Contact> find(final Long id, final Long partnerId, final Long companyId) {
     return repository.findByIdAndPartnerIdAndPartnerCompanyId(id, partnerId, companyId);
   }
 
   @Override
-  public Contact save(Contact contact) {
+  public Contact save(final Contact contact) {
     return repository.save(contact);
   }
 }

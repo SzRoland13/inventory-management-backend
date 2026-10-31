@@ -26,6 +26,7 @@ import dev.roland.inventory_management_backend.features.product.message.ProductV
  * @param description descriptive text
  * @param dimensions physical dimensions
  * @param ean product European Article Number
+ * @param imageAssetIds ordered image asset identifiers; null preserves images on update
  * @param name display name
  * @param pricing product pricing configuration
  * @param sku product stock keeping unit
@@ -48,12 +49,15 @@ public record ProductRequest(
     @NotNull(message = ProductValidationMessage.REQUIRED) @Valid Pricing pricing,
     @Valid Dimensions dimensions,
     List<@Positive(message = ProductValidationMessage.POSITIVE) Long> categoryIds,
-    List<@Valid ProductAttributeValueRequest> attributes) {
+    List<@Valid ProductAttributeValueRequest> attributes,
+    @Size(max = 10, message = ProductValidationMessage.TOO_LONG)
+        List<@Positive(message = ProductValidationMessage.POSITIVE) Long> imageAssetIds) {
 
   /** Copies request collections while preserving their optional null state. */
   public ProductRequest {
     categoryIds = immutableCopy(categoryIds);
     attributes = immutableCopy(attributes);
+    imageAssetIds = immutableCopy(imageAssetIds);
   }
 
   /**
@@ -74,6 +78,14 @@ public record ProductRequest(
   @Override
   public List<ProductAttributeValueRequest> attributes() {
     return attributes == null ? null : Collections.unmodifiableList(new ArrayList<>(attributes));
+  }
+
+  /** Returns the requested product image order, or null when omitted. */
+  @Override
+  public List<Long> imageAssetIds() {
+    return imageAssetIds == null
+        ? null
+        : Collections.unmodifiableList(new ArrayList<>(imageAssetIds));
   }
 
   private static <T> List<T> immutableCopy(final List<T> values) {

@@ -13,6 +13,7 @@ import dev.roland.inventory_management_backend.features.brand.Brand;
 import dev.roland.inventory_management_backend.features.brand.dto.BrandResponse;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueResponse;
+import dev.roland.inventory_management_backend.features.product.dto.ProductImageResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductRequest;
 import dev.roland.inventory_management_backend.features.product.dto.ProductResponse;
 import dev.roland.inventory_management_backend.features.product.dto.ProductStockResponse;
@@ -76,6 +77,7 @@ public interface ProductMapper {
    * @param categoryIds associated category identifiers
    * @param attributes mapped attribute values
    * @param stockByWarehouse mapped stock balances
+   * @param images ordered product images
    * @param secondaryNetPrice calculated secondary-unit price
    * @return mapped product response
    */
@@ -93,6 +95,7 @@ public interface ProductMapper {
   @Mapping(target = "categoryIds", source = "categoryIds")
   @Mapping(target = "attributes", source = "attributes")
   @Mapping(target = "stockByWarehouse", source = "stockByWarehouse")
+  @Mapping(target = "images", source = "images")
   @Mapping(target = "createdAt", source = "product.createdAt")
   @Mapping(target = "updatedAt", source = "product.updatedAt")
   @Mapping(target = "deletedAt", source = "product.deletedAt")
@@ -101,6 +104,7 @@ public interface ProductMapper {
       List<Long> categoryIds,
       List<ProductAttributeValueResponse> attributes,
       List<ProductStockResponse> stockByWarehouse,
+      List<ProductImageResponse> images,
       BigDecimal secondaryNetPrice);
 
   /**

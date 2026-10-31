@@ -104,7 +104,8 @@ class ProductRequestValidationTest {
             new ProductRequest.Pricing(null, BigDecimal.ONE, null, BigDecimal.ZERO),
             null,
             categories,
-            attributes);
+            attributes,
+            null);
 
     categories.add(2L);
     assertTrue(request.categoryIds().equals(java.util.List.of(1L)));

@@ -17,35 +17,42 @@ public class PartnerServiceImpl implements PartnerService {
   private final PartnerRepository repository;
 
   @Override
-  public List<Partner> list(Long companyId, Boolean archived) {
+  public List<Partner> list(final Long companyId, final Boolean archived) {
+    final List<Partner> partners;
     if (Boolean.TRUE.equals(archived)) {
-      return repository.findAllByCompanyIdAndDeletedAtIsNotNullOrderByNameAsc(companyId);
+      partners = repository.findAllByCompanyIdAndDeletedAtIsNotNullOrderByNameAsc(companyId);
     } else if (Boolean.FALSE.equals(archived)) {
-      return repository.findAllByCompanyIdAndDeletedAtIsNullOrderByNameAsc(companyId);
+      partners = repository.findAllByCompanyIdAndDeletedAtIsNullOrderByNameAsc(companyId);
     } else {
-      return repository.findAllByCompanyIdOrderByNameAsc(companyId);
+      partners = repository.findAllByCompanyIdOrderByNameAsc(companyId);
     }
+    return partners;
   }
 
   @Override
-  public Optional<Partner> find(Long id, Long companyId) {
+  public Optional<Partner> find(final Long id, final Long companyId) {
     return repository.findByIdAndCompanyId(id, companyId);
   }
 
   @Override
-  public Optional<Partner> findActive(Long id, Long companyId) {
+  public Optional<Partner> findActive(final Long id, final Long companyId) {
     return repository.findByIdAndCompanyIdAndDeletedAtIsNull(id, companyId);
   }
 
   @Override
-  public boolean taxNumberExists(Long companyId, String taxNumber, Long exceptId) {
-    return exceptId == null
-        ? repository.existsByCompanyIdAndTaxNumber(companyId, taxNumber)
-        : repository.existsByCompanyIdAndTaxNumberAndIdNot(companyId, taxNumber, exceptId);
+  public boolean taxNumberExists(
+      final Long companyId, final String taxNumber, final Long exceptId) {
+    final boolean exists;
+    if (exceptId == null) {
+      exists = repository.existsByCompanyIdAndTaxNumber(companyId, taxNumber);
+    } else {
+      exists = repository.existsByCompanyIdAndTaxNumberAndIdNot(companyId, taxNumber, exceptId);
+    }
+    return exists;
   }
 
   @Override
-  public Partner save(Partner partner) {
+  public Partner save(final Partner partner) {
     return repository.save(partner);
   }
 }

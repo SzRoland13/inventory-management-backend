@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.media_usage.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.repository.MediaUsageRepository;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 
 /** Implements the media usage service operations. */
@@ -21,6 +23,10 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   private final MediaUsageRepository mediaUsageRepository;
 
   /** {@inheritDoc} */
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP",
+      justification =
+          "BaseService CRUD methods use this accessor to reach the Spring Data repository.")
   @Override
   public JpaRepository<MediaUsage, Long> getRepository() {
     return mediaUsageRepository;
@@ -37,6 +43,28 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   public Optional<MediaUsage> findByEntityTypeAndEntityIdAndUsageType(
       final MediaEntityType type, final Long entityId, final MediaUsageType usageType) {
     return mediaUsageRepository.findByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
+  }
+
+  @Override
+  public List<MediaUsage> findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
+      final MediaEntityType type, final Long entityId, final MediaUsageType usageType) {
+    return mediaUsageRepository.findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
+        type, entityId, usageType);
+  }
+
+  @Override
+  public List<MediaUsage>
+      findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+          final MediaEntityType type, final List<Long> entityIds, final MediaUsageType usageType) {
+    return mediaUsageRepository
+        .findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+            type, entityIds, usageType);
+  }
+
+  @Override
+  public void deleteAllByEntityTypeAndEntityIdAndUsageType(
+      final MediaEntityType type, final Long entityId, final MediaUsageType usageType) {
+    mediaUsageRepository.deleteAllByEntityTypeAndEntityIdAndUsageType(type, entityId, usageType);
   }
 
   /**

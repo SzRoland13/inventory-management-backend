@@ -40,6 +40,12 @@ public class PartnerController {
 
   private final PartnerFacade facade;
 
+  /**
+   * Lists partners in the current company.
+   *
+   * @param archived optional archive filter
+   * @return matching partners
+   */
   @GetMapping
   public ResponseEntity<ApiResponse<List<PartnerResponse>>> list(
       @RequestParam(required = false) final Boolean archived) {
@@ -47,12 +53,24 @@ public class PartnerController {
         ApiResponse.success(PartnerMessageKey.PARTNERS_RETRIEVED, facade.list(archived)));
   }
 
+  /**
+   * Retrieves a partner.
+   *
+   * @param id partner identifier
+   * @return requested partner
+   */
   @GetMapping(ID_PATH)
   public ResponseEntity<ApiResponse<PartnerResponse>> get(@PathVariable final Long id) {
     return ResponseEntity.ok(
         ApiResponse.success(PartnerMessageKey.PARTNER_RETRIEVED, facade.get(id)));
   }
 
+  /**
+   * Creates a partner.
+   *
+   * @param request partner data
+   * @return created partner
+   */
   @PostMapping
   @AdminOnly
   public ResponseEntity<ApiResponse<PartnerResponse>> create(
@@ -61,6 +79,13 @@ public class PartnerController {
         .body(ApiResponse.success(PartnerMessageKey.PARTNER_CREATED, facade.create(request)));
   }
 
+  /**
+   * Updates a partner.
+   *
+   * @param id partner identifier
+   * @param request partner data
+   * @return updated partner
+   */
   @PutMapping(ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<PartnerResponse>> update(
@@ -69,6 +94,12 @@ public class PartnerController {
         ApiResponse.success(PartnerMessageKey.PARTNER_UPDATED, facade.update(id, request)));
   }
 
+  /**
+   * Archives a partner.
+   *
+   * @param id partner identifier
+   * @return archived partner
+   */
   @PostMapping(ARCHIVE_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<PartnerResponse>> archive(@PathVariable final Long id) {
@@ -76,6 +107,12 @@ public class PartnerController {
         ApiResponse.success(PartnerMessageKey.PARTNER_ARCHIVED, facade.archive(id)));
   }
 
+  /**
+   * Restores a partner.
+   *
+   * @param id partner identifier
+   * @return restored partner
+   */
   @PostMapping(RESTORE_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<PartnerResponse>> restore(@PathVariable final Long id) {
@@ -83,6 +120,12 @@ public class PartnerController {
         ApiResponse.success(PartnerMessageKey.PARTNER_RESTORED, facade.restore(id)));
   }
 
+  /**
+   * Lists contacts for a partner.
+   *
+   * @param id partner identifier
+   * @return partner contacts
+   */
   @GetMapping(CONTACTS_PATH)
   public ResponseEntity<ApiResponse<List<ContactResponse>>> listContacts(
       @PathVariable final Long id) {
@@ -90,6 +133,13 @@ public class PartnerController {
         ApiResponse.success(PartnerMessageKey.CONTACTS_RETRIEVED, facade.listContacts(id)));
   }
 
+  /**
+   * Creates a contact for a partner.
+   *
+   * @param id partner identifier
+   * @param request contact data
+   * @return created contact
+   */
   @PostMapping(CONTACTS_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<ContactResponse>> createContact(
@@ -100,6 +150,14 @@ public class PartnerController {
                 PartnerMessageKey.CONTACT_CREATED, facade.createContact(id, request)));
   }
 
+  /**
+   * Updates a partner contact.
+   *
+   * @param id partner identifier
+   * @param contactId contact identifier
+   * @param request contact data
+   * @return updated contact
+   */
   @PutMapping(CONTACT_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<ContactResponse>> updateContact(
@@ -111,6 +169,13 @@ public class PartnerController {
             PartnerMessageKey.CONTACT_UPDATED, facade.updateContact(id, contactId, request)));
   }
 
+  /**
+   * Removes a partner contact.
+   *
+   * @param id partner identifier
+   * @param contactId contact identifier
+   * @return removed contact
+   */
   @DeleteMapping(CONTACT_ID_PATH)
   @AdminOnly
   public ResponseEntity<ApiResponse<ContactResponse>> removeContact(

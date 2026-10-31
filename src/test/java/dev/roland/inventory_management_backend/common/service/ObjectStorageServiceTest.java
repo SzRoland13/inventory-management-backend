@@ -82,7 +82,7 @@ class ObjectStorageServiceTest {
   @Test
   void generatesSignedReadAndUploadUrlsWithExpectedExpiries() {
     when(configuration.getS3Bucket()).thenReturn("inventory");
-    when(configuration.getS3Endpoint()).thenReturn("http://localhost:8333");
+    when(configuration.getS3PublicEndpoint()).thenReturn("http://192.168.1.117:8333");
     when(configuration.getS3Region()).thenReturn("us-east-1");
     when(configuration.getS3AccessKey()).thenReturn("test-key");
     when(configuration.getS3SecretKey()).thenReturn("test-secret");
@@ -90,8 +90,9 @@ class ObjectStorageServiceTest {
     final var getUrl = service.generatePresignedGetUrl("users/1/avatar.png");
     final var putUrl = service.generatePresignedPutUrl("temp/avatar.png", "image/png");
 
-    assertTrue(getUrl.getUrl().startsWith("http://localhost:8333/inventory/users/1/avatar.png"));
-    assertTrue(putUrl.getUrl().startsWith("http://localhost:8333/inventory/temp/avatar.png"));
+    assertTrue(
+        getUrl.getUrl().startsWith("http://192.168.1.117:8333/inventory/users/1/avatar.png"));
+    assertTrue(putUrl.getUrl().startsWith("http://192.168.1.117:8333/inventory/temp/avatar.png"));
     assertTrue(getUrl.getExpiry().isAfter(java.time.Instant.now().plusSeconds(7_000)));
     assertTrue(putUrl.getExpiry().isAfter(java.time.Instant.now().plusSeconds(500)));
   }
