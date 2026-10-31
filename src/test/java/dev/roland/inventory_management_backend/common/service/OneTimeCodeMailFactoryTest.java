@@ -43,6 +43,17 @@ class OneTimeCodeMailFactoryTest {
     assertThrows(MailException.class, () -> factory.compose(new OtherMailable()));
   }
 
+  @Test
+  void rejectsBlankRecipientAndLanguage() {
+    assertThrows(
+        MailException.class,
+        () -> factory.compose(new OneTimeCodeMailable("  ", "Alice", "123456", "en")));
+    assertThrows(
+        MailException.class,
+        () ->
+            factory.compose(new OneTimeCodeMailable("alice@example.com", "Alice", "123456", "  ")));
+  }
+
   private static SpringTemplateEngine templateEngine() {
     final ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
     resolver.setPrefix("templates/");

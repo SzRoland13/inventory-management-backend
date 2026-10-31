@@ -4,12 +4,13 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /** Defines the cross-origin policy for credentialed frontend requests. */
 @Configuration
-public class CorsConfiguration {
+public class CorsConfig {
 
   private final AppConfiguration appConfiguration;
 
@@ -18,7 +19,7 @@ public class CorsConfiguration {
    *
    * @param appConfiguration application settings
    */
-  public CorsConfiguration(final AppConfiguration appConfiguration) {
+  public CorsConfig(final AppConfiguration appConfiguration) {
     this.appConfiguration = appConfiguration;
   }
 
@@ -29,8 +30,7 @@ public class CorsConfiguration {
    */
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
-    final org.springframework.web.cors.CorsConfiguration configuration =
-        new org.springframework.web.cors.CorsConfiguration();
+    final CorsConfiguration configuration = new CorsConfiguration();
 
     configuration.setAllowedOrigins(appConfiguration.getCorsAllowedOrigins());
     configuration.setAllowCredentials(true);

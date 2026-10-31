@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.one_time_code.mail;
 
 import java.util.Locale;
+import java.util.Objects;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
@@ -59,9 +60,9 @@ public class OneTimeCodeMailFactory implements MailFactory {
         || mailable.preheaderKey() == null
         || mailable.template() == null
         || mailable.templateVariables() == null
-        || mailable.templateVariables().values().stream().anyMatch(java.util.Objects::isNull)
+        || mailable.templateVariables().values().stream().anyMatch(Objects::isNull)
         || mailable.attachments() == null
-        || mailable.attachments().stream().anyMatch(java.util.Objects::isNull)
+        || mailable.attachments().stream().anyMatch(Objects::isNull)
         || mailable.languageTag() == null
         || mailable.languageTag().isBlank()) {
       throw new MailException(MailMessageKey.INVALID_MAILABLE);

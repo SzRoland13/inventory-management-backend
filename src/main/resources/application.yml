@@ -1,6 +1,13 @@
 spring:
   application:
     name: inventory-management-backend
+  rabbitmq:
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
   messages:
     basename: email-messages
     encoding: UTF-8
@@ -26,6 +33,9 @@ spring:
       mail:
         smtp:
           auth: ${EMAIL_SMTP_AUTH:false}
+          connectiontimeout: ${EMAIL_SMTP_CONNECTION_TIMEOUT_MS:10000}
+          timeout: ${EMAIL_SMTP_TIMEOUT_MS:10000}
+          writetimeout: ${EMAIL_SMTP_WRITE_TIMEOUT_MS:10000}
           starttls:
             enable: ${EMAIL_SMTP_STARTTLS:false}
   data:
@@ -45,8 +55,25 @@ logging:
         web: DEBUG
       servlet:
         DispatcherServlet: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: when_authorized
 #App config
 app:
+  outbox:
+    encryption-secret: ${OUTBOX_ENCRYPTION_SECRET:}
+    publisher-enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
+    publish-interval-ms: ${OUTBOX_PUBLISH_INTERVAL_MS:1000}
+    publish-batch-size: ${OUTBOX_PUBLISH_BATCH_SIZE:50}
+    publish-confirm-timeout-ms: ${OUTBOX_PUBLISH_CONFIRM_TIMEOUT_MS:10000}
+    publish-lease-seconds: ${OUTBOX_PUBLISH_LEASE_SECONDS:120}
+    max-attempts: ${ASYNC_MAX_ATTEMPTS:5}
+    retry-delay-ms: ${ASYNC_RETRY_DELAY_MS:3000}
   mail:
     from: ${EMAIL_FROM:noreply@example.com}
   cors:

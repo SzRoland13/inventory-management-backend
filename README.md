@@ -41,6 +41,7 @@ Before running the project, make sure you have:
 - **Docker & Docker Compose**
 - **PostgreSQL** (automatically set up via Docker)
 - **Redis** (automatically set up via Docker)
+- **RabbitMQ** (automatically set up via Docker)
 - **SeaweedFS** (automatically set up via Docker for S3-compatible object storage)
 - Local email is captured by Mailpit; no external mail server credentials are needed.
 
@@ -57,13 +58,12 @@ Before running the project, make sure you have:
    ```bash
    cp .env-example .env
    ```
-   Fill in JWT, mail, Redis, and storage values in `.env`.
-3. **Start PostgreSQL, Redis, and SeaweedFS**
+   Fill in JWT, mail, Redis, RabbitMQ, outbox encryption, and storage values in `.env`. Set `OUTBOX_ENCRYPTION_SECRET` to a unique random value with at least 32 characters. Keep it stable while outbox or dead-letter jobs remain, since replacing it makes their encrypted payloads unreadable.
+3. **Start PostgreSQL, Redis, RabbitMQ, Mailpit, and SeaweedFS**
    ```bash
    docker compose up -d
-
-   Mailpit captures outgoing development email. Start the app with `SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run`; this profile always routes mail to Mailpit, even if `.env` contains SMTP provider settings. Open [http://localhost:8025](http://localhost:8025) to inspect captured messages. Without the `local` profile, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SMTP_AUTH`, and `EMAIL_SMTP_STARTTLS` configure SMTP.
    ```
+   Mailpit captures outgoing development email. Start the app with `SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run`; this profile always routes mail to Mailpit, even if `.env` contains SMTP provider settings. Open [http://localhost:8025](http://localhost:8025) to inspect captured messages. Without the `local` profile, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SMTP_AUTH`, `EMAIL_SMTP_STARTTLS`, and the `EMAIL_SMTP_*_TIMEOUT_MS` settings configure SMTP.
 4. **Run the backend**
    ```bash
    ./mvnw spring-boot:run
@@ -135,6 +135,12 @@ Represent an email use case with an immutable `Mailable` subclass and a stable `
 - **Stock balance and stock movement persistence for warehouse/product inventory tracking**
 - **Modular architecture with services and facades**
 - **Centralized exception handling and message keys**
+
+### Async jobs and outbox
+
+Email requests are stored in PostgreSQL's `outbox_messages` table in the same transaction as the operation that requests them. A scheduled publisher sends confirmed messages to RabbitMQ; email workers send them through Spring Mail and update the outbox delivery state. The publisher and workers may run in multiple backend instances. Jobs use durable queues, five configurable delivery attempts by default, persisted retry scheduling, and a dead-letter queue for exhausted work. Permanent failures and exhausted jobs commit a `DLQ_PENDING` state before acknowledgement. The outbox publisher leases these as `DLQ_PUBLISHING` and retries DLQ publication until confirmed, then marks them `FAILED` and clears the stored payload. Redelivery never sends email for these terminal delivery states; delivery diagnostics remain available. RabbitMQ management UI is available at [http://localhost:15672](http://localhost:15672) using the credentials in `.env`.
+
+The shared exchange is `inventory.jobs`. Email jobs route to `inventory.email`; document PDF jobs route to `inventory.document-pdf`. Each has a retry queue and a `.dlq` dead-letter queue. Email workers schedule retries using `PENDING` outbox rows and `next_attempt_at`; the publisher retries broker publication until confirmed, so email retry recovery does not depend on TTL dead-letter forwarding. Retry queues remain available for future PDF infrastructure. Configure `ASYNC_MAX_ATTEMPTS`, `ASYNC_RETRY_DELAY_MS`, `OUTBOX_PUBLISH_INTERVAL_MS`, and the `OUTBOX_PUBLISH_*` settings as needed. One-time-code payloads and future job payloads are encrypted at rest and in broker messages with `OUTBOX_ENCRYPTION_SECRET`. Delivery uses at-least-once processing: normal redelivery is deduplicated after a recorded success, though a process crash after SMTP acceptance and before the database commit can produce a duplicate email. This is intentional: recovery favors eventual delivery over suppressing a potentially unsent email.
 
 ### Domain Model
 

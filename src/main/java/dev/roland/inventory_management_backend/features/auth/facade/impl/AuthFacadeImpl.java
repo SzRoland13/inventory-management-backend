@@ -81,12 +81,8 @@ public class AuthFacadeImpl implements AuthFacade {
     code.setUser(user);
     code.setCode(generateOneTimeCode());
     code.setExpiresAt(LocalDateTime.now().plusMinutes(30));
-
-    if (!sendFirstLoginEmail(user, code.getCode())) {
-      throw new ApiException(AuthMessageKey.EMAIL_SEND_FAILED);
-    } else {
-      oneTimeCodeService.save(code);
-    }
+    oneTimeCodeService.save(code);
+    sendFirstLoginEmail(user, code.getCode());
   }
 
   /** {@inheritDoc} */
@@ -124,10 +120,9 @@ public class AuthFacadeImpl implements AuthFacade {
    *
    * @param user account receiving the code
    * @param code one-time code included in the email
-   * @return true when the email was sent successfully
    */
-  private boolean sendFirstLoginEmail(final User user, final String code) {
-    return emailService.send(
+  private void sendFirstLoginEmail(final User user, final String code) {
+    emailService.enqueue(
         new OneTimeCodeMailable(
             user.getEmail(),
             user.getUsername(),
