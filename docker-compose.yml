@@ -22,6 +22,19 @@ services:
     volumes:
       - redis_data:/data
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: ims-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   mailpit:
     image: axllent/mailpit:latest
     container_name: ims-mailpit
@@ -70,4 +83,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
   seaweedfs_data:

@@ -3,6 +3,7 @@ package dev.roland.inventory_management_backend.features.product.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -109,7 +110,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public java.util.Optional<Product> findByIdAndCompanyId(final Long id, final Long companyId) {
+  public Optional<Product> findByIdAndCompanyId(final Long id, final Long companyId) {
     return productRepository.findByIdAndCompanyId(id, companyId);
   }
 

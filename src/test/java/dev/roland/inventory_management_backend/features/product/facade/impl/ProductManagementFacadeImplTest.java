@@ -15,6 +15,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -185,7 +188,7 @@ class ProductManagementFacadeImplTest {
             new ProductAttributeValueRequest(102L, null, "Cotton", null, null, null),
             new ProductAttributeValueRequest(103L, null, null, new BigDecimal("2.5"), null, null),
             new ProductAttributeValueRequest(
-                104L, null, null, null, java.time.LocalDate.parse("2026-01-05"), null),
+                104L, null, null, null, LocalDate.parse("2026-01-05"), null),
             new ProductAttributeValueRequest(105L, null, null, null, null, true));
     final ProductRequest request = productRequest(null, null, List.of(301L), attributes);
     final ProductResponse response = response(100L);
@@ -214,12 +217,12 @@ class ProductManagementFacadeImplTest {
     assertEquals(category, assignmentCaptor.getValue().getCategory());
     final ArgumentCaptor<ProductAttributeValue> valueCaptor =
         ArgumentCaptor.forClass(ProductAttributeValue.class);
-    verify(valueService, org.mockito.Mockito.times(5)).save(valueCaptor.capture());
+    verify(valueService, Mockito.times(5)).save(valueCaptor.capture());
     final List<ProductAttributeValue> values = valueCaptor.getAllValues();
     assertEquals("Steel", values.get(0).getOption().getValue());
     assertEquals("Cotton", values.get(1).getTextValue());
     assertEquals(new BigDecimal("2.5"), values.get(2).getNumberValue());
-    assertEquals(java.time.LocalDate.parse("2026-01-05"), values.get(3).getDateValue());
+    assertEquals(LocalDate.parse("2026-01-05"), values.get(3).getDateValue());
     assertEquals(Boolean.TRUE, values.get(4).getBooleanValue());
   }
 
@@ -437,8 +440,7 @@ class ProductManagementFacadeImplTest {
 
   @Test
   void hidesArchivedProductsUnlessExplicitlyIncluded() {
-    final Product archived =
-        Product.builder().id(50L).deletedAt(java.time.LocalDateTime.now()).build();
+    final Product archived = Product.builder().id(50L).deletedAt(LocalDateTime.now()).build();
     when(currentCompanyProvider.getCurrentCompany()).thenReturn(company);
     when(productService.findByIdAndCompanyId(50L, 1L)).thenReturn(Optional.of(archived));
 
@@ -527,7 +529,7 @@ class ProductManagementFacadeImplTest {
     product.setDeletedAt(null);
     assertThrows(ApiException.class, () -> facade.restore(50L));
 
-    product.setDeletedAt(java.time.LocalDateTime.now());
+    product.setDeletedAt(LocalDateTime.now());
     when(productService.save(product)).thenReturn(product);
     stubSingleProductResponse(product);
     stubResponseMapping(response(50L));

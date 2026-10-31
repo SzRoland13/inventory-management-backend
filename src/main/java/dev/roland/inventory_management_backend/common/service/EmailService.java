@@ -10,21 +10,25 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+import dev.roland.inventory_management_backend.common.async.AsyncJobException;
+import dev.roland.inventory_management_backend.common.async.OutboxService;
 import dev.roland.inventory_management_backend.common.mail.ComposedMail;
 import dev.roland.inventory_management_backend.common.mail.MailComposer;
 import dev.roland.inventory_management_backend.common.mail.Mailable;
+import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 /** Sends composed email messages through Spring Mail. */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EmailService {
 
   private final JavaMailSender javaMailSender;
   private final MailComposer mailComposer;
+  private final OutboxService outboxService;
 
   @Value("${app.mail.from:noreply@example.com}")
   private String sender;
@@ -33,20 +37,18 @@ public class EmailService {
    * Composes a typed request and sends the resulting message.
    *
    * @param mailable typed email request
-   * @return whether the transport accepted the message
    */
-  public boolean send(final Mailable mailable) {
-    return send(mailComposer.compose(mailable));
+  public void send(final Mailable mailable) {
+    send(mailComposer.compose(mailable));
   }
 
   /**
    * Sends a composed message; composition itself can be tested without SMTP.
    *
    * @param mail composed email message
-   * @return whether the transport accepted the message
+   * @throws AsyncJobException when email delivery fails
    */
-  public boolean send(final ComposedMail mail) {
-    boolean sent = false;
+  public void send(final ComposedMail mail) {
     try {
       final MimeMessage mimeMessage = javaMailSender.createMimeMessage();
       final MimeMessageHelper helper =
@@ -68,10 +70,18 @@ public class EmailService {
       }
 
       javaMailSender.send(mimeMessage);
-      sent = true;
     } catch (MessagingException | RuntimeException e) {
-      log.warn("Failed to send email", e);
+      throw new AsyncJobException(AsyncJobMessageKey.EMAIL_DELIVERY_FAILED, false, e);
     }
-    return sent;
+  }
+
+  /**
+   * Records an email job in the caller's transaction for asynchronous delivery.
+   *
+   * @param mailable typed email request
+   */
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void enqueue(final Mailable mailable) {
+    outboxService.enqueueEmail(mailable);
   }
 }

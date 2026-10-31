@@ -7,12 +7,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -82,18 +84,17 @@ class AuthFacadeImplTest {
     final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    when(emailService.send(any(OneTimeCodeMailable.class))).thenReturn(true);
-
     facade.sendOneTimeCode(email("alice@example.com"));
 
     verify(oneTimeCodeService)
         .save(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 code ->
                     code.getUser() == user
                         && code.getCode().length() == 32
                         && code.getExpiresAt().isAfter(LocalDateTime.now())
                         && code.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(31))));
+    verify(emailService).enqueue(any(OneTimeCodeMailable.class));
   }
 
   @Test
@@ -105,22 +106,19 @@ class AuthFacadeImplTest {
         assertThrows(ApiException.class, () -> facade.sendOneTimeCode(email("alice@example.com")));
 
     assertEquals(AuthMessageKey.NOT_FIRST_LOGIN, exception.getMessageKey());
-    verify(emailService, never()).send(any(OneTimeCodeMailable.class));
+    verify(emailService, never()).enqueue(any(OneTimeCodeMailable.class));
     verify(oneTimeCodeService, never()).save(any());
   }
 
   @Test
-  void reportsFailedEmailInsteadOfPersistingCode() {
+  void persistsCodeAndQueuesEmailWithoutWaitingForTransport() {
     final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    when(emailService.send(any(OneTimeCodeMailable.class))).thenReturn(false);
+    facade.sendOneTimeCode(email("alice@example.com"));
 
-    final ApiException exception =
-        assertThrows(ApiException.class, () -> facade.sendOneTimeCode(email("alice@example.com")));
-
-    assertEquals(AuthMessageKey.EMAIL_SEND_FAILED, exception.getMessageKey());
-    verify(oneTimeCodeService, never()).save(any());
+    verify(oneTimeCodeService).save(any());
+    verify(emailService).enqueue(any(OneTimeCodeMailable.class));
   }
 
   @Test
@@ -189,7 +187,7 @@ class AuthFacadeImplTest {
         User.builder().username("alice").email("alice@example.com").is2faEnabled(true).build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(loginSessionService.createTemporarySessionWithExpiry("alice@example.com"))
-        .thenReturn(new TokenWithExpiry("short-lived", java.time.Instant.now().plusSeconds(60)));
+        .thenReturn(new TokenWithExpiry("short-lived", Instant.now().plusSeconds(60)));
     final LoginRequest request = new LoginRequest();
     request.setEmail("alice@example.com");
     request.setPassword("password");

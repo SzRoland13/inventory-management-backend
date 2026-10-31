@@ -1,4 +1,8 @@
 spring:
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
   datasource:
     url: jdbc:h2:mem:inventory_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;NON_KEYWORDS=VALUE,YEAR
     username: sa
@@ -22,6 +26,9 @@ spring:
       host: localhost
       port: 6379
 app:
+  outbox:
+    encryption-secret: test-outbox-encryption-secret-at-least-32-bytes
+    publisher-enabled: false
   security:
     secure-cookie: false
     jwt:

@@ -1,5 +1,8 @@
 package dev.roland.inventory_management_backend.features.unit.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -33,12 +36,12 @@ public class UnitServiceImpl implements UnitService {
   }
 
   @Override
-  public java.util.List<Unit> findSelectableUnits(final Long companyId) {
+  public List<Unit> findSelectableUnits(final Long companyId) {
     return unitRepository.findSelectableUnits(companyId);
   }
 
   @Override
-  public java.util.Optional<Unit> findById(final Long id) {
+  public Optional<Unit> findById(final Long id) {
     return unitRepository.findById(id);
   }
 

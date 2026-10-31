@@ -1,5 +1,8 @@
 package dev.roland.inventory_management_backend.features.product_attribute_option.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -33,12 +36,12 @@ public class ProductAttributeOptionServiceImpl implements ProductAttributeOption
   }
 
   @Override
-  public java.util.List<ProductAttributeOption> findAllByDefinitionId(final Long id) {
+  public List<ProductAttributeOption> findAllByDefinitionId(final Long id) {
     return productAttributeOptionRepository.findAllByDefinitionId(id);
   }
 
   @Override
-  public java.util.Optional<ProductAttributeOption> findByIdAndDefinitionId(
+  public Optional<ProductAttributeOption> findByIdAndDefinitionId(
       final Long id, final Long definitionId) {
     return productAttributeOptionRepository
         .findById(id)

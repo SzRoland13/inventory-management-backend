@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import dev.roland.inventory_management_backend.common.async.AsyncJobException;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
@@ -19,6 +20,18 @@ import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 /** Converts domain and validation exceptions into consistent API responses. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  /**
+   * Converts an asynchronous infrastructure failure into a keyed server-error response.
+   *
+   * @param ex exception carrying the message key and cause
+   * @return server-error response for the client
+   */
+  @ExceptionHandler(AsyncJobException.class)
+  public ResponseEntity<ApiResponse<Void>> handleAsyncJobException(final AsyncJobException ex) {
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponse.failure(ex.getMessageKey(), ex.getParams()));
+  }
 
   /**
    * Converts a domain API failure into a bad-request response.

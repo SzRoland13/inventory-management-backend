@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.partner.facade.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.transaction.Transactional;
 
@@ -177,7 +178,7 @@ public class PartnerFacadeImpl implements PartnerFacade {
     contact.setAddressLine1(request.addressLine1().trim());
     contact.setAddressLine2(request.addressLine2() == null ? null : request.addressLine2().trim());
     contact.setCity(request.city().trim());
-    contact.setCountry(request.country().trim().toUpperCase(java.util.Locale.ROOT));
+    contact.setCountry(request.country().trim().toUpperCase(Locale.ROOT));
     contact.setPhone(
         request.phone() == null || request.phone().isBlank() ? null : request.phone().trim());
     contact.setEmail(

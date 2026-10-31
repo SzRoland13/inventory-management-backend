@@ -26,6 +26,18 @@ public class ApiException extends RuntimeException {
   }
 
   /**
+   * Creates an API exception with an underlying cause.
+   *
+   * @param messageKey localized message associated with the failure
+   * @param cause underlying failure
+   */
+  public ApiException(final MessageKey messageKey, final Throwable cause) {
+    super(messageKey.getKey(), cause);
+    this.messageKey = messageKey;
+    this.params = null;
+  }
+
+  /**
    * Creates an API exception with parameters for message interpolation.
    *
    * @param messageKey localized message associated with the failure

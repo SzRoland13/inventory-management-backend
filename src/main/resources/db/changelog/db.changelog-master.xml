@@ -22,4 +22,5 @@
     <include file="db/changelog/changes/015-create-brands-table.xml"/>
     <include file="db/changelog/changes/016-warehouse-types-and-company-scope.xml"/>
     <include file="db/changelog/changes/017-partners-company-scope.xml"/>
+    <include file="db/changelog/changes/018-create-outbox-messages.xml"/>
 </databaseChangeLog>

@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -65,7 +66,7 @@ class ProductCategoryFacadeImplTest {
     assertEquals(0, response.sortOrder());
     verify(categoryService)
         .save(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 category -> category.getCompany() == company && category.getParent() == null));
   }
 
@@ -149,9 +150,7 @@ class ProductCategoryFacadeImplTest {
     assertEquals(0, second.getSortOrder());
     assertEquals(1, first.getSortOrder());
     verify(categoryService)
-        .saveAll(
-            org.mockito.ArgumentMatchers.argThat(
-                categories -> categories.equals(List.of(second, first))));
+        .saveAll(ArgumentMatchers.argThat(categories -> categories.equals(List.of(second, first))));
   }
 
   @Test

@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.product_category_assignment.service.impl;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
@@ -51,13 +53,12 @@ public class ProductCategoryAssignmentServiceImpl implements ProductCategoryAssi
   }
 
   @Override
-  public java.util.List<ProductCategoryAssignment> findAllByProductId(final Long id) {
+  public List<ProductCategoryAssignment> findAllByProductId(final Long id) {
     return productCategoryAssignmentRepository.findAllByProductId(id);
   }
 
   @Override
-  public java.util.List<ProductCategoryAssignment> findAllByProductIdIn(
-      final java.util.List<Long> productIds) {
+  public List<ProductCategoryAssignment> findAllByProductIdIn(final List<Long> productIds) {
     return productCategoryAssignmentRepository.findAllByProductIdIn(productIds);
   }
 

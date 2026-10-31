@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.currency.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class CurrencyServiceImpl implements CurrencyService {
   }
 
   @Override
-  public java.util.Optional<Currency> findById(final Long id) {
+  public Optional<Currency> findById(final Long id) {
     return currencyRepository.findById(id);
   }
 }

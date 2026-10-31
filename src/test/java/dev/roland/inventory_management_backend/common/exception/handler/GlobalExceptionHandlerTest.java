@@ -8,9 +8,11 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import dev.roland.inventory_management_backend.common.async.AsyncJobException;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
@@ -47,5 +49,16 @@ class GlobalExceptionHandlerTest {
     assertEquals(GenericMessageKey.GENERIC_ERROR.getKey(), generic.getBody().getMessageKey());
     assertEquals(HttpStatus.BAD_REQUEST, validation.getStatusCode());
     assertEquals("must be valid", validation.getBody().getParams().get("email"));
+  }
+
+  @Test
+  void mapsAsyncInfrastructureFailuresToKeyedServerErrors() {
+    final var response =
+        handler.handleAsyncJobException(
+            new AsyncJobException(AsyncJobMessageKey.OUTBOX_PAYLOAD_INVALID, true));
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    assertEquals(
+        AsyncJobMessageKey.OUTBOX_PAYLOAD_INVALID.getKey(), response.getBody().getMessageKey());
   }
 }

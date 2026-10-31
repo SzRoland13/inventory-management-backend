@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -64,7 +65,7 @@ class BrandFacadeImplTest {
     assertEquals("Acme", response.name());
     verify(brandService)
         .save(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 brand -> brand.getCompany() == company && brand.getName().equals("Acme")));
   }
 

@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.warehouse.service.impl;
 
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.transaction.Transactional;
 
@@ -136,14 +137,14 @@ public class WarehouseServiceImpl implements WarehouseService {
   }
 
   private static String normalizeCode(final String code) {
-    return code.trim().toUpperCase(java.util.Locale.ROOT);
+    return code.trim().toUpperCase(Locale.ROOT);
   }
 
   private static WarehouseAddress toAddress(final WarehouseAddressDto dto) {
     return dto == null
         ? null
         : WarehouseAddress.builder()
-            .country(dto.getCountry().trim().toUpperCase(java.util.Locale.ROOT))
+            .country(dto.getCountry().trim().toUpperCase(Locale.ROOT))
             .city(dto.getCity().trim())
             .addressLine1(dto.getAddressLine1().trim())
             .addressLine2(dto.getAddressLine2())

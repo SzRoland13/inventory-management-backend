@@ -8,10 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
+import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -74,7 +76,7 @@ class ObjectStorageServiceTest {
 
     verify(s3Client)
         .deleteObject(
-            org.mockito.ArgumentMatchers.argThat(
+            ArgumentMatchers.argThat(
                 (DeleteObjectRequest request) ->
                     request.bucket().equals("inventory") && request.key().equals("unused/object")));
   }
@@ -93,7 +95,7 @@ class ObjectStorageServiceTest {
     assertTrue(
         getUrl.getUrl().startsWith("http://192.168.1.117:8333/inventory/users/1/avatar.png"));
     assertTrue(putUrl.getUrl().startsWith("http://192.168.1.117:8333/inventory/temp/avatar.png"));
-    assertTrue(getUrl.getExpiry().isAfter(java.time.Instant.now().plusSeconds(7_000)));
-    assertTrue(putUrl.getExpiry().isAfter(java.time.Instant.now().plusSeconds(500)));
+    assertTrue(getUrl.getExpiry().isAfter(Instant.now().plusSeconds(7_000)));
+    assertTrue(putUrl.getExpiry().isAfter(Instant.now().plusSeconds(500)));
   }
 }
