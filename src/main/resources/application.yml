@@ -1,6 +1,9 @@
 spring:
   application:
     name: inventory-management-backend
+  messages:
+    basename: email-messages
+    encoding: UTF-8
 
   datasource:
     url: jdbc:postgresql://localhost:5432/inventory_db
@@ -15,16 +18,16 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
   mail:
-    host: ${EMAIL_HOST}
-    port: ${EMAIL_PORT}
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_PASSWORD}
+    host: ${EMAIL_HOST:localhost}
+    port: ${EMAIL_PORT:1025}
+    username: ${EMAIL_USERNAME:}
+    password: ${EMAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${EMAIL_SMTP_AUTH:false}
           starttls:
-            enable: true
+            enable: ${EMAIL_SMTP_STARTTLS:false}
   data:
     redis:
       host: ${REDIS_HOST}
@@ -44,6 +47,8 @@ logging:
         DispatcherServlet: DEBUG
 #App config
 app:
+  mail:
+    from: ${EMAIL_FROM:noreply@example.com}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://192.168.1.117:3001}
   security:

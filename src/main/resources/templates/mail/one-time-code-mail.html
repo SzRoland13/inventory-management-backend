@@ -1,0 +1,19 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+    <p style="margin:0 0 16px; color:#475467; font-size:16px; line-height:1.65;">
+        <span style="color:#182230; font-weight:600;" th:text="#{email.one-time-code.greeting(${username})}">Hello there,</span>
+    </p>
+    <p style="margin:0 0 24px; color:#475467; font-size:16px; line-height:1.65;">
+        <span th:text="#{email.one-time-code.instruction}">Use this code to verify your email and finish setting up your account.</span>
+    </p>
+    <table role="presentation" style="width:100%; margin:0 0 24px; border-collapse:collapse; table-layout:fixed;">
+        <tr>
+            <td class="email-code-cell" style="padding:16px 12px; text-align:center; background-color:#f5f7ff; border:1px solid #dfe6ff; border-radius:12px;">
+                <p style="margin:0 0 8px; color:#667085; font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;" th:text="#{email.one-time-code.code-label}">Your verification code</p>
+                <p class="email-code" style="margin:0; color:#253b8f; font-family:Arial, Helvetica, sans-serif; font-size:24px; line-height:1.5; font-weight:bold; letter-spacing:4px; overflow-wrap:anywhere; word-break:break-all;" th:text="${oneTimeCode}">000000</p>
+            </td>
+        </tr>
+    </table>
+    <p style="margin:0; color:#667085; font-size:14px; line-height:1.65;">
+        <span th:text="#{email.one-time-code.security-note}">For your security, do not share this code. If you did not request it, you can ignore this email.</span>
+    </p>
+</th:block>

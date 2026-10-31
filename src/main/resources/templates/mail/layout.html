@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title th:text="${mailTitle}">Inventory Management</title>
+    <style type="text/css">
+        @media only screen and (max-width: 480px) {
+            .email-outer-padding { padding:24px 12px !important; }
+            .email-card-padding { padding:28px 20px 30px !important; }
+            .email-title { font-size:24px !important; }
+            .email-code-cell { padding:14px 8px !important; }
+            .email-code { font-size:20px !important; letter-spacing:3px !important; }
+            .email-footer { padding:20px 8px 0 !important; }
+        }
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f6fb; font-family:Arial, Helvetica, sans-serif; color:#182230; -webkit-text-size-adjust:100%;">
+<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;" th:text="${preheader}">An account notification from Inventory Management.</div>
+<table role="presentation" style="width:100%; border-collapse:collapse; background-color:#f3f6fb;">
+    <tr>
+        <td class="email-outer-padding" style="padding:40px 16px; text-align:center;">
+            <table role="presentation" class="email-shell" style="width:100%; max-width:600px; margin:0 auto; border-collapse:collapse; text-align:left;">
+                <tr>
+                    <td style="padding:0 0 22px;">
+                        <table role="presentation" style="border-collapse:collapse;">
+                            <tr>
+                                <td style="width:38px; height:38px; text-align:center; vertical-align:middle; background-color:#3157d5; border-radius:11px; color:#ffffff; font-size:19px; font-weight:bold;" th:text="#{email.brand.initial}">I</td>
+                                <td style="padding-left:11px; color:#182230; font-size:16px; font-weight:bold;" th:text="#{email.brand.name}">Inventory Management</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="email-card-padding" style="padding:38px 32px 36px; background-color:#ffffff; border:1px solid #e5eaf2; border-radius:16px;">
+                        <p style="margin:0 0 10px; color:#3157d5; font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;" th:text="#{email.category.account-security}">Account security</p>
+                        <h1 class="email-title" style="margin:0 0 24px; color:#182230; font-size:27px; line-height:1.25; font-weight:700;" th:text="${mailTitle}">Your account</h1>
+                        <div th:utext="${content}"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="email-footer" style="padding:24px 20px 0; text-align:center; color:#667085; font-size:12px; line-height:1.6;">
+                        <p style="margin:0;" th:text="#{email.footer}">This message was sent by Inventory Management about your account.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

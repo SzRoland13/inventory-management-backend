@@ -42,7 +42,7 @@ Before running the project, make sure you have:
 - **PostgreSQL** (automatically set up via Docker)
 - **Redis** (automatically set up via Docker)
 - **SeaweedFS** (automatically set up via Docker for S3-compatible object storage)
-- (Optional) **Mail server credentials** for sending verification emails
+- Local email is captured by Mailpit; no external mail server credentials are needed.
 
 ---
 
@@ -61,6 +61,8 @@ Before running the project, make sure you have:
 3. **Start PostgreSQL, Redis, and SeaweedFS**
    ```bash
    docker compose up -d
+
+   Mailpit captures outgoing development email. Start the app with `SPRING_PROFILES_ACTIVE=local ./mvnw spring-boot:run`; this profile always routes mail to Mailpit, even if `.env` contains SMTP provider settings. Open [http://localhost:8025](http://localhost:8025) to inspect captured messages. Without the `local` profile, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SMTP_AUTH`, and `EMAIL_SMTP_STARTTLS` configure SMTP.
    ```
 4. **Run the backend**
    ```bash
@@ -111,6 +113,10 @@ The application uses a multistep secure authentication process with **JWT, refre
 - **Liquibase for database migrations**
 - **Lombok + JPA + Validation for clean model layer**
 - **Mail templating system for transactional emails**
+
+### Adding an email type
+
+Represent an email use case with an immutable `Mailable` subclass and a stable `MailType` discriminator. Implement a `MailFactory` that validates the mailable, prepares presentational view data, and renders a Thymeleaf content fragment into the shared HTML layout (plus attachments when needed). Reuse `templates/mail/layout.html` for the shared brand and structure, and give each email type its own content template. Localize subjects and template text with keys in `email-messages.properties`; add translations to `email-messages_<language>.properties`. The shared `LocaleResolver` reads the frontend's `NEXT_LOCALE` cookie, and the selected language tag is captured in the mailable for async delivery. Use `th:text` for untrusted values so Thymeleaf escapes them. Keep business decisions in the calling service or facade. `EmailService` sends the HTML message through Spring Mail; factories can be tested independently of SMTP.
 - **S3-compatible object storage for media assets**
 
 ---

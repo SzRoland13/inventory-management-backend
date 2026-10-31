@@ -1,20 +1,18 @@
 package dev.roland.inventory_management_backend.features.auth.facade.impl;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
-import dev.roland.inventory_management_backend.common.dto.mail.EmailDetails;
-import dev.roland.inventory_management_backend.common.enumeration.MailTemplate;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.common.service.EmailService;
@@ -41,6 +39,7 @@ import dev.roland.inventory_management_backend.features.media_usage.enumeration.
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
+import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
 import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
@@ -128,17 +127,12 @@ public class AuthFacadeImpl implements AuthFacade {
    * @return true when the email was sent successfully
    */
   private boolean sendFirstLoginEmail(final User user, final String code) {
-    final Map<String, Object> model = Map.of("username", user.getUsername(), "oneTimeCode", code);
-
-    final EmailDetails emailDetails =
-        EmailDetails.builder()
-            .recipient(user.getEmail())
-            .templateName(MailTemplate.ONE_TIME_CODE_MAIL)
-            .subject("One Time Code for Login")
-            .templateModel(model)
-            .build();
-
-    return emailService.sendMailWithTemplate(emailDetails);
+    return emailService.send(
+        new OneTimeCodeMailable(
+            user.getEmail(),
+            user.getUsername(),
+            code,
+            LocaleContextHolder.getLocale().toLanguageTag()));
   }
 
   /** {@inheritDoc} */
