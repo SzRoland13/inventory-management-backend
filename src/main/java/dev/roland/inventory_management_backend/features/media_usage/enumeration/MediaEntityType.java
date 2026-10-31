@@ -15,6 +15,8 @@ public enum MediaEntityType {
   PRODUCT("product"),
   /** Represents the warehouse value. */
   WAREHOUSE("warehouse"),
+  /** Business document owning attachments. */
+  DOCUMENT("document"),
   ;
 
   private final String name;

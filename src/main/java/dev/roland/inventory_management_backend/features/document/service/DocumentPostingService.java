@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.document.service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 
 /** Defines operations supported by the inventory document feature. */
@@ -9,8 +10,7 @@ public interface DocumentPostingService {
    *
    * @param document document to complete
    * @return completed document
-   * @throws IllegalStateException when a stock-affecting document does not define the required
-   *     warehouse
+   * @throws ApiException when a stock-affecting document does not define the required warehouse
    */
   Document complete(Document document);
 }

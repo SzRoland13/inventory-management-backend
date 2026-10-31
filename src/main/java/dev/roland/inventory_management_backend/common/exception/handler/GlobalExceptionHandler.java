@@ -16,10 +16,19 @@ import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
+import dev.roland.inventory_management_backend.features.document.exception.DocumentConflictException;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 
 /** Converts domain and validation exceptions into consistent API responses. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(DocumentConflictException.class)
+  public ResponseEntity<ApiResponse<Object>> handleDocumentConflict(
+      final DocumentConflictException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiResponse.failure(DocumentApiMessageKey.DOCUMENT_CONFLICT, ex.getLatestDocument()));
+  }
 
   /**
    * Converts an asynchronous infrastructure failure into a keyed server-error response.

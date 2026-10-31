@@ -19,11 +19,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
+import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
@@ -62,6 +64,17 @@ public class Document implements IdInterface<Long> {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "company_id", nullable = false)
+  private Company company;
+
+  @Version
+  @Column(name = "version", nullable = false)
+  private Long version;
+
+  @Column(name = "document_number", length = 100)
+  private String documentNumber;
+
   @Column(name = "category", length = 50)
   @Enumerated(EnumType.STRING)
   private DocumentCategory category;
@@ -78,6 +91,15 @@ public class Document implements IdInterface<Long> {
   @JoinColumn(name = "partner_id")
   private Partner partner;
 
+  @Column(name = "partner_name_snapshot", length = 255)
+  private String partnerNameSnapshot;
+
+  @Column(name = "partner_tax_number_snapshot", length = 50)
+  private String partnerTaxNumberSnapshot;
+
+  @Column(name = "partner_address_snapshot", columnDefinition = "TEXT")
+  private String partnerAddressSnapshot;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "source_warehouse_id")
   private Warehouse sourceWarehouse;
@@ -85,12 +107,18 @@ public class Document implements IdInterface<Long> {
   @Column(name = "source_warehouse_code_snapshot", length = 50)
   private String sourceWarehouseCodeSnapshot;
 
+  @Column(name = "source_warehouse_name_snapshot", length = 255)
+  private String sourceWarehouseNameSnapshot;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "target_warehouse_id")
   private Warehouse targetWarehouse;
 
   @Column(name = "target_warehouse_code_snapshot", length = 50)
   private String targetWarehouseCodeSnapshot;
+
+  @Column(name = "target_warehouse_name_snapshot", length = 255)
+  private String targetWarehouseNameSnapshot;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "created_by_user_id")
@@ -139,8 +167,14 @@ public class Document implements IdInterface<Long> {
     if (sourceWarehouse != null && sourceWarehouseCodeSnapshot == null) {
       sourceWarehouseCodeSnapshot = sourceWarehouse.getCode();
     }
+    if (sourceWarehouse != null && sourceWarehouseNameSnapshot == null) {
+      sourceWarehouseNameSnapshot = sourceWarehouse.getName();
+    }
     if (targetWarehouse != null && targetWarehouseCodeSnapshot == null) {
       targetWarehouseCodeSnapshot = targetWarehouse.getCode();
+    }
+    if (targetWarehouse != null && targetWarehouseNameSnapshot == null) {
+      targetWarehouseNameSnapshot = targetWarehouse.getName();
     }
   }
 }

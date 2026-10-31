@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.stock_movement.service.
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import jakarta.transaction.Transactional;
 
@@ -15,6 +16,7 @@ import dev.roland.inventory_management_backend.common.exception.NotFoundExceptio
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
@@ -98,6 +100,17 @@ public class StockMovementServiceImpl implements StockMovementService {
                         .build());
 
     balance.setQuantity(balance.getQuantity().add(quantityChange));
+    if (balance.getQuantity().signum() < 0) {
+      throw new ApiException(
+          DocumentApiMessageKey.DOCUMENT_INSUFFICIENT_STOCK,
+          Map.of(
+              "productId", documentLine.getProduct().getId(),
+              "productName", documentLine.getProductNameSnapshot(),
+              "warehouseId", lockedWarehouse.getId(),
+              "warehouseName", lockedWarehouse.getName(),
+              "availableQuantity", balance.getQuantity().subtract(quantityChange),
+              "shortfall", balance.getQuantity().abs()));
+    }
     stockBalanceRepository.save(balance);
 
     final StockMovement movement =

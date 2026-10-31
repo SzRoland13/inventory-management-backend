@@ -15,6 +15,10 @@ public enum MediaUsageType {
   IMAGE("image"),
   /** Represents the other value. */
   OTHER("other"),
+  /** User supplied business document file. */
+  DOCUMENT_FILE("document-file"),
+  /** Generated business document PDF. */
+  DOCUMENT_PDF("document-pdf"),
   ;
 
   private final String name;

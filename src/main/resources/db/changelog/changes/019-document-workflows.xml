@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="019-document-company-version-number" author="roland">
+        <addColumn tableName="documents">
+            <column name="company_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_number" type="VARCHAR(100)"/>
+            <column name="partner_name_snapshot" type="VARCHAR(255)"/>
+            <column name="partner_tax_number_snapshot" type="VARCHAR(50)"/>
+            <column name="partner_address_snapshot" type="TEXT"/>
+            <column name="source_warehouse_name_snapshot" type="VARCHAR(255)"/>
+            <column name="target_warehouse_name_snapshot" type="VARCHAR(255)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="company_id"
+                                 constraintName="fk_documents_company" referencedTableName="companies"
+                                 referencedColumnNames="id" onDelete="RESTRICT"/>
+        <createIndex tableName="documents" indexName="idx_documents_company_status">
+            <column name="company_id"/><column name="status"/>
+        </createIndex>
+        <addUniqueConstraint tableName="documents" columnNames="company_id,document_number"
+                             constraintName="uq_documents_company_number"/>
+        <addColumn tableName="document_lines">
+            <column name="closed_quantity" type="NUMERIC(24,8)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="closure_reason" type="VARCHAR(1000)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="019-document-line-allocations" author="roland">
+        <createTable tableName="document_line_allocations">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="fulfillment_line_id" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="source_order_line_id" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="quantity" type="NUMERIC(24,8)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_line_allocations" baseColumnNames="fulfillment_line_id"
+                                 constraintName="fk_doc_alloc_fulfillment_line" referencedTableName="document_lines"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="document_line_allocations" baseColumnNames="source_order_line_id"
+                                 constraintName="fk_doc_alloc_source_line" referencedTableName="document_lines"
+                                 referencedColumnNames="id" onDelete="RESTRICT"/>
+        <addCheckConstraint tableName="document_line_allocations" constraintName="ck_doc_alloc_positive"
+                             checkConstraint="quantity &gt; 0"/>
+        <createIndex tableName="document_line_allocations" indexName="idx_doc_alloc_source_line">
+            <column name="source_order_line_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="019-document-activity-and-idempotency" author="roland">
+        <createTable tableName="document_activity">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="document_id" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="actor_user_id" type="INTEGER"/>
+            <column name="event_type" type="VARCHAR(80)"><constraints nullable="false"/></column>
+            <column name="details" type="TEXT"/>
+            <column name="occurred_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_activity" baseColumnNames="document_id" constraintName="fk_doc_activity_document" referencedTableName="documents" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="document_activity" baseColumnNames="actor_user_id" constraintName="fk_doc_activity_user" referencedTableName="users" referencedColumnNames="id" onDelete="SET NULL"/>
+        <createIndex tableName="document_activity" indexName="idx_doc_activity_document_time"><column name="document_id"/><column name="occurred_at"/></createIndex>
+        <createTable tableName="document_posting_keys">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="document_id" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="idempotency_key" type="VARCHAR(200)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_posting_keys" baseColumnNames="document_id" constraintName="fk_doc_post_key_document" referencedTableName="documents" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addUniqueConstraint tableName="document_posting_keys" columnNames="document_id,idempotency_key" constraintName="uq_doc_post_key"/>
+    </changeSet>
+
+    <changeSet id="019-document-files" author="roland">
+        <createTable tableName="document_files">
+            <column name="id" type="BIGSERIAL"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="document_id" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="media_asset_id" type="INTEGER"/>
+            <column name="source" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="status" type="VARCHAR(30)"/>
+            <column name="idempotency_key" type="VARCHAR(200)"/>
+            <column name="language_tag" type="VARCHAR(10)"/>
+            <column name="attempt" type="INTEGER" defaultValueNumeric="1"><constraints nullable="false"/></column>
+            <column name="parent_file_id" type="BIGINT"/>
+            <column name="error_message" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="document_files" baseColumnNames="document_id" constraintName="fk_document_files_document" referencedTableName="documents" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="document_files" baseColumnNames="media_asset_id" constraintName="fk_document_files_asset" referencedTableName="media_assets" referencedColumnNames="id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="document_files" baseColumnNames="parent_file_id" constraintName="fk_document_files_parent" referencedTableName="document_files" referencedColumnNames="id" onDelete="SET NULL"/>
+        <createIndex tableName="document_files" indexName="idx_document_files_document"><column name="document_id"/><column name="created_at"/></createIndex>
+        <addUniqueConstraint tableName="document_files" columnNames="document_id,idempotency_key" constraintName="uq_document_file_idempotency"/>
+    </changeSet>
+</databaseChangeLog>
