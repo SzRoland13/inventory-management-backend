@@ -31,7 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import dev.roland.inventory_management_backend.common.async.OutboxService;
 import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
@@ -41,6 +40,7 @@ import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_asset.service.ProductThumbnailService;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.dto.ProductAttributeValueRequest;
@@ -90,7 +90,7 @@ class ProductManagementFacadeImplTest {
   @Mock private StockBalanceService stockBalanceService;
   @Mock private MediaAssetService mediaAssetService;
   @Mock private MediaUsageService mediaUsageService;
-  @Mock private OutboxService outboxService;
+  @Mock private ProductThumbnailService productThumbnailService;
 
   private ProductManagementFacadeImpl facade;
   private Company company;
@@ -113,8 +113,8 @@ class ProductManagementFacadeImplTest {
             movementService,
             stockBalanceService,
             mediaAssetService,
-            mediaUsageService,
-            outboxService);
+            productThumbnailService,
+            mediaUsageService);
     company = Company.builder().id(1L).build();
   }
 

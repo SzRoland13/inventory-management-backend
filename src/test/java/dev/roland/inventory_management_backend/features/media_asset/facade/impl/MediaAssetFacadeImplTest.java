@@ -22,6 +22,7 @@ import dev.roland.inventory_management_backend.features.media_asset.dto.Generate
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.features.media_asset.dto.PresignedUrlData;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_asset.service.ProductThumbnailService;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +39,10 @@ class MediaAssetFacadeImplTest {
   void setUp() {
     facade =
         new MediaAssetFacadeImpl(
-            mediaAssetService, objectStorageService, mediaUsageService, outboxService);
+            mediaAssetService,
+            objectStorageService,
+            mediaUsageService,
+            new ProductThumbnailService(outboxService));
   }
 
   @Test
