@@ -20,10 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.configuration.AsyncJobConfiguration;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 import dev.roland.inventory_management_backend.common.service.EmailService;
@@ -37,6 +37,7 @@ class EmailJobConsumerTest {
   @Mock private OutboxMessageRepository repository;
   @Mock private EmailService emailService;
   @Mock private RabbitTemplate rabbitTemplate;
+  @Mock private AppConfiguration appConfiguration;
 
   @Test
   void skipsAlreadyCompletedMessageOnRedelivery() {
@@ -125,11 +126,18 @@ class EmailJobConsumerTest {
   }
 
   private EmailJobConsumer consumer() {
+    org.mockito.Mockito.lenient()
+        .when(appConfiguration.getOutboxEncryptionSecret())
+        .thenReturn(SECRET);
+    org.mockito.Mockito.lenient().when(appConfiguration.getOutboxMaxAttempts()).thenReturn(5);
+    org.mockito.Mockito.lenient().when(appConfiguration.getOutboxRetryDelayMs()).thenReturn(3000);
     final EmailJobConsumer consumer =
         new EmailJobConsumer(
-            repository, new OutboxEncryptionService(SECRET), new ObjectMapper(), emailService);
-    ReflectionTestUtils.setField(consumer, "maxAttempts", 5);
-    ReflectionTestUtils.setField(consumer, "retryDelayMs", 3000);
+            repository,
+            new OutboxEncryptionService(SECRET),
+            new ObjectMapper(),
+            emailService,
+            appConfiguration);
     return consumer;
   }
 }

@@ -5,10 +5,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import lombok.RequiredArgsConstructor;
 
 /** Claims batches briefly and persists publication outcomes without holding locks over I/O. */
@@ -17,9 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class OutboxClaimService {
 
   private final OutboxMessageRepository repository;
-
-  @Value("${app.outbox.publish-lease-seconds:120}")
-  private int leaseSeconds;
+  private final AppConfiguration appConfiguration;
 
   /**
    * Claims eligible jobs for a bounded period.
@@ -30,7 +28,8 @@ public class OutboxClaimService {
   @Transactional
   public List<ClaimedOutboxMessage> claimPending(final int batchSize) {
     final Instant now = Instant.now();
-    final Instant lockedUntil = now.plus(Math.max(1, leaseSeconds), ChronoUnit.SECONDS);
+    final Instant lockedUntil =
+        now.plus(Math.max(1, appConfiguration.getOutboxPublishLeaseSeconds()), ChronoUnit.SECONDS);
     return repository.lockPending(Math.max(1, batchSize)).stream()
         .map(
             message -> {

@@ -2,7 +2,6 @@ package dev.roland.inventory_management_backend.common.configuration;
 
 import java.net.URI;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,23 +16,18 @@ public class S3Configuration {
   /**
    * Creates the S3 client configured for the application storage endpoint.
    *
-   * @param endpoint endpoint supplied to this method
-   * @param region region supplied to this method
-   * @param accessKey access key supplied to this method
-   * @param secretKey secret key supplied to this method
+   * @param appConfiguration application settings
    * @return s3client result
    */
   @Bean
-  public S3Client s3Client(
-      @Value("${app.storage.endpoint}") final String endpoint,
-      @Value("${app.storage.region}") final String region,
-      @Value("${app.storage.access-key}") final String accessKey,
-      @Value("${app.storage.secret-key}") final String secretKey) {
+  public S3Client s3Client(final AppConfiguration appConfiguration) {
     return S3Client.builder()
-        .endpointOverride(URI.create(endpoint))
-        .region(Region.of(region))
+        .endpointOverride(URI.create(appConfiguration.getS3Endpoint()))
+        .region(Region.of(appConfiguration.getS3Region()))
         .credentialsProvider(
-            StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    appConfiguration.getS3AccessKey(), appConfiguration.getS3SecretKey())))
         .forcePathStyle(true)
         .build();
   }

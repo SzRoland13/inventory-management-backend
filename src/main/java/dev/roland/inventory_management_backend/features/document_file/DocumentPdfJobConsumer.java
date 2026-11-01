@@ -11,7 +11,6 @@ import java.util.Objects;
 import jakarta.transaction.Transactional;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -28,6 +27,7 @@ import dev.roland.inventory_management_backend.common.async.OutboxEncryptionServ
 import dev.roland.inventory_management_backend.common.async.OutboxMessage;
 import dev.roland.inventory_management_backend.common.async.OutboxMessageRepository;
 import dev.roland.inventory_management_backend.common.async.OutboxStatus;
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
@@ -55,21 +55,7 @@ public class DocumentPdfJobConsumer {
   private final MediaUsageService mediaUsageService;
   private final ObjectStorageService objectStorage;
   private final DocumentPdfFactory documentPdfFactory;
-
-  @Value("${app.document-pdf.renderer-url:http://localhost:8081}")
-  private String rendererUrl;
-
-  @Value("${app.document-pdf.renderer-path:/api/v1/render}")
-  private String rendererPath;
-
-  @Value("${app.document-pdf.renderer-token:}")
-  private String rendererToken;
-
-  @Value("${app.document-pdf.max-attempts:5}")
-  private int maxAttempts;
-
-  @Value("${app.outbox.retry-delay-ms:3000}")
-  private int retryDelayMs;
+  private final AppConfiguration appConfiguration;
 
   /**
    * Processes a queued document PDF job.
@@ -159,7 +145,7 @@ public class DocumentPdfJobConsumer {
       final String details = diagnostic(error);
       message.setLastError(details);
       message.setUpdatedAt(Instant.now());
-      if (permanent || attempts >= Math.max(1, maxAttempts)) {
+      if (permanent || attempts >= Math.max(1, appConfiguration.getDocumentPdfMaxAttempts())) {
         message.setStatus(OutboxStatus.DLQ_PENDING);
         final Long fileId = extractFileId(message);
         if (fileId != null) {
@@ -178,7 +164,8 @@ public class DocumentPdfJobConsumer {
             error);
       } else {
         message.setStatus(OutboxStatus.PENDING);
-        message.setNextAttemptAt(Instant.now().plusMillis(Math.max(1, retryDelayMs)));
+        message.setNextAttemptAt(
+            Instant.now().plusMillis(Math.max(1, appConfiguration.getOutboxRetryDelayMs())));
         log.warn(
             "Document PDF job {} scheduled for retry {}", message.getId(), attempts + 1, error);
       }
@@ -201,15 +188,16 @@ public class DocumentPdfJobConsumer {
     requestFactory.setReadTimeout(Duration.ofSeconds(25));
     final RestClient.RequestBodySpec call =
         RestClient.builder()
-            .baseUrl(rendererUrl)
+            .baseUrl(appConfiguration.getDocumentPdfRendererUrl())
             .requestFactory(requestFactory)
             .build()
             .post()
-            .uri(rendererPath)
+            .uri(appConfiguration.getDocumentPdfRendererPath())
             .contentType(MediaType.APPLICATION_JSON)
             .accept(MediaType.APPLICATION_PDF);
-    if (rendererToken != null && !rendererToken.isBlank()) {
-      call.header("Authorization", "Bearer " + rendererToken);
+    if (appConfiguration.getDocumentPdfRendererToken() != null
+        && !appConfiguration.getDocumentPdfRendererToken().isBlank()) {
+      call.header("Authorization", "Bearer " + appConfiguration.getDocumentPdfRendererToken());
     }
     final byte[] result;
     try {

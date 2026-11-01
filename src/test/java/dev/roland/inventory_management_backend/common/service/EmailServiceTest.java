@@ -20,10 +20,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import dev.roland.inventory_management_backend.common.async.AsyncJobException;
 import dev.roland.inventory_management_backend.common.async.OutboxService;
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.mail.ComposedMail;
 import dev.roland.inventory_management_backend.common.mail.MailComposer;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
@@ -35,13 +35,14 @@ class EmailServiceTest {
   @Mock private JavaMailSender mailSender;
   @Mock private MailComposer mailComposer;
   @Mock private OutboxService outboxService;
+  @Mock private AppConfiguration appConfiguration;
 
   private EmailService service;
 
   @BeforeEach
   void setUp() {
-    service = new EmailService(mailSender, mailComposer, outboxService);
-    ReflectionTestUtils.setField(service, "sender", "noreply@example.com");
+    when(appConfiguration.getMailFrom()).thenReturn("noreply@example.com");
+    service = new EmailService(mailSender, mailComposer, outboxService, appConfiguration);
   }
 
   @Test

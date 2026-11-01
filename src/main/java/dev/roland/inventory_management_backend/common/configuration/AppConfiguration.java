@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
-/** Collects application settings for authentication, storage, mail, and Redis services. */
+/** Collects application settings used across the application. */
 @Getter
 @Component
 public class AppConfiguration {
@@ -53,4 +53,58 @@ public class AppConfiguration {
 
   @Value("${redis.session.ttl-minutes}")
   private long sessionTtlMinutes;
+
+  @Value("${app.initial-admin.username:}")
+  private String initialAdminUsername;
+
+  @Value("${app.initial-admin.email:}")
+  private String initialAdminEmail;
+
+  @Value("${app.initial-company.name:}")
+  private String initialCompanyName;
+
+  @Value("${spring.datasource.driver-class-name:org.postgresql.Driver}")
+  private String databaseDriverClassName;
+
+  @Value("${app.outbox.encryption-secret:}")
+  private String outboxEncryptionSecret;
+
+  @Value("${app.outbox.publish-interval-ms:1000}")
+  private long outboxPublishIntervalMs;
+
+  @Value("${app.outbox.publish-batch-size:50}")
+  private int outboxPublishBatchSize;
+
+  @Value("${app.outbox.publish-confirm-timeout-ms:10000}")
+  private int outboxPublishConfirmTimeoutMs;
+
+  @Value("${app.outbox.publish-lease-seconds:120}")
+  private int outboxPublishLeaseSeconds;
+
+  @Value("${app.outbox.max-attempts:5}")
+  private int outboxMaxAttempts;
+
+  @Value("${app.outbox.retry-delay-ms:3000}")
+  private int outboxRetryDelayMs;
+
+  @Value("${app.document-pdf.renderer-url:http://localhost:8081}")
+  private String documentPdfRendererUrl;
+
+  @Value("${app.document-pdf.renderer-path:/api/v1/render}")
+  private String documentPdfRendererPath;
+
+  @Value("${app.document-pdf.renderer-token:}")
+  private String documentPdfRendererToken;
+
+  @Value("${app.document-pdf.max-attempts:5}")
+  private int documentPdfMaxAttempts;
+
+  @Value("${app.mail.from:noreply@example.com}")
+  private String mailFrom;
+
+  @Value("${spring.data.redis.host}")
+  private String redisHost;
+
+  @Value("${spring.data.redis.port}")
+  private int redisPort;
 }

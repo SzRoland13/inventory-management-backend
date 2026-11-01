@@ -18,12 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxClaimServiceTest {
 
   @Mock private OutboxMessageRepository repository;
+  @Mock private AppConfiguration appConfiguration;
 
   @Test
   void claimsPendingRowsWithLeasesBeforeReturningThemForPublishing() {
@@ -31,8 +33,7 @@ class OutboxClaimServiceTest {
     final OutboxMessage pending =
         new OutboxMessage(id, AsyncJobType.EMAIL, new byte[] {1, 2, 3}, null, null);
     when(repository.lockPending(10)).thenReturn(List.of(pending));
-    final OutboxClaimService service = new OutboxClaimService(repository);
-    ReflectionTestUtils.setField(service, "leaseSeconds", 30);
+    final OutboxClaimService service = serviceWithLease(30);
 
     final List<ClaimedOutboxMessage> claimed = service.claimPending(10);
 
@@ -61,7 +62,7 @@ class OutboxClaimServiceTest {
             nextAttempt,
             now))
         .thenReturn(1);
-    final OutboxClaimService service = new OutboxClaimService(repository);
+    final OutboxClaimService service = serviceWithLease(120);
 
     assertTrue(service.markPublishFailed(claimed, "keyed error", nextAttempt, now));
 
@@ -81,8 +82,7 @@ class OutboxClaimServiceTest {
     final OutboxMessage pending =
         new OutboxMessage(UUID.randomUUID(), AsyncJobType.EMAIL, new byte[] {1}, null, null);
     when(repository.lockPending(1)).thenReturn(List.of(pending));
-    final OutboxClaimService service = new OutboxClaimService(repository);
-    ReflectionTestUtils.setField(service, "leaseSeconds", 0);
+    final OutboxClaimService service = serviceWithLease(0);
 
     final ClaimedOutboxMessage claimed = service.claimPending(0).getFirst();
 
@@ -123,5 +123,12 @@ class OutboxClaimServiceTest {
             "failed",
             Instant.EPOCH,
             Instant.EPOCH);
+  }
+
+  private OutboxClaimService serviceWithLease(final int leaseSeconds) {
+    org.mockito.Mockito.lenient()
+        .when(appConfiguration.getOutboxPublishLeaseSeconds())
+        .thenReturn(leaseSeconds);
+    return new OutboxClaimService(repository, appConfiguration);
   }
 }

@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import dev.roland.inventory_management_backend.common.async.AsyncJobException;
 import dev.roland.inventory_management_backend.common.async.OutboxService;
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.mail.ComposedMail;
 import dev.roland.inventory_management_backend.common.mail.MailComposer;
 import dev.roland.inventory_management_backend.common.mail.Mailable;
@@ -29,9 +29,7 @@ public class EmailService {
   private final JavaMailSender javaMailSender;
   private final MailComposer mailComposer;
   private final OutboxService outboxService;
-
-  @Value("${app.mail.from:noreply@example.com}")
-  private String sender;
+  private final AppConfiguration appConfiguration;
 
   /**
    * Composes a typed request and sends the resulting message.
@@ -57,7 +55,7 @@ public class EmailService {
               MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
               StandardCharsets.UTF_8.name());
 
-      helper.setFrom(sender);
+      helper.setFrom(appConfiguration.getMailFrom());
       helper.setTo(mail.recipient());
       helper.setSubject(mail.subject());
       helper.setText(mail.htmlBody(), true);

@@ -16,6 +16,8 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
+
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -33,7 +35,9 @@ class OutboxMessageRepositoryTest {
     message.setDeliveryAttempts(5);
     message.setLastError("SMTP exhausted");
     repository.saveAndFlush(message);
-    final OutboxClaimService claims = new OutboxClaimService(repository);
+    final AppConfiguration appConfiguration = org.mockito.Mockito.mock(AppConfiguration.class);
+    org.mockito.Mockito.when(appConfiguration.getOutboxPublishLeaseSeconds()).thenReturn(120);
+    final OutboxClaimService claims = new OutboxClaimService(repository, appConfiguration);
     final ClaimedOutboxMessage first = claims.claimPending(5).getFirst();
     Assertions.assertTrue(first.deadLetter());
     claims.markPublishFailed(

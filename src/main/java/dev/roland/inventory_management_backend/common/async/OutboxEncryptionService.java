@@ -10,9 +10,10 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 
 /** Encrypts persisted job payloads with AES-GCM. */
@@ -29,7 +30,12 @@ public class OutboxEncryptionService {
    *
    * @param secret encryption secret
    */
-  public OutboxEncryptionService(@Value("${app.outbox.encryption-secret:}") final String secret) {
+  @Autowired
+  public OutboxEncryptionService(final AppConfiguration appConfiguration) {
+    this(appConfiguration.getOutboxEncryptionSecret());
+  }
+
+  OutboxEncryptionService(final String secret) {
     this.secret = secret.getBytes(StandardCharsets.UTF_8);
   }
 

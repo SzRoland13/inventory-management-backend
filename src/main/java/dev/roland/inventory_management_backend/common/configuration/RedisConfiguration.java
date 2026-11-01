@@ -1,6 +1,5 @@
 package dev.roland.inventory_management_backend.common.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -12,20 +11,15 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfiguration {
 
-  @Value("${spring.data.redis.host}")
-  private String redisHost;
-
-  @Value("${spring.data.redis.port}")
-  private int redisPort;
-
   /**
    * Creates the connection used by Redis clients.
    *
    * @return Redis connection factory
    */
   @Bean
-  public RedisConnectionFactory redisConnectionFactory() {
-    return new LettuceConnectionFactory(redisHost, redisPort);
+  public RedisConnectionFactory redisConnectionFactory(final AppConfiguration appConfiguration) {
+    return new LettuceConnectionFactory(
+        appConfiguration.getRedisHost(), appConfiguration.getRedisPort());
   }
 
   /**
