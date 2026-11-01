@@ -1,8 +1,6 @@
 package dev.roland.inventory_management_backend.common.async;
 
-import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.Objects;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -46,17 +44,14 @@ public class EmailJobConsumer {
             .lockById(envelope.id())
             .orElseThrow(
                 () -> new AsyncJobException(AsyncJobMessageKey.OUTBOX_JOB_NOT_FOUND, true));
-    if (message.getStatus() == OutboxStatus.SENT
-        || message.getStatus() == OutboxStatus.FAILED
-        || message.getStatus() == OutboxStatus.DLQ_PENDING
-        || message.getStatus() == OutboxStatus.DLQ_PUBLISHING
+    if (OutboxMessageSupport.isTerminal(message)
         // A duplicate broker delivery must not bypass a persisted retry delay.
         || (message.getNextAttemptAt() != null
             && message.getNextAttemptAt().isAfter(Instant.now()))) {
       return;
     }
     try {
-      if (!envelopeMatches(message, envelope)) {
+      if (!OutboxMessageSupport.matchesEnvelope(message, envelope)) {
         throw new AsyncJobException(AsyncJobMessageKey.OUTBOX_PAYLOAD_INVALID, true);
       }
       if (message.getJobType() != AsyncJobType.EMAIL) {
@@ -106,13 +101,5 @@ public class EmailJobConsumer {
         log.warn("Email job {} scheduled for attempt {}", message.getId(), attempts + 1, e);
       }
     }
-  }
-
-  private boolean envelopeMatches(final OutboxMessage message, final AsyncJobEnvelope envelope) {
-    return message.getJobType() == envelope.jobType()
-        && Objects.equals(message.getCompanyId(), envelope.companyId())
-        && Objects.equals(message.getDocumentId(), envelope.documentId())
-        && envelope.encryptedPayload() != null
-        && MessageDigest.isEqual(message.getEncryptedPayload(), envelope.encryptedPayload());
   }
 }

@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.common.service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
@@ -10,6 +11,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
+import dev.roland.inventory_management_backend.common.exception.ObjectStorageException;
+import dev.roland.inventory_management_backend.common.message.StorageMessageKey;
 import dev.roland.inventory_management_backend.features.media_asset.dto.GeneratedMediaPathAndName;
 import dev.roland.inventory_management_backend.features.media_asset.dto.PresignedUrlData;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
@@ -71,6 +74,25 @@ public class ObjectStorageService {
             .bucket(appConfiguration.getS3Bucket())
             .key(objectPath)
             .build());
+  }
+
+  /**
+   * Reads a stored object into memory.
+   *
+   * @param objectPath object key to read
+   * @return object bytes
+   */
+  public byte[] download(final String objectPath) {
+    try (var response =
+        s3Client.getObject(
+            GetObjectRequest.builder()
+                .bucket(appConfiguration.getS3Bucket())
+                .key(objectPath)
+                .build())) {
+      return response.readAllBytes();
+    } catch (IOException error) {
+      throw new ObjectStorageException(StorageMessageKey.OBJECT_READ_FAILED, error);
+    }
   }
 
   /**
