@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -94,7 +96,8 @@ public class DocumentController {
    * @return the requested result
    */
   @PostMapping(DRAFTS_ENDPOINT)
-  public ResponseEntity<ApiResponse<DocumentResponse>> createDraft(@RequestBody final Draft draft) {
+  public ResponseEntity<ApiResponse<DocumentResponse>> createDraft(
+      @Valid @RequestBody final Draft draft) {
     return success(facade.createDraft(draft));
   }
 
@@ -107,7 +110,7 @@ public class DocumentController {
    */
   @PutMapping(DRAFT_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> updateDraft(
-      @PathVariable final Long id, @RequestBody final DraftUpdate request) {
+      @PathVariable final Long id, @Valid @RequestBody final DraftUpdate request) {
     return success(facade.updateDraft(id, request));
   }
 

@@ -14,6 +14,8 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param activity activity value
  * @param allowedActions allowed actions value
  * @param currencyCode currency code value
+ * @param currencyId currency identifier value
+ * @param exchangeRates saved exchange-rate snapshots
  * @param date date value
  * @param files files value
  * @param id id value
@@ -43,6 +45,8 @@ public record DocumentResponse(
     Long warehouseId,
     String notes,
     String currencyCode,
+    Long currencyId,
+    List<ExchangeRateResponse> exchangeRates,
     DocumentTotals totals,
     String status,
     String version,
@@ -76,6 +80,7 @@ public record DocumentResponse(
    */
   public DocumentResponse {
     lines = immutableList(lines);
+    exchangeRates = immutableList(exchangeRates);
     allowedActions = immutableList(allowedActions);
     relatedDocuments = immutableList(relatedDocuments);
     activity = immutableList(activity);
@@ -90,6 +95,11 @@ public record DocumentResponse(
   @Override
   public List<LineResponse> lines() {
     return immutableList(lines);
+  }
+
+  @Override
+  public List<ExchangeRateResponse> exchangeRates() {
+    return immutableList(exchangeRates);
   }
 
   /**

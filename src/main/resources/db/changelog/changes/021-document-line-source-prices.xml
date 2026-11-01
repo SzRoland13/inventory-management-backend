@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="021-document-line-source-prices" author="roland">
+        <addColumn tableName="document_lines">
+            <column name="source_unit_price" type="NUMERIC(24,8)"/>
+        </addColumn>
+        <sql>UPDATE document_lines SET source_unit_price = CASE
+                 WHEN exchange_rate_snapshot IS NOT NULL AND exchange_rate_snapshot &gt; 0
+                 THEN unit_price / exchange_rate_snapshot
+                 ELSE unit_price
+             END</sql>
+        <addNotNullConstraint tableName="document_lines" columnName="source_unit_price" columnDataType="NUMERIC(24,8)"/>
+    </changeSet>
+</databaseChangeLog>

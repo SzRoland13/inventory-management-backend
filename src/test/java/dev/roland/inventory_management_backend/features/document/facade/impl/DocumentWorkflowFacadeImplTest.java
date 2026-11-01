@@ -31,10 +31,14 @@ import dev.roland.inventory_management_backend.common.service.ObjectStorageServi
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.contact.service.ContactService;
+import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.DocumentExchangeRate;
 import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.ExchangeRateDraft;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentDraft;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentLine;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
@@ -83,6 +87,7 @@ class DocumentWorkflowFacadeImplTest {
   @Mock private UnitService unitService;
   @Mock private PartnerService partnerService;
   @Mock private ContactService contactService;
+  @Mock private CurrencyService currencyService;
   @Mock private WarehouseService warehouseService;
   @Mock private CurrentCompanyProvider companyProvider;
   @Mock private UserService userService;
@@ -104,10 +109,17 @@ class DocumentWorkflowFacadeImplTest {
 
   private Company company;
   private User user;
+  private Currency preferredCurrency;
 
   @BeforeEach
   void setUp() {
-    company = Company.builder().id(COMPANY_ID).name("Example").build();
+    preferredCurrency = Currency.builder().id(1L).code("EUR").name("Euro").build();
+    company =
+        Company.builder()
+            .id(COMPANY_ID)
+            .name("Example")
+            .preferredCurrency(preferredCurrency)
+            .build();
     user = User.builder().id(USER_ID).username("admin").role(UserRole.ADMIN).build();
     lenient().when(companyProvider.getCurrentCompany()).thenReturn(company);
     lenient().when(userService.findByIdOrThrow(USER_ID)).thenReturn(user);
@@ -338,6 +350,82 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals(1, response.lines().size());
     assertEquals(new BigDecimal("3"), response.lines().getFirst().orderedQuantity());
     assertEquals(new BigDecimal("2.50"), response.lines().getFirst().unitPrice());
+  }
+
+  @Test
+  void draftPriceRoundTripsWithoutApplyingExchangeRateTwice() {
+    final Currency sourceCurrency = Currency.builder().id(3L).code("GBP").name("Pound").build();
+    final Currency targetCurrency = Currency.builder().id(2L).code("USD").name("Dollar").build();
+    final Unit unit = Unit.builder().id(7L).code("EA").name("Each").build();
+    final Product product =
+        Product.builder()
+            .id(24L)
+            .name("Widget")
+            .sku("W-1")
+            .unit(unit)
+            .currency(sourceCurrency)
+            .build();
+    when(currencyService.findById(2L)).thenReturn(Optional.of(targetCurrency));
+    when(currencyService.findById(3L)).thenReturn(Optional.of(sourceCurrency));
+    when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(unitService.findById(7L)).thenReturn(Optional.of(unit));
+    when(documentService.save(any(Document.class)))
+        .thenAnswer(
+            invocation -> {
+              final Document document = invocation.getArgument(0);
+              if (document.getId() == null) document.setId(3L);
+              if (document.getVersion() == null) document.setVersion(0L);
+              return document;
+            });
+
+    final var created =
+        facade.createDraft(
+            new Draft(
+                DocumentType.PURCHASE_ORDER,
+                null,
+                null,
+                null,
+                null,
+                List.of(new LineDraft(24L, 7L, new BigDecimal("2"), new BigDecimal("2.50"))),
+                targetCurrency.getId(),
+                List.of(new ExchangeRateDraft(sourceCurrency.getId(), new BigDecimal("1.08")))));
+
+    assertEquals(new BigDecimal("2.7000"), created.lines().getFirst().unitPrice());
+    assertEquals(new BigDecimal("2.50"), created.lines().getFirst().sourceUnitPrice());
+    assertEquals("USD", created.currencyCode());
+    assertEquals(new BigDecimal("1.08"), created.exchangeRates().getFirst().rate());
+
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
+    document.setCreatedByUser(user);
+    document.setCurrency(targetCurrency);
+    document.setExchangeRates(
+        List.of(exchangeRate(document, sourceCurrency, new BigDecimal("1.08"))));
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+
+    final var updated =
+        facade.updateDraft(
+            3L,
+            new DraftUpdate(
+                created.version(),
+                new Draft(
+                    DocumentType.PURCHASE_ORDER,
+                    null,
+                    null,
+                    null,
+                    null,
+                    List.of(
+                        new LineDraft(
+                            24L,
+                            7L,
+                            new BigDecimal("2"),
+                            created.lines().getFirst().unitPrice(),
+                            created.lines().getFirst().sourceUnitPrice())),
+                    targetCurrency.getId(),
+                    List.of(
+                        new ExchangeRateDraft(sourceCurrency.getId(), new BigDecimal("1.08"))))));
+
+    assertEquals(new BigDecimal("2.7000"), updated.lines().getFirst().unitPrice());
+    assertEquals(new BigDecimal("2.50"), updated.lines().getFirst().sourceUnitPrice());
   }
 
   @Test
@@ -899,6 +987,15 @@ class DocumentWorkflowFacadeImplTest {
         .version(0L)
         .lines(new java.util.ArrayList<>())
         .build();
+  }
+
+  private static DocumentExchangeRate exchangeRate(
+      final Document document, final Currency sourceCurrency, final BigDecimal rateValue) {
+    final DocumentExchangeRate rate = new DocumentExchangeRate();
+    rate.setDocument(document);
+    rate.setSourceCurrency(sourceCurrency);
+    rate.setRate(rateValue);
+    return rate;
   }
 
   private static Document documentWithLine(final DocumentType type, final DocumentStatus status) {

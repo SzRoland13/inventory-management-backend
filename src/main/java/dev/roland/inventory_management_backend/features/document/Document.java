@@ -161,6 +161,9 @@ public class Document implements IdInterface<Long> {
   @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<DocumentLine> lines;
 
+  @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DocumentExchangeRate> exchangeRates;
+
   /** Copies the current warehouse codes into the document snapshots. */
   @PrePersist
   void initializeWarehouseCodeSnapshots() {

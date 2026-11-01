@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.transaction.Transactional;
@@ -32,7 +34,10 @@ import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.contact.Contact;
 import dev.roland.inventory_management_backend.features.contact.enumeration.ContactType;
 import dev.roland.inventory_management_backend.features.contact.service.ContactService;
+import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.DocumentExchangeRate;
 import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
 import dev.roland.inventory_management_backend.features.document.dto.Activity;
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
@@ -41,6 +46,8 @@ import dev.roland.inventory_management_backend.features.document.dto.DocumentRes
 import dev.roland.inventory_management_backend.features.document.dto.DocumentTotals;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.ExchangeRateDraft;
+import dev.roland.inventory_management_backend.features.document.dto.ExchangeRateResponse;
 import dev.roland.inventory_management_backend.features.document.dto.FileEntry;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentDraft;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentLine;
@@ -91,7 +98,6 @@ import dev.roland.inventory_management_backend.features.partner.service.PartnerS
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
-import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.unit.service.UnitService;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -115,6 +121,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private static final List<DocumentQueueView> VIEWS = List.of(DocumentQueueView.values());
 
   private final DocumentService documentService;
+  private final CurrencyService currencyService;
   private final DocumentLineService lineService;
   private final ProductService productService;
   private final UnitService unitService;
@@ -135,7 +142,6 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private final MediaUsageService mediaUsageService;
   private final ObjectStorageService objectStorage;
   private final OutboxService outboxService;
-  private final StockMovementService stockMovementService;
 
   @Override
   public Capabilities capabilities() {
@@ -207,6 +213,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     document.setNotes(draft.notes());
     document.setLines(new ArrayList<>());
     document.setCreatedByUser(actor());
+    setCurrencyAndRates(document, draft, company);
     if (draft.partnerId() != null) {
       final Partner partner =
           partnerService
@@ -254,6 +261,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
     }
     document.setType(draft.type());
+    setCurrencyAndRates(document, draft, company);
     document.setCategory(category(draft.type()));
     document.setDocumentDate(draft.date() == null ? document.getDocumentDate() : draft.date());
     document.setNotes(draft.notes());
@@ -326,7 +334,22 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       operation.setPartnerTaxNumberSnapshot(source.getPartnerTaxNumberSnapshot());
       operation.setPartnerAddressSnapshot(source.getPartnerAddressSnapshot());
       operation.setCurrency(source.getCurrency());
+      operation.setExchangeRate(source.getExchangeRate());
+      operation.setExchangeRates(
+          safe(source.getExchangeRates()).stream()
+              .map(
+                  sourceRate -> {
+                    final DocumentExchangeRate rate = new DocumentExchangeRate();
+                    rate.setDocument(operation);
+                    rate.setSourceCurrency(sourceRate.getSourceCurrency());
+                    rate.setRate(sourceRate.getRate());
+                    return rate;
+                  })
+              .collect(Collectors.toCollection(ArrayList::new)));
       operation.setReferenceNumber(source.getReferenceNumber());
+    }
+    if (operation.getCurrency() == null) {
+      operation.setCurrency(company.getPreferredCurrency());
     }
     setWarehouse(operation, request.type(), warehouseId, company.getId());
     if (source != null
@@ -880,14 +903,97 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_CROSS_COMPANY_REFERENCE);
       }
       final BigDecimal quantity = nz(draft.quantity());
-      final BigDecimal price = nz(draft.unitPrice());
-      lines.add(buildLine(document, product, unit, quantity, price));
+      final Currency sourceCurrency =
+          product.getCurrency() == null
+              ? document.getCompany().getPreferredCurrency()
+              : product.getCurrency();
+      if (sourceCurrency == null || document.getCurrency() == null) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final BigDecimal rate =
+          sourceCurrency.getId().equals(document.getCurrency().getId())
+              ? BigDecimal.ONE
+              : safe(document.getExchangeRates()).stream()
+                  .filter(r -> r.getSourceCurrency().getId().equals(sourceCurrency.getId()))
+                  .map(DocumentExchangeRate::getRate)
+                  .findFirst()
+                  .orElseThrow(
+                      () -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+      final BigDecimal sourceUnitPrice =
+          draft.sourceUnitPrice() == null ? nz(draft.unitPrice()) : nz(draft.sourceUnitPrice());
+      final DocumentLine line =
+          buildLine(document, product, unit, quantity, sourceUnitPrice.multiply(rate));
+      line.setCurrency(document.getCurrency());
+      line.setSourceCurrency(sourceCurrency);
+      line.setExchangeRateSnapshot(rate);
+      line.setSourceUnitPrice(sourceUnitPrice);
+      lines.add(line);
+    }
+    final Set<Long> requiredRates =
+        lines.stream()
+            .map(DocumentLine::getSourceCurrency)
+            .map(Currency::getId)
+            .filter(id -> !id.equals(document.getCurrency().getId()))
+            .collect(Collectors.toSet());
+    final Set<Long> submittedRates =
+        safe(document.getExchangeRates()).stream()
+            .map(r -> r.getSourceCurrency().getId())
+            .collect(Collectors.toSet());
+    if (!requiredRates.equals(submittedRates)) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
     }
     if (document.getLines() == null) {
       document.setLines(new ArrayList<>());
     }
     document.getLines().clear();
     document.getLines().addAll(lines);
+  }
+
+  private void setCurrencyAndRates(
+      final Document document, final Draft draft, final Company company) {
+    final Long requested = draft.currencyId();
+    final Currency target =
+        requested == null
+            ? company.getPreferredCurrency()
+            : currencyService
+                .findById(requested)
+                .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+    if (target == null) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    if (!target
+            .getId()
+            .equals(
+                company.getPreferredCurrency() == null
+                    ? null
+                    : company.getPreferredCurrency().getId())
+        && actor().getRole() != UserRole.ADMIN) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    document.setCurrency(target);
+    final List<DocumentExchangeRate> saved = new ArrayList<>();
+    for (ExchangeRateDraft entry : safe(draft.exchangeRates())) {
+      if (entry == null
+          || entry.sourceCurrencyId() == null
+          || entry.rate() == null
+          || entry.rate().signum() <= 0
+          || entry.sourceCurrencyId().equals(target.getId())
+          || saved.stream()
+              .anyMatch(r -> r.getSourceCurrency().getId().equals(entry.sourceCurrencyId()))) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final Currency source =
+          currencyService
+              .findById(entry.sourceCurrencyId())
+              .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+      final DocumentExchangeRate rate = new DocumentExchangeRate();
+      rate.setDocument(document);
+      rate.setSourceCurrency(source);
+      rate.setRate(entry.rate());
+      saved.add(rate);
+    }
+    document.setExchangeRates(saved);
+    document.setExchangeRate(null);
   }
 
   private void addLine(
@@ -897,6 +1003,10 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       final BigDecimal quantity,
       final BigDecimal price) {
     final DocumentLine line = buildLine(doc, product, unit, quantity, price);
+    line.setSourceUnitPrice(price);
+    line.setCurrency(doc.getCurrency());
+    line.setSourceCurrency(doc.getCurrency());
+    line.setExchangeRateSnapshot(BigDecimal.ONE);
     doc.getLines().add(line);
     lineService.save(line);
   }
@@ -914,14 +1024,18 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
             .quantity(quantity)
             .fulfilledQuantity(BigDecimal.ZERO)
             .unitPrice(nz(source.getUnitPrice()))
+            .sourceUnitPrice(nz(source.getSourceUnitPrice()))
             .totalPrice(nz(source.getUnitPrice()).multiply(quantity))
             .currency(source.getCurrency())
+            .sourceCurrency(source.getSourceCurrency())
+            .exchangeRateSnapshot(source.getExchangeRateSnapshot())
             .productNameSnapshot(source.getProductNameSnapshot())
             .productSkuSnapshot(source.getProductSkuSnapshot())
             .vatRateSnapshot(source.getVatRateSnapshot())
             .build();
     doc.getLines().add(line);
     lineService.save(line);
+
     return line;
   }
 
@@ -941,6 +1055,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         .quantity(quantity)
         .fulfilledQuantity(BigDecimal.ZERO)
         .unitPrice(price)
+        .sourceUnitPrice(price)
         .totalPrice(price.multiply(quantity))
         .productNameSnapshot(product.getName())
         .productSkuSnapshot(product.getSku())
@@ -1029,6 +1144,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                           ? nz(line.getQuantity())
                           : sourceLine == null ? null : nz(line.getQuantity()),
                       line.getUnitPrice(),
+                      line.getSourceUnitPrice(),
                       sourceLine == null ? null : sourceLine.getId());
                 })
             .toList();
@@ -1111,6 +1227,10 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
             : idOf(doc.getTargetWarehouse()),
         doc.getNotes(),
         doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
+        doc.getCurrency() == null ? null : doc.getCurrency().getId(),
+        safe(doc.getExchangeRates()).stream()
+            .map(r -> new ExchangeRateResponse(r.getSourceCurrency().getId(), r.getRate()))
+            .toList(),
         new DocumentTotals(
             doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
             totals.net(),
