@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document_relation.service.impl;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -30,5 +32,12 @@ public class DocumentRelationServiceImpl implements DocumentRelationService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_RELATION;
+  }
+
+  @Override
+  public List<DocumentRelation> findAllBySourceDocumentIdOrTargetDocumentId(
+      final Long sourceId, final Long targetId) {
+    return documentRelationRepository.findAllBySourceDocumentIdOrTargetDocumentId(
+        sourceId, targetId);
   }
 }

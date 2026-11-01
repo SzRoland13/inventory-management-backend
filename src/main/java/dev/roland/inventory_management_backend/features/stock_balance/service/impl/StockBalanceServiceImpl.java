@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.stock_balance.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,12 +10,14 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.dto.StockBalanceListRequest;
 import dev.roland.inventory_management_backend.features.stock_balance.dto.StockBalanceQueryRow;
 import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
+import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseStatus;
 import lombok.RequiredArgsConstructor;
 
@@ -68,5 +71,11 @@ public class StockBalanceServiceImpl implements StockBalanceService {
   @Override
   public boolean hasNonZeroBalanceForWarehouse(final Long warehouseId) {
     return stockBalanceRepository.existsNonZeroOrNullQuantityByWarehouseId(warehouseId);
+  }
+
+  @Override
+  public Optional<StockBalance> findByWarehouseAndProduct(
+      final Warehouse warehouse, final Product product) {
+    return stockBalanceRepository.findByWarehouseAndProduct(warehouse, product);
   }
 }

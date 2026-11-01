@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 
 /** Provides database queries for document numbering prefix records. */
@@ -27,4 +28,24 @@ public interface DocumentPrefixRepository extends JpaRepository<DocumentPrefix, 
    * @return matching prefix, if it exists
    */
   Optional<DocumentPrefix> findByIdAndCompanyId(Long id, Long companyId);
+
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param companyId company identifier value
+   * @param documentType document type value
+   * @return the requested result
+   */
+  Optional<DocumentPrefix> findByCompanyIdAndDocumentType(
+      Long companyId, DocumentType documentType);
+
+  /**
+   * Finds records matching the supplied criteria.
+   *
+   * @param companyId company identifier value
+   * @param documentType document type value
+   * @return the requested result
+   */
+  Optional<DocumentPrefix> findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
+      Long companyId, DocumentType documentType);
 }

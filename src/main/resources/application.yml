@@ -9,7 +9,7 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
   messages:
-    basename: email-messages
+    basename: email-messages,document-messages
     encoding: UTF-8
 
   datasource:
@@ -18,6 +18,7 @@ spring:
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
+    open-in-view: false
     show-sql: true
     properties:
       hibernate.format_sql: true
@@ -74,6 +75,11 @@ app:
     publish-lease-seconds: ${OUTBOX_PUBLISH_LEASE_SECONDS:120}
     max-attempts: ${ASYNC_MAX_ATTEMPTS:5}
     retry-delay-ms: ${ASYNC_RETRY_DELAY_MS:3000}
+  document-pdf:
+    renderer-url: ${DOCUMENT_PDF_RENDERER_URL:http://localhost:8081}
+    renderer-path: ${DOCUMENT_PDF_RENDERER_PATH:/api/v1/render}
+    renderer-token: ${DOCUMENT_PDF_RENDERER_TOKEN:}
+    max-attempts: ${DOCUMENT_PDF_MAX_ATTEMPTS:5}
   mail:
     from: ${EMAIL_FROM:noreply@example.com}
   cors:

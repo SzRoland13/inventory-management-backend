@@ -23,4 +23,7 @@
     <include file="db/changelog/changes/016-warehouse-types-and-company-scope.xml"/>
     <include file="db/changelog/changes/017-partners-company-scope.xml"/>
     <include file="db/changelog/changes/018-create-outbox-messages.xml"/>
+    <include file="db/changelog/changes/019-document-workflows.xml"/>
+    <include file="db/changelog/changes/020-document-currency-rates.xml"/>
+    <include file="db/changelog/changes/021-document-line-source-prices.xml"/>
 </databaseChangeLog>

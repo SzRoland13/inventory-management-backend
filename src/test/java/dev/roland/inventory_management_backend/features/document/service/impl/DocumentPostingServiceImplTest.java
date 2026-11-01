@@ -18,9 +18,11 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
@@ -143,7 +145,9 @@ class DocumentPostingServiceImplTest {
   void missingWarehouseForStockMovementIsRejected() {
     final Document document = document(DocumentType.GOODS_RECEIPT, null, null, "1");
 
-    assertThrows(IllegalStateException.class, () -> service.complete(document));
+    final ApiException exception =
+        assertThrows(ApiException.class, () -> service.complete(document));
+    assertEquals(DocumentApiMessageKey.DOCUMENT_WAREHOUSE_REQUIRED, exception.getMessageKey());
     verify(documentService, never()).save(document);
   }
 

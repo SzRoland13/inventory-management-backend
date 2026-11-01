@@ -1,0 +1,44 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: Arial, sans-serif; color: #202124; font-size: 11pt; }
+    h1 { font-size: 20pt; margin-bottom: 4px; }
+    .muted { color: #5f6368; }
+    table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    th, td { border-bottom: 1px solid #dadce0; padding: 8px; text-align: left; }
+    .number { text-align: right; }
+    .totals { margin: 24px 0 0 auto; width: 260px; }
+    .totals p { display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <h1 th:text="${documentType}">Document</h1>
+  <p><strong><span th:text="${numberLabel}">Document number</span>:</strong> <span th:text="${number}">Number</span></p>
+  <p><strong th:text="${dateLabel}">Date</strong>: <span th:text="${date}">Date</span></p>
+  <p><strong th:text="${documentStatus}">Status</strong></p>
+  <p th:if="${partnerName != null and !partnerName.isEmpty()}"><strong th:text="${partnerLabel}">Partner</strong>: <span th:text="${partnerName}">Partner</span></p>
+  <p class="muted" th:if="${partnerAddress != null}" th:text="${partnerAddress}">Address</p>
+  <p class="muted" th:if="${warehouseName != null and !warehouseName.isEmpty()}"><span th:text="${warehouseLabel}">Warehouse</span>: <span th:text="${warehouseName}">Warehouse</span></p>
+  <h2 th:text="${itemsTitle}">Items</h2>
+  <table>
+    <thead><tr><th th:text="${productLabel}">Product</th><th th:text="${codeLabel}">Code</th><th th:text="${unitLabel}">Unit</th><th class="number" th:text="${quantityLabel}">Quantity</th><th class="number" th:text="${unitPriceLabel}">Unit price</th><th class="number" th:text="${vatRateLabel}">VAT %</th><th class="number" th:text="${netLabel}">Net</th><th class="number" th:text="${vatLabel}">VAT</th><th class="number" th:text="${grossLabel}">Gross</th></tr></thead>
+    <tbody>
+      <tr th:each="line : ${lines}">
+        <td th:text="${line.product}">Product</td><td th:text="${line.code}">Code</td>
+        <td th:text="${line.unit}">Unit</td><td class="number" th:text="${line.quantity}">0</td>
+        <td class="number" th:text="${line.price}">0</td><td class="number" th:text="${line.vatRate}">0</td>
+        <td class="number" th:text="${line.net}">0</td><td class="number" th:text="${line.tax}">0</td>
+        <td class="number" th:text="${line.gross}">0</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="totals">
+    <p><span><span th:text="${netLabel}">Net</span> (<span th:text="${currencyCode}">Currency</span>)</span><strong th:text="${netTotal}">0</strong></p>
+    <p><span th:text="${vatLabel}">VAT</span><strong th:text="${taxTotal}">0</strong></p>
+    <p><span th:text="${totalLabel}">Total</span><strong th:text="${grossTotal}">0</strong></p>
+  </div>
+  <p th:if="${notes != null and !notes.isEmpty()}"><strong th:text="${notesLabel}">Notes</strong>: <span th:text="${notes}">Notes</span></p>
+</body>
+</html>

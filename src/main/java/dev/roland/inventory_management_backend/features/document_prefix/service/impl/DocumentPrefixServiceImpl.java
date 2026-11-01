@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.document_prefix.service
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 
@@ -32,6 +33,13 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
   @Override
   public JpaRepository<DocumentPrefix, Long> getRepository() {
     return documentPrefixRepository;
+  }
+
+  @Override
+  public Optional<DocumentPrefix> findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
+      final Long companyId, final DocumentType type) {
+    return documentPrefixRepository.findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
+        companyId, type);
   }
 
   /** {@inheritDoc} */

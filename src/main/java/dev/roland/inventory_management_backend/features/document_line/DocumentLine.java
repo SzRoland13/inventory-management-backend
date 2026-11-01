@@ -80,8 +80,18 @@ public class DocumentLine implements IdInterface<Long> {
   @Builder.Default
   private BigDecimal fulfilledQuantity = BigDecimal.ZERO;
 
+  @Column(name = "closed_quantity", nullable = false, precision = 24, scale = 8)
+  @Builder.Default
+  private BigDecimal closedQuantity = BigDecimal.ZERO;
+
+  @Column(name = "closure_reason", length = 1000)
+  private String closureReason;
+
   @Column(name = "unit_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal unitPrice;
+
+  @Column(name = "source_unit_price", nullable = false, precision = 24, scale = 8)
+  private BigDecimal sourceUnitPrice;
 
   @Column(name = "total_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal totalPrice;
@@ -89,6 +99,13 @@ public class DocumentLine implements IdInterface<Long> {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "currency_id")
   private Currency currency;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "source_currency_id")
+  private Currency sourceCurrency;
+
+  @Column(name = "exchange_rate_snapshot", precision = 24, scale = 12)
+  private BigDecimal exchangeRateSnapshot;
 
   @Column(name = "product_name_snapshot")
   private String productNameSnapshot;

@@ -7,9 +7,11 @@ import jakarta.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
@@ -88,7 +90,7 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
       final BigDecimal quantityChange,
       final StockMovementType movementType) {
     if (warehouse == null) {
-      throw new IllegalStateException("Stock-affecting documents require a warehouse");
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_WAREHOUSE_REQUIRED);
     }
 
     stockMovementService.postMovement(
