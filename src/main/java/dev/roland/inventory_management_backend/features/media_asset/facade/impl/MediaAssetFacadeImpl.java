@@ -81,27 +81,31 @@ public class MediaAssetFacadeImpl implements MediaAssetFacade {
     if (asset.getThumbnailStatus() == null
         && ProductImageFormat.supports(asset.getMimeType())
         && mediaUsageService.existsByMediaAssetIdAndEntityTypeAndUsageType(
-            id, MediaEntityType.PRODUCT, MediaUsageType.IMAGE)) {
-      if (productThumbnailService.enqueueIfNeeded(asset, null)) {
-        mediaAssetService.save(asset);
-      }
+            id, MediaEntityType.PRODUCT, MediaUsageType.IMAGE)
+        && productThumbnailService.enqueueIfNeeded(asset, null)) {
+      mediaAssetService.save(asset);
     }
     final boolean ready =
         asset.getThumbnailStatus() == MediaThumbnailStatus.READY
             && asset.getThumbnailObjectPath() != null;
-    if (!ready) {
-      return new MediaThumbnailPreviewResponse(
-          id,
-          asset.getThumbnailStatus() == null
-              ? MediaThumbnailStatus.FAILED
-              : asset.getThumbnailStatus(),
-          null,
-          null);
+    final MediaThumbnailPreviewResponse response;
+    if (ready) {
+      final PresignedUrlData presigned =
+          objectStorageService.generatePresignedGetUrl(asset.getThumbnailObjectPath());
+      response =
+          new MediaThumbnailPreviewResponse(
+              id, MediaThumbnailStatus.READY, presigned.getUrl(), presigned.getExpiry());
+    } else {
+      response =
+          new MediaThumbnailPreviewResponse(
+              id,
+              asset.getThumbnailStatus() == null
+                  ? MediaThumbnailStatus.FAILED
+                  : asset.getThumbnailStatus(),
+              null,
+              null);
     }
-    final PresignedUrlData presigned =
-        objectStorageService.generatePresignedGetUrl(asset.getThumbnailObjectPath());
-    return new MediaThumbnailPreviewResponse(
-        id, MediaThumbnailStatus.READY, presigned.getUrl(), presigned.getExpiry());
+    return response;
   }
 
   /**

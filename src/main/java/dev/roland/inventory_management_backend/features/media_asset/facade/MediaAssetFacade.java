@@ -23,7 +23,12 @@ public interface MediaAssetFacade {
    */
   MediaPreviewResponse getPreview(Long id);
 
-  /** Returns the thumbnail URL and processing state for a media asset. */
+  /**
+   * Returns the thumbnail URL and processing state for a media asset.
+   *
+   * @param id media asset identifier
+   * @return thumbnail URL and processing status
+   */
   MediaThumbnailPreviewResponse getThumbnailPreview(Long id);
 
   /**

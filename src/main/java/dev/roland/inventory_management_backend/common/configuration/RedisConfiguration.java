@@ -14,6 +14,7 @@ public class RedisConfiguration {
   /**
    * Creates the connection used by Redis clients.
    *
+   * @param appConfiguration application settings containing the Redis endpoint
    * @return Redis connection factory
    */
   @Bean

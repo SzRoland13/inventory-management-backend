@@ -32,6 +32,7 @@ public class ThumbnailImageProcessor {
    *
    * @param original source image bytes
    * @return encoded thumbnail bytes
+   * @throws MediaThumbnailException if the source image cannot be decoded or encoded
    */
   public byte[] createThumbnail(final byte[] original) {
     try {

@@ -187,6 +187,12 @@ public class DocumentPdfJobConsumer {
     }
   }
 
+  /**
+   * Creates a stable filename from the document number, or its identifier for drafts.
+   *
+   * @param document document to name
+   * @return sanitized PDF filename
+   */
   String pdfFilename(final Document document) {
     final String number =
         document.getDocumentNumber() == null || document.getDocumentNumber().isBlank()
@@ -250,21 +256,25 @@ public class DocumentPdfJobConsumer {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-    if (productIds.isEmpty()) {
-      return Map.of();
+    Map<Long, String> thumbnails = Map.of();
+    if (!productIds.isEmpty()) {
+      thumbnails =
+          mediaUsageService
+              .findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+                  MediaEntityType.PRODUCT, productIds, MediaUsageType.IMAGE)
+              .stream()
+              .collect(
+                  Collectors.toMap(
+                      MediaUsage::getEntityId,
+                      usage -> thumbnailDataUri(usage.getMediaAsset()),
+                      (first, ignored) -> first));
     }
-    return mediaUsageService
-        .findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
-            MediaEntityType.PRODUCT, productIds, MediaUsageType.IMAGE)
-        .stream()
-        .collect(
-            Collectors.toMap(
-                MediaUsage::getEntityId,
-                usage -> thumbnailDataUri(usage.getMediaAsset()),
-                (first, ignored) -> first));
+
+    return thumbnails;
   }
 
   private String thumbnailDataUri(final MediaAsset asset) {
+    String result = "";
     try {
       byte[] bytes = null;
       if (asset.getThumbnailStatus() == MediaThumbnailStatus.READY
@@ -280,11 +290,11 @@ public class DocumentPdfJobConsumer {
         bytes =
             thumbnailImageProcessor.createThumbnail(objectStorage.download(asset.getObjectPath()));
       }
-      return ProductImageFormat.WEBP.dataUriPrefix() + Base64.getEncoder().encodeToString(bytes);
+      result = ProductImageFormat.WEBP.dataUriPrefix() + Base64.getEncoder().encodeToString(bytes);
     } catch (RuntimeException error) {
       log.warn("Could not load product thumbnail for media asset {}", asset.getId(), error);
-      return "";
     }
+    return result;
   }
 
   private String value(final String value) {

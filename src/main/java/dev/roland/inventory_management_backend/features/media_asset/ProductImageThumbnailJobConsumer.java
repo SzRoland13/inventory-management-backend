@@ -42,11 +42,16 @@ public class ProductImageThumbnailJobConsumer {
   private final AppConfiguration appConfiguration;
   private final ProductThumbnailService productThumbnailService;
 
-  /** Processes a queued thumbnail job. */
+  /**
+   * Processes a queued thumbnail job.
+   *
+   * @param envelope queued job envelope
+   */
   @RabbitListener(
       queues =
-          "#{T(dev.roland.inventory_management_backend.common.async.AsyncJobType).PRODUCT_IMAGE_THUMBNAIL"
-              + ".getQueueName()}")
+          "#{T("
+              + "dev.roland.inventory_management_backend.common.async.AsyncJobType"
+              + ").PRODUCT_IMAGE_THUMBNAIL.getQueueName()}")
   @Transactional
   public void consume(final AsyncJobEnvelope envelope) {
     final OutboxMessage message =
@@ -117,15 +122,17 @@ public class ProductImageThumbnailJobConsumer {
   }
 
   private Long extractAssetId(final OutboxMessage message) {
+    Long assetId = null;
     try {
       final ProductImageThumbnailJobPayload payload =
           objectMapper.readValue(
               encryptionService.decrypt(message.getEncryptedPayload()),
               ProductImageThumbnailJobPayload.class);
-      return payload.mediaAssetId();
+      assetId = payload.mediaAssetId();
     } catch (RuntimeException | IOException ignored) {
-      return null;
+      // The asset cannot be identified when the persisted payload is malformed.
     }
+    return assetId;
   }
 
   private String diagnostic(final Throwable error) {

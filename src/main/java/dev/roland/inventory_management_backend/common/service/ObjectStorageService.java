@@ -81,6 +81,7 @@ public class ObjectStorageService {
    *
    * @param objectPath object key to read
    * @return object bytes
+   * @throws ObjectStorageException if the object cannot be read
    */
   public byte[] download(final String objectPath) {
     try (var response =

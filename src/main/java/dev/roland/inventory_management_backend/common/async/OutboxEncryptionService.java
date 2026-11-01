@@ -28,13 +28,18 @@ public class OutboxEncryptionService {
   /**
    * Creates an encryptor using the configured secret.
    *
-   * @param secret encryption secret
+   * @param appConfiguration application settings containing the encryption secret
    */
   @Autowired
   public OutboxEncryptionService(final AppConfiguration appConfiguration) {
     this(appConfiguration.getOutboxEncryptionSecret());
   }
 
+  /**
+   * Creates an encryptor with the supplied secret.
+   *
+   * @param secret encryption secret
+   */
   OutboxEncryptionService(final String secret) {
     this.secret = secret.getBytes(StandardCharsets.UTF_8);
   }

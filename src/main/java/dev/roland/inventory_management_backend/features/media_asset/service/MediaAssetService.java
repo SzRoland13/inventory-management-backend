@@ -9,7 +9,12 @@ import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 
 /** Defines operations supported by the media asset feature. */
 public interface MediaAssetService extends BaseService<MediaAsset, Long> {
-  /** Finds an asset without throwing when it has already been deleted. */
+  /**
+   * Finds an asset without throwing when it has already been deleted.
+   *
+   * @param id media asset identifier
+   * @return the asset when it exists
+   */
   Optional<MediaAsset> findById(Long id);
 
   /**

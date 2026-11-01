@@ -9,6 +9,13 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public final class OutboxMessageSupport {
 
+  /**
+   * Checks whether a broker delivery matches its persisted outbox message.
+   *
+   * @param message persisted outbox message
+   * @param envelope broker delivery envelope
+   * @return whether the envelope matches the persisted message
+   */
   public static boolean matchesEnvelope(
       final OutboxMessage message, final AsyncJobEnvelope envelope) {
     return message.getJobType() == envelope.jobType()
@@ -18,6 +25,12 @@ public final class OutboxMessageSupport {
         && MessageDigest.isEqual(message.getEncryptedPayload(), envelope.encryptedPayload());
   }
 
+  /**
+   * Checks whether an outbox message has reached a state that must not be processed again.
+   *
+   * @param message persisted outbox message
+   * @return whether processing is complete or dead-lettered
+   */
   public static boolean isTerminal(final OutboxMessage message) {
     return message.getStatus() == OutboxStatus.SENT
         || message.getStatus() == OutboxStatus.FAILED

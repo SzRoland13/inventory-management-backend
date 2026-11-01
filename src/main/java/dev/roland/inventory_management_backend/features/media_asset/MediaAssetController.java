@@ -61,7 +61,12 @@ public class MediaAssetController {
         ApiResponse.success(MediaMessageKey.URL_GENERATED, mediaAssetFacade.getPreview(id)));
   }
 
-  /** Returns the generated thumbnail URL when it is ready. */
+  /**
+   * Returns the generated thumbnail URL and processing state.
+   *
+   * @param id media asset identifier
+   * @return thumbnail preview response
+   */
   @GetMapping(MEDIA_ASSET_THUMBNAIL_PREVIEW_ENDPOINT)
   public ResponseEntity<ApiResponse<MediaThumbnailPreviewResponse>> getThumbnailPreview(
       @PathVariable final Long id) {

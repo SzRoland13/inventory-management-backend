@@ -39,7 +39,14 @@ public class DocumentPdfFactory {
     return createHtml(document, languageTag, Map.of());
   }
 
-  /** Creates a localized HTML snapshot with pre-resolved product thumbnails. */
+  /**
+   * Creates a localized HTML snapshot with pre-resolved product thumbnails.
+   *
+   * @param document document to render
+   * @param languageTag language used for localized text
+   * @param thumbnails data URIs keyed by product identifier
+   * @return rendered HTML document
+   */
   public String createHtml(
       final Document document, final String languageTag, final Map<Long, String> thumbnails) {
     final Locale locale = Locale.forLanguageTag(languageTag == null ? "en" : languageTag);

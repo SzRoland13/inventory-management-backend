@@ -60,6 +60,11 @@ public class AsyncJobConfiguration {
         .build();
   }
 
+  /**
+   * Declares the primary product image thumbnail queue.
+   *
+   * @return durable product image thumbnail queue
+   */
   @Bean
   Queue productImageThumbnailQueue() {
     return QueueBuilder.durable(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getQueueName())
@@ -71,7 +76,7 @@ public class AsyncJobConfiguration {
   /**
    * Declares a delayed retry queue for email jobs.
    *
-   * @param delay retry delay in milliseconds
+   * @param appConfiguration application settings containing the retry delay
    * @return durable email retry queue
    */
   @Bean
@@ -85,7 +90,7 @@ public class AsyncJobConfiguration {
   /**
    * Declares a delayed retry queue for document PDF jobs.
    *
-   * @param delay retry delay in milliseconds
+   * @param appConfiguration application settings containing the retry delay
    * @return durable document PDF retry queue
    */
   @Bean
@@ -96,6 +101,12 @@ public class AsyncJobConfiguration {
         appConfiguration.getOutboxRetryDelayMs());
   }
 
+  /**
+   * Declares a delayed retry queue for product image thumbnail jobs.
+   *
+   * @param appConfiguration application settings containing the retry delay
+   * @return durable product image thumbnail retry queue
+   */
   @Bean
   Queue productImageThumbnailRetryQueue(final AppConfiguration appConfiguration) {
     return retryQueue(
@@ -140,6 +151,11 @@ public class AsyncJobConfiguration {
     return QueueBuilder.durable(AsyncJobType.DOCUMENT_PDF.getDeadLetterQueueName()).build();
   }
 
+  /**
+   * Declares the product image thumbnail dead-letter queue.
+   *
+   * @return durable product image thumbnail dead-letter queue
+   */
   @Bean
   Queue productImageThumbnailDeadLetterQueue() {
     return QueueBuilder.durable(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getDeadLetterQueueName())
@@ -177,6 +193,13 @@ public class AsyncJobConfiguration {
         .with(AsyncJobType.DOCUMENT_PDF.getRoutingKey());
   }
 
+  /**
+   * Binds the product image thumbnail queue to its routing key.
+   *
+   * @param queue primary product image thumbnail queue
+   * @param jobsExchange asynchronous jobs exchange
+   * @return product image thumbnail queue binding
+   */
   @Bean
   Binding productImageThumbnailBinding(
       @Qualifier("productImageThumbnailQueue") final Queue queue,
@@ -218,6 +241,13 @@ public class AsyncJobConfiguration {
         .with(AsyncJobType.DOCUMENT_PDF.getRetryRoutingKey());
   }
 
+  /**
+   * Binds the product image thumbnail retry queue to its routing key.
+   *
+   * @param queue product image thumbnail retry queue
+   * @param jobsExchange asynchronous jobs exchange
+   * @return product image thumbnail retry queue binding
+   */
   @Bean
   Binding productImageThumbnailRetryBinding(
       @Qualifier("productImageThumbnailRetryQueue") final Queue queue,
@@ -259,6 +289,13 @@ public class AsyncJobConfiguration {
         .with(AsyncJobType.DOCUMENT_PDF.getDeadLetterRoutingKey());
   }
 
+  /**
+   * Binds the product image thumbnail dead-letter queue to its routing key.
+   *
+   * @param queue product image thumbnail dead-letter queue
+   * @param jobsExchange asynchronous jobs exchange
+   * @return product image thumbnail dead-letter queue binding
+   */
   @Bean
   Binding productImageThumbnailDlqBinding(
       @Qualifier("productImageThumbnailDeadLetterQueue") final Queue queue,
