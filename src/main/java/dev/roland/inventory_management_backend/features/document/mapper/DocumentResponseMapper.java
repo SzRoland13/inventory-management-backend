@@ -106,93 +106,87 @@ public class DocumentResponseMapper {
   }
 
   private List<LineResponse> mapLines(final Document doc) {
-    final List<LineResponse> lines =
-        DocumentWorkflowValues.safe(doc.getLines()).stream()
-            .map(
-                line -> {
-                  final DocumentLine sourceLine =
-                      line.getSourceLine() != null
-                          ? line.getSourceLine()
-                          : allocationService.findAllByFulfillmentLineId(line.getId()).stream()
-                              .map(DocumentLineAllocation::getSourceOrderLine)
-                              .findFirst()
-                              .orElse(null);
-                  final DocumentLine totalsLine = sourceLine == null ? line : sourceLine;
-                  final DocumentLine quantitySourceLine =
-                      line.getSourceLine() == null ? line : line.getSourceLine();
-                  final BigDecimal ordered = DocumentWorkflowValues.nz(totalsLine.getQuantity());
-                  final BigDecimal fulfilled = accessService.fulfilledFor(totalsLine);
-                  final BigDecimal closed =
-                      DocumentWorkflowValues.nz(totalsLine.getClosedQuantity());
-                  return new LineResponse(
-                      line.getId(),
-                      line.getProduct().getId(),
-                      line.getProductNameSnapshot(),
-                      line.getProductSkuSnapshot(),
-                      line.getUnitNameSnapshot(),
-                      ordered,
-                      fulfilled,
-                      closed,
-                      totalsLine.getClosureReason(),
-                      ordered.subtract(fulfilled).subtract(closed),
-                      isDirectOperation(doc.getType())
-                          ? DocumentWorkflowValues.nz(line.getQuantity())
-                          : sourceLine == null
-                              ? null
-                              : DocumentWorkflowValues.nz(line.getQuantity()),
-                      line.getUnitPrice(),
-                      line.getSourceUnitPrice(),
-                      line.getSourceCurrency() == null ? null : line.getSourceCurrency().getId(),
-                      line.getSourceLine() != null
-                          ? line.getSourceLine().getId()
-                          : sourceLine == null ? null : sourceLine.getId(),
-                      DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity()),
-                      DocumentWorkflowValues.nz(quantitySourceLine.getQuantity())
-                          .subtract(
-                              DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity())),
-                      DocumentWorkflowValues.nz(quantitySourceLine.getInTransitQuantity()),
-                      line.getExpectedQuantity(),
-                      line.getCountedQuantity(),
-                      line.getVariance());
-                })
-            .toList();
-    return lines;
+      return DocumentWorkflowValues.safe(doc.getLines()).stream()
+          .map(
+              line -> {
+                final DocumentLine sourceLine =
+                    line.getSourceLine() != null
+                        ? line.getSourceLine()
+                        : allocationService.findAllByFulfillmentLineId(line.getId()).stream()
+                            .map(DocumentLineAllocation::getSourceOrderLine)
+                            .findFirst()
+                            .orElse(null);
+                final DocumentLine totalsLine = sourceLine == null ? line : sourceLine;
+                final DocumentLine quantitySourceLine =
+                    line.getSourceLine() == null ? line : line.getSourceLine();
+                final BigDecimal ordered = DocumentWorkflowValues.nz(totalsLine.getQuantity());
+                final BigDecimal fulfilled = accessService.fulfilledFor(totalsLine);
+                final BigDecimal closed =
+                    DocumentWorkflowValues.nz(totalsLine.getClosedQuantity());
+                return new LineResponse(
+                    line.getId(),
+                    line.getProduct().getId(),
+                    line.getProductNameSnapshot(),
+                    line.getProductSkuSnapshot(),
+                    line.getUnitNameSnapshot(),
+                    ordered,
+                    fulfilled,
+                    closed,
+                    totalsLine.getClosureReason(),
+                    ordered.subtract(fulfilled).subtract(closed),
+                    isDirectOperation(doc.getType())
+                        ? DocumentWorkflowValues.nz(line.getQuantity())
+                        : sourceLine == null
+                            ? null
+                            : DocumentWorkflowValues.nz(line.getQuantity()),
+                    line.getUnitPrice(),
+                    line.getSourceUnitPrice(),
+                    line.getSourceCurrency() == null ? null : line.getSourceCurrency().getId(),
+                    line.getSourceLine() != null
+                        ? line.getSourceLine().getId()
+                        : sourceLine == null ? null : sourceLine.getId(),
+                    DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity()),
+                    DocumentWorkflowValues.nz(quantitySourceLine.getQuantity())
+                        .subtract(
+                            DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity())),
+                    DocumentWorkflowValues.nz(quantitySourceLine.getInTransitQuantity()),
+                    line.getExpectedQuantity(),
+                    line.getCountedQuantity(),
+                    line.getVariance());
+              })
+          .toList();
   }
 
   private List<RelatedDocument> mapRelatedDocuments(final Document doc) {
-    final List<RelatedDocument> related =
-        relationService
-            .findAllBySourceDocumentIdOrTargetDocumentId(doc.getId(), doc.getId())
-            .stream()
-            .map(
-                r -> {
-                  final Document d =
-                      r.getSourceDocument().getId().equals(doc.getId())
-                          ? r.getTargetDocument()
-                          : r.getSourceDocument();
-                  return new RelatedDocument(
-                      d.getId(),
-                      DocumentWorkflowValues.number(d),
-                      d.getType(),
-                      r.getRelationType().name());
-                })
-            .distinct()
-            .toList();
-    return related;
+      return relationService
+          .findAllBySourceDocumentIdOrTargetDocumentId(doc.getId(), doc.getId())
+          .stream()
+          .map(
+              r -> {
+                final Document d =
+                    r.getSourceDocument().getId().equals(doc.getId())
+                        ? r.getTargetDocument()
+                        : r.getSourceDocument();
+                return new RelatedDocument(
+                    d.getId(),
+                    DocumentWorkflowValues.number(d),
+                    d.getType(),
+                    r.getRelationType().name());
+              })
+          .distinct()
+          .toList();
   }
 
   private List<Activity> mapActivity(final Document doc) {
-    final List<Activity> activity =
-        activityService.findAllByDocumentIdOrderByOccurredAtAsc(doc.getId()).stream()
-            .map(
-                a ->
-                    new Activity(
-                        a.getId(),
-                        a.getEventType() + (a.getDetails() == null ? "" : ": " + a.getDetails()),
-                        a.getActor() == null ? "System" : a.getActor().getUsername(),
-                        a.getOccurredAt()))
-            .toList();
-    return activity;
+      return activityService.findAllByDocumentIdOrderByOccurredAtAsc(doc.getId()).stream()
+          .map(
+              a ->
+                  new Activity(
+                      a.getId(),
+                      a.getEventType() + (a.getDetails() == null ? "" : ": " + a.getDetails()),
+                      a.getActor() == null ? "System" : a.getActor().getUsername(),
+                      a.getOccurredAt()))
+          .toList();
   }
 
   private List<FileEntry> mapFiles(final Document doc) {

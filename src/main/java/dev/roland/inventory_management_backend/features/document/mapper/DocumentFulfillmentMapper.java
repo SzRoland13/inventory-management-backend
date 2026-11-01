@@ -5,10 +5,11 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
+import lombok.experimental.UtilityClass;
 
 /** Maps a persisted fulfillment draft to the stock preview input. */
+@UtilityClass
 public final class DocumentFulfillmentMapper {
-  private DocumentFulfillmentMapper() {}
 
   public static FulfillmentPreview toPreview(final Document document) {
     return new FulfillmentPreview(

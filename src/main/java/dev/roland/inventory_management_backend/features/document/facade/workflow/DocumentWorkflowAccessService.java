@@ -20,7 +20,6 @@ import dev.roland.inventory_management_backend.features.document.message.Documen
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
-import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -36,7 +35,6 @@ public class DocumentWorkflowAccessService {
   private final CurrentCompanyProvider companyProvider;
   private final UserService userService;
   private final DocumentLineAllocationService allocationService;
-  private final DocumentLineService lineService;
   private final DocumentRelationService relationService;
 
   public User currentActor() {
@@ -56,16 +54,6 @@ public class DocumentWorkflowAccessService {
 
   public Document lock(final Long id, final Long companyId) {
     return documentService.lockByIdAndCompanyId(id, companyId).orElseThrow(this::notFound);
-  }
-
-  public DocumentLine findLine(final Long id, final Long companyId) {
-    final DocumentLine line = lineService.findByIdOrThrow(id);
-    if (line.getDocument() == null
-        || line.getDocument().getCompany() == null
-        || !companyId.equals(line.getDocument().getCompany().getId())) {
-      throw notFound();
-    }
-    return line;
   }
 
   public NotFoundException notFound() {
