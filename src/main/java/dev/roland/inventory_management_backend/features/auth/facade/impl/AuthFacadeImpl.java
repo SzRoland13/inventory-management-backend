@@ -86,6 +86,7 @@ public class AuthFacadeImpl implements AuthFacade {
   }
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public void validateOneTimeCode(final FirstLoginValidationRequest request) {
     final OneTimeCode oneTimeCode =
