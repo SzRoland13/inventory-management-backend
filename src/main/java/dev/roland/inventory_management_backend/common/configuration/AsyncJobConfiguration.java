@@ -9,7 +9,6 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -68,9 +67,11 @@ public class AsyncJobConfiguration {
    * @return durable email retry queue
    */
   @Bean
-  Queue emailRetryQueue(@Value("${app.outbox.retry-delay-ms:3000}") final int delay) {
+  Queue emailRetryQueue(final AppConfiguration appConfiguration) {
     return retryQueue(
-        AsyncJobType.EMAIL.getRetryQueueName(), AsyncJobType.EMAIL.getRoutingKey(), delay);
+        AsyncJobType.EMAIL.getRetryQueueName(),
+        AsyncJobType.EMAIL.getRoutingKey(),
+        appConfiguration.getOutboxRetryDelayMs());
   }
 
   /**
@@ -80,11 +81,11 @@ public class AsyncJobConfiguration {
    * @return durable document PDF retry queue
    */
   @Bean
-  Queue documentPdfRetryQueue(@Value("${app.outbox.retry-delay-ms:3000}") final int delay) {
+  Queue documentPdfRetryQueue(final AppConfiguration appConfiguration) {
     return retryQueue(
         AsyncJobType.DOCUMENT_PDF.getRetryQueueName(),
         AsyncJobType.DOCUMENT_PDF.getRoutingKey(),
-        delay);
+        appConfiguration.getOutboxRetryDelayMs());
   }
 
   /**

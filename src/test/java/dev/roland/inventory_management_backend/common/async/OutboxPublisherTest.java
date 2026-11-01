@@ -26,8 +26,8 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.configuration.AsyncJobConfiguration;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 
@@ -36,6 +36,7 @@ class OutboxPublisherTest {
 
   @Mock private OutboxClaimService claimService;
   @Mock private RabbitTemplate rabbitTemplate;
+  @Mock private AppConfiguration appConfiguration;
 
   @Test
   void doesNothingWhenNoJobsAreEligible() {
@@ -129,7 +130,7 @@ class OutboxPublisherTest {
             any(AsyncJobEnvelope.class),
             any(MessagePostProcessor.class),
             any(CorrelationData.class));
-    ReflectionTestUtils.setField(publisher(), "confirmTimeoutMs", 1);
+    when(appConfiguration.getOutboxPublishConfirmTimeoutMs()).thenReturn(1);
 
     publisher().publishPending();
 
@@ -200,10 +201,11 @@ class OutboxPublisherTest {
   }
 
   private OutboxPublisher publisher() {
-    final OutboxPublisher publisher = new OutboxPublisher(claimService, rabbitTemplate);
-    ReflectionTestUtils.setField(publisher, "batchSize", 50);
-    ReflectionTestUtils.setField(publisher, "confirmTimeoutMs", 100);
-    return publisher;
+    org.mockito.Mockito.lenient().when(appConfiguration.getOutboxPublishBatchSize()).thenReturn(50);
+    org.mockito.Mockito.lenient()
+        .when(appConfiguration.getOutboxPublishConfirmTimeoutMs())
+        .thenReturn(100);
+    return new OutboxPublisher(claimService, rabbitTemplate, appConfiguration);
   }
 
   private ClaimedOutboxMessage job(final boolean deadLetter) {

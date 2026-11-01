@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,6 +24,7 @@ import dev.roland.inventory_management_backend.common.async.OutboxEncryptionServ
 import dev.roland.inventory_management_backend.common.async.OutboxMessage;
 import dev.roland.inventory_management_backend.common.async.OutboxMessageRepository;
 import dev.roland.inventory_management_backend.common.async.OutboxStatus;
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
@@ -40,6 +40,7 @@ class DocumentPdfJobConsumerTest {
   @Mock private MediaUsageService mediaUsageService;
   @Mock private dev.roland.inventory_management_backend.common.service.ObjectStorageService storage;
   @Mock private DocumentPdfFactory pdfFactory;
+  @Mock private AppConfiguration appConfiguration;
 
   @InjectMocks private DocumentPdfJobConsumer consumer;
 
@@ -104,6 +105,11 @@ class DocumentPdfJobConsumerTest {
     when(documentRepository.findByIdAndCompanyId(3L, 9L)).thenReturn(Optional.of(document));
     when(fileRepository.findById(6L)).thenReturn(Optional.of(file));
     when(pdfFactory.createHtml(document, null)).thenReturn("<html></html>");
+    when(appConfiguration.getDocumentPdfRendererUrl()).thenReturn("http://127.0.0.1:1");
+    when(appConfiguration.getDocumentPdfRendererPath()).thenReturn("/api/v1/render");
+    when(appConfiguration.getDocumentPdfRendererToken()).thenReturn("");
+    when(appConfiguration.getDocumentPdfMaxAttempts()).thenReturn(3);
+    when(appConfiguration.getOutboxRetryDelayMs()).thenReturn(1000);
     final var realConsumer =
         new DocumentPdfJobConsumer(
             outboxRepository,
@@ -114,10 +120,8 @@ class DocumentPdfJobConsumerTest {
             mediaAssetService,
             mediaUsageService,
             storage,
-            pdfFactory);
-    ReflectionTestUtils.setField(realConsumer, "rendererUrl", "http://127.0.0.1:1");
-    ReflectionTestUtils.setField(realConsumer, "maxAttempts", 3);
-    ReflectionTestUtils.setField(realConsumer, "retryDelayMs", 1000);
+            pdfFactory,
+            appConfiguration);
 
     realConsumer.consume(envelope);
 

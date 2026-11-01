@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.configuration.AsyncJobConfiguration;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
 import lombok.RequiredArgsConstructor;
@@ -30,17 +30,13 @@ public class OutboxPublisher {
 
   private final OutboxClaimService claimService;
   private final RabbitTemplate rabbitTemplate;
-
-  @Value("${app.outbox.publish-batch-size:50}")
-  private int batchSize;
-
-  @Value("${app.outbox.publish-confirm-timeout-ms:10000}")
-  private int confirmTimeoutMs;
+  private final AppConfiguration appConfiguration;
 
   /** Publishes eligible jobs and persists broker outcomes. */
-  @Scheduled(fixedDelayString = "${app.outbox.publish-interval-ms:1000}")
+  @Scheduled(fixedDelayString = "#{@appConfiguration.outboxPublishIntervalMs}")
   public void publishPending() {
-    final List<ClaimedOutboxMessage> claimed = claimService.claimPending(batchSize);
+    final List<ClaimedOutboxMessage> claimed =
+        claimService.claimPending(appConfiguration.getOutboxPublishBatchSize());
     final List<PendingPublish> pending = new ArrayList<>(claimed.size());
     for (final ClaimedOutboxMessage job : claimed) {
       try {
@@ -70,7 +66,9 @@ public class OutboxPublisher {
     }
 
     final long deadline =
-        System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(Math.max(1, confirmTimeoutMs));
+        System.nanoTime()
+            + TimeUnit.MILLISECONDS.toNanos(
+                Math.max(1, appConfiguration.getOutboxPublishConfirmTimeoutMs()));
     for (final PendingPublish publish : pending) {
       try {
         final long remainingNanos = deadline - System.nanoTime();

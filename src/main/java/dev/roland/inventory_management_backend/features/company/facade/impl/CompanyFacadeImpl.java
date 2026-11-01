@@ -56,6 +56,7 @@ public class CompanyFacadeImpl implements CompanyFacade {
   }
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public CompanyExtendedResponse getExtendedCompanyData() {
     final Company company = currentCompanyProvider.getCurrentCompany();

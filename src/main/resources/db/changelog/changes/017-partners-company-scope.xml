@@ -6,13 +6,6 @@
         <addColumn tableName="users">
             <column name="company_id" type="INTEGER"/>
         </addColumn>
-        <sql dbms="postgresql"><![CDATA[
-            INSERT INTO companies(name, created_at, updated_at)
-            SELECT '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            WHERE NOT EXISTS (SELECT 1 FROM companies);
-            UPDATE users SET company_id = (SELECT id FROM companies ORDER BY id LIMIT 1)
-            WHERE company_id IS NULL;
-        ]]></sql>
         <addNotNullConstraint tableName="users" columnName="company_id" columnDataType="INTEGER"/>
         <addForeignKeyConstraint baseTableName="users" baseColumnNames="company_id"
                                  constraintName="fk_users_company" referencedTableName="companies"

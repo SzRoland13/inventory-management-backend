@@ -5,12 +5,12 @@ import java.time.Instant;
 import java.util.Objects;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.exception.MailException;
 import dev.roland.inventory_management_backend.common.mail.Mailable;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
@@ -28,12 +28,7 @@ public class EmailJobConsumer {
   private final OutboxEncryptionService encryptionService;
   private final ObjectMapper objectMapper;
   private final EmailService emailService;
-
-  @Value("${app.outbox.max-attempts:5}")
-  private int maxAttempts;
-
-  @Value("${app.outbox.retry-delay-ms:3000}")
-  private int retryDelayMs;
+  private final AppConfiguration appConfiguration;
 
   /**
    * Processes an email job and persists its delivery outcome.
@@ -94,7 +89,7 @@ public class EmailJobConsumer {
       message.setDeliveryAttempts(attempts);
       message.setLastError(OutboxPublisher.shortError(failure));
       message.setUpdatedAt(Instant.now());
-      if (failure.isPermanent() || attempts >= maxAttempts) {
+      if (failure.isPermanent() || attempts >= appConfiguration.getOutboxMaxAttempts()) {
         message.setStatus(OutboxStatus.DLQ_PENDING);
         message.setNextAttemptAt(null);
         message.setLeaseToken(null);
@@ -104,7 +99,8 @@ public class EmailJobConsumer {
         // Commit retry scheduling with the failed attempt. The outbox publisher will
         // recover publication failures; no TTL dead-letter forwarding is required.
         message.setStatus(OutboxStatus.PENDING);
-        message.setNextAttemptAt(Instant.now().plusMillis(Math.max(1, retryDelayMs)));
+        message.setNextAttemptAt(
+            Instant.now().plusMillis(Math.max(1, appConfiguration.getOutboxRetryDelayMs())));
         message.setLeaseToken(null);
         message.setLockedUntil(null);
         log.warn("Email job {} scheduled for attempt {}", message.getId(), attempts + 1, e);

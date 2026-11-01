@@ -66,6 +66,11 @@ management:
       show-details: when_authorized
 #App config
 app:
+  initial-admin:
+    username: ${INITIAL_ADMIN_USERNAME:}
+    email: ${INITIAL_ADMIN_EMAIL:}
+  initial-company:
+    name: ${INITIAL_COMPANY_NAME:}
   outbox:
     encryption-secret: ${OUTBOX_ENCRYPTION_SECRET:}
     publisher-enabled: ${OUTBOX_PUBLISHER_ENABLED:true}

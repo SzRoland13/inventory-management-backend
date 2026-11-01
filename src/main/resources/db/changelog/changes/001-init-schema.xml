@@ -265,27 +265,6 @@
                                  onDelete="RESTRICT"/>
     </changeSet>
 
-    <!-- Default admin -->
-    <changeSet id="010" author="roland">
-        <preConditions onFail="MARK_RAN">
-            <and>
-                <tableExists tableName="users"/>
-                <sqlCheck expectedResult="0">
-                    SELECT COUNT(*) FROM users WHERE username = 'admin';
-                </sqlCheck>
-            </and>
-        </preConditions>
-        <insert tableName="users">
-            <column name="username" value="admin"/>
-            <column name="email" value="admin@example.com"/>
-            <column name="password" value="$2a$12$Xn0TF.Pc6cT3WvagkECNFeVpwGCZKYDlhTo6VkuujyDKU/9Ury8Ia"/><!-- password is: admin.ADMIN.1234! -->
-            <column name="role" value="ADMIN"/>
-            <column name="created_at" valueComputed="now()"/>
-            <column name="updated_at" valueComputed="now()"/>
-            <column name="is_otc_setup_complete" valueBoolean="true" />
-        </insert>
-    </changeSet>
-
     <!-- Indexes -->
     <changeSet id="011" author="roland">
         <createIndex indexName="idx_warehouses_location_id" tableName="warehouses">
