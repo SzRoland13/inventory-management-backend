@@ -19,6 +19,7 @@ import java.math.BigDecimal;
  * @param unitName unit name value
  * @param unitPrice unit price in document currency
  * @param sourceUnitPrice original unit price in the product currency
+ * @param sourceCurrencyId source currency snapshot identifier
  */
 public record LineResponse(
     Long id,
@@ -34,4 +35,5 @@ public record LineResponse(
     BigDecimal operationQuantity,
     BigDecimal unitPrice,
     BigDecimal sourceUnitPrice,
+    Long sourceCurrencyId,
     Long sourceLineId) {}

@@ -904,9 +904,14 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       }
       final BigDecimal quantity = nz(draft.quantity());
       final Currency sourceCurrency =
-          product.getCurrency() == null
-              ? document.getCompany().getPreferredCurrency()
-              : product.getCurrency();
+          draft.sourceCurrencyId() == null
+              ? product.getCurrency() == null
+                  ? document.getCompany().getPreferredCurrency()
+                  : product.getCurrency()
+              : currencyService
+                  .findById(draft.sourceCurrencyId())
+                  .orElseThrow(
+                      () -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
       if (sourceCurrency == null || document.getCurrency() == null) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
       }
@@ -1145,6 +1150,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                           : sourceLine == null ? null : nz(line.getQuantity()),
                       line.getUnitPrice(),
                       line.getSourceUnitPrice(),
+                      line.getSourceCurrency() == null ? null : line.getSourceCurrency().getId(),
                       sourceLine == null ? null : sourceLine.getId());
                 })
             .toList();

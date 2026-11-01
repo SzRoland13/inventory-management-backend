@@ -350,6 +350,7 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals(1, response.lines().size());
     assertEquals(new BigDecimal("3"), response.lines().getFirst().orderedQuantity());
     assertEquals(new BigDecimal("2.50"), response.lines().getFirst().unitPrice());
+    assertEquals(preferredCurrency.getId(), response.lines().getFirst().sourceCurrencyId());
   }
 
   @Test
@@ -392,6 +393,7 @@ class DocumentWorkflowFacadeImplTest {
 
     assertEquals(new BigDecimal("2.7000"), created.lines().getFirst().unitPrice());
     assertEquals(new BigDecimal("2.50"), created.lines().getFirst().sourceUnitPrice());
+    assertEquals(sourceCurrency.getId(), created.lines().getFirst().sourceCurrencyId());
     assertEquals("USD", created.currencyCode());
     assertEquals(new BigDecimal("1.08"), created.exchangeRates().getFirst().rate());
 
@@ -400,6 +402,7 @@ class DocumentWorkflowFacadeImplTest {
     document.setCurrency(targetCurrency);
     document.setExchangeRates(
         List.of(exchangeRate(document, sourceCurrency, new BigDecimal("1.08"))));
+    product.setCurrency(Currency.builder().id(4L).code("JPY").name("Yen").build());
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
 
     final var updated =
@@ -419,13 +422,46 @@ class DocumentWorkflowFacadeImplTest {
                             7L,
                             new BigDecimal("2"),
                             created.lines().getFirst().unitPrice(),
-                            created.lines().getFirst().sourceUnitPrice())),
+                            created.lines().getFirst().sourceUnitPrice(),
+                            created.lines().getFirst().sourceCurrencyId())),
                     targetCurrency.getId(),
                     List.of(
                         new ExchangeRateDraft(sourceCurrency.getId(), new BigDecimal("1.08"))))));
 
     assertEquals(new BigDecimal("2.7000"), updated.lines().getFirst().unitPrice());
     assertEquals(new BigDecimal("2.50"), updated.lines().getFirst().sourceUnitPrice());
+    assertEquals(sourceCurrency.getId(), updated.lines().getFirst().sourceCurrencyId());
+  }
+
+  @Test
+  void draftRejectsUnknownSourceCurrencySnapshot() {
+    final Unit unit = Unit.builder().id(7L).code("EA").name("Each").build();
+    final Product product = Product.builder().id(24L).unit(unit).build();
+    when(currencyService.findById(preferredCurrency.getId()))
+        .thenReturn(Optional.of(preferredCurrency));
+    when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(unitService.findById(7L)).thenReturn(Optional.of(unit));
+    when(documentService.save(any(Document.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    final ApiException exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                facade.createDraft(
+                    new Draft(
+                        DocumentType.PURCHASE_ORDER,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of(
+                            new LineDraft(
+                                24L, 7L, BigDecimal.ONE, BigDecimal.TEN, BigDecimal.TEN, 999L)),
+                        preferredCurrency.getId(),
+                        List.of())));
+
+    assertEquals(DocumentApiMessageKey.DOCUMENT_INVALID_LINES, exception.getMessageKey());
   }
 
   @Test
