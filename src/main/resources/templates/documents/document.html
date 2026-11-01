@@ -14,7 +14,7 @@
     .brand-copy { display: inline-block; vertical-align: middle; }
     .brand-name { color: #17243b; font-size: 14pt; font-weight: 700; }
     .brand-detail { display: block; }
-    .heading { margin: 65px 0 24px; }
+    .heading { margin: 85px 0 39px; }
     .eyebrow { color: #3167e9; font-size: 8pt; letter-spacing: 2px; font-weight: bold; text-transform: uppercase; }
     h1 { font-size: 25pt; margin: 3px 0 0; }
     .number { float: right; text-align: right; color: #60718d; font-size: 9pt; margin-top: 7px; }
@@ -34,13 +34,15 @@
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th { background: #f4f6fa; color: #647590; font-size: 7pt; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 7px; border-top: 1px solid #dce4ef; border-bottom: 1px solid #dce4ef; }
     td { padding: 10px 7px; border-bottom: 1px solid #dce4ef; vertical-align: top; }
-    th:first-child, td:first-child { width: 43%; }
-    th:nth-child(2), td:nth-child(2) { width: 13%; text-align: right; }
-    th:nth-child(3), td:nth-child(3) { width: 13%; }
-    th:nth-child(4), td:nth-child(4) { width: 15%; text-align: right; }
-    th:nth-child(5), td:nth-child(5) { width: 16%; text-align: right; }
+    th:first-child, td:first-child { width: 30%; }
+    th:nth-child(2), td:nth-child(2) { width: 8%; text-align: right; }
+    th:nth-child(3), td:nth-child(3) { width: 8%; }
+    th:nth-child(4), td:nth-child(4) { width: 14%; text-align: right; }
+    th:nth-child(5), td:nth-child(5) { width: 10%; text-align: right; }
+    th:nth-child(6), td:nth-child(6) { width: 14%; text-align: right; }
+    th:nth-child(7), td:nth-child(7) { width: 16%; text-align: right; }
     .product { font-weight: bold; }
-    .sku { color: #647590; font-size: 7.5pt; margin-top: 2px; }
+    .sku { display: block; color: #647590; font-size: 7.5pt; margin-top: 2px; }
     .qty { font-weight: bold; }
     .totals { width: 42%; margin: 17px 0 24px auto; }
     .total-row { display: table; width: 100%; padding: 4px 0; color: #647590; }
@@ -57,6 +59,11 @@
     .footer { border-top: 1px solid #dce4ef; margin-top: 22px; padding-top: 8px; color: #647590; font-size: 7pt; }
     .footer-number { float: right; color: #17243b; font-weight: bold; }
     tr { page-break-inside: avoid; }
+    .product-cell { display: table; width: 100%; }
+    .product-thumb, .product-copy { display: table-cell; vertical-align: middle; }
+    .product-thumb { width: 36px; padding-right: 7px; }
+    .product-thumb img { width: 29px; height: 29px; object-fit: contain; border-radius: 3px; }
+    .product-copy { overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
@@ -78,7 +85,7 @@
   </div>
 
   <div class="details" th:classappend="${warehouseName.isEmpty()} ? 'two-columns' : ''">
-    <div class="detail" th:if="${!warehouseName.isEmpty()}">
+    <div class="detail">
       <div class="label" th:text="${deliveredToLabel}">Partner</div>
       <strong th:text="${partnerName}">Partner name</strong>
       <span class="muted" th:if="${!partnerAddress.isEmpty()}" th:text="${partnerAddress}">Partner address</span>
@@ -89,7 +96,7 @@
       <strong th:text="${date}">Date</strong>
       <span class="muted" th:if="${!referenceNumber.isEmpty()}" th:text="|Reference: ${referenceNumber}|">Reference</span>
     </div>
-    <div class="detail">
+    <div class="detail" th:if="${!warehouseName.isEmpty()}">
       <div class="label" th:text="${dispatchWarehouseLabel}">Warehouse</div>
       <strong th:text="${warehouseName}">Warehouse</strong>
       <span class="muted" th:if="${!warehouseCode.isEmpty()}" th:text="|Warehouse code: ${warehouseCode}|">Warehouse code</span>
@@ -98,11 +105,12 @@
 
   <div class="section-head"><h2 class="section-title" th:text="${itemsTitle}">Items</h2><span class="hint" th:text="${quantityHint}">Quantity hint</span></div>
   <table>
-    <thead><tr><th th:text="${productLabel}">Product</th><th th:text="${quantityLabel}">Quantity</th><th th:text="${unitLabel}">Unit</th><th th:text="${unitPriceLabel}">Unit price</th><th th:text="${lineTotalLabel}">Line total</th></tr></thead>
+    <thead><tr><th th:text="${productLabel}">Product</th><th th:text="${quantityLabel}">Quantity</th><th th:text="${unitLabel}">Unit</th><th th:text="${unitPriceLabel}">Net unit price</th><th th:text="${vatRateLabel}">VAT rate</th><th th:text="${vatAmountLabel}">VAT amount</th><th th:text="${lineTotalLabel}">Gross total</th></tr></thead>
     <tbody><tr th:each="line : ${lines}">
-      <td><div class="product" th:text="${line.product}">Product</div><div class="sku" th:if="${!line.code.isEmpty()}" th:text="|SKU ${line.code}|">SKU</div></td>
+      <td><div class="product-cell"><span class="product-thumb" th:if="${!line.thumbnail.isEmpty()}"><img th:src="${line.thumbnail}" alt="" /></span><span class="product-copy"><span class="product" th:text="${line.product}">Product</span><span class="sku" th:if="${!line.code.isEmpty()}" th:text="|SKU ${line.code}|">SKU</span></span></div></td>
       <td class="qty" th:text="${line.quantity}">0</td><td th:text="${line.unit}">Unit</td>
-      <td th:text="|${currencySymbol} ${line.price}|">Price</td><td th:text="|${currencySymbol} ${line.gross}|">Total</td>
+      <td th:text="|${currencySymbol} ${line.price}|">Price</td><td th:text="|${line.vatRate}%|">VAT rate</td>
+      <td th:text="|${currencySymbol} ${line.tax}|">VAT amount</td><td th:text="|${currencySymbol} ${line.gross}|">Total</td>
     </tr></tbody>
   </table>
 

@@ -27,6 +27,7 @@ import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
+import dev.roland.inventory_management_backend.features.product.Product;
 
 @ExtendWith(MockitoExtension.class)
 class DocumentPdfFactoryTest {
@@ -131,6 +132,34 @@ class DocumentPdfFactoryTest {
     assertEquals("0.00", row.get("net"));
     assertEquals("0.00", row.get("tax"));
     assertEquals("0.00", row.get("gross"));
+  }
+
+  @Test
+  void includesTaxBreakdownAndThumbnailOnDocumentLine() {
+    final DocumentLine line =
+        DocumentLine.builder()
+            .product(Product.builder().id(42L).build())
+            .quantity(new BigDecimal("2"))
+            .unitPrice(new BigDecimal("10"))
+            .vatRateSnapshot(new BigDecimal("27"))
+            .productNameSnapshot("Widget")
+            .build();
+    final Document document = document(List.of(line));
+    when(document.getDocumentNumber()).thenReturn("DN-1");
+    when(documentMessages.getMessage(
+            anyString(), isNull(), org.mockito.ArgumentMatchers.any(Locale.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(templateEngine.process(eq("documents/document"), any(IContext.class)))
+        .thenReturn("rendered");
+
+    factory.createHtml(document, "en", java.util.Map.of(42L, "data:image/webp;base64,AA=="));
+
+    final java.util.Map<?, ?> row =
+        (java.util.Map<?, ?>) ((List<?>) capturedContext().getVariable("lines")).getFirst();
+    assertEquals("27", row.get("vatRate"));
+    assertEquals("5.40", row.get("tax"));
+    assertEquals("25.40", row.get("gross"));
+    assertEquals("data:image/webp;base64,AA==", row.get("thumbnail"));
   }
 
   private IContext capturedContext() {

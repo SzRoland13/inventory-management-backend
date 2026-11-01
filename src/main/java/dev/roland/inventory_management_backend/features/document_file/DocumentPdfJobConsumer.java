@@ -2,11 +2,13 @@ package dev.roland.inventory_management_backend.features.document_file;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 
@@ -26,6 +28,7 @@ import dev.roland.inventory_management_backend.common.async.AsyncJobType;
 import dev.roland.inventory_management_backend.common.async.OutboxEncryptionService;
 import dev.roland.inventory_management_backend.common.async.OutboxMessage;
 import dev.roland.inventory_management_backend.common.async.OutboxMessageRepository;
+import dev.roland.inventory_management_backend.common.async.OutboxMessageSupport;
 import dev.roland.inventory_management_backend.common.async.OutboxStatus;
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
@@ -33,7 +36,10 @@ import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.MediaThumbnailStatus;
+import dev.roland.inventory_management_backend.features.media_asset.ProductImageFormat;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_asset.service.ThumbnailImageProcessor;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
@@ -55,6 +61,7 @@ public class DocumentPdfJobConsumer {
   private final MediaUsageService mediaUsageService;
   private final ObjectStorageService objectStorage;
   private final DocumentPdfFactory documentPdfFactory;
+  private final ThumbnailImageProcessor thumbnailImageProcessor;
   private final AppConfiguration appConfiguration;
 
   /**
@@ -62,7 +69,10 @@ public class DocumentPdfJobConsumer {
    *
    * @param envelope envelope value
    */
-  @RabbitListener(queues = "inventory.document-pdf")
+  @RabbitListener(
+      queues =
+          "#{T(dev.roland.inventory_management_backend.common.async.AsyncJobType).DOCUMENT_PDF"
+              + ".getQueueName()}")
   @Transactional
   public void consume(final AsyncJobEnvelope envelope) {
     final OutboxMessage message =
@@ -72,13 +82,14 @@ public class DocumentPdfJobConsumer {
                 () ->
                     new DocumentPdfJobException(
                         DocumentApiMessageKey.DOCUMENT_PDF_JOB_NOT_FOUND, true));
-    if (terminal(message)
+    if (OutboxMessageSupport.isTerminal(message)
         || (message.getNextAttemptAt() != null
             && message.getNextAttemptAt().isAfter(Instant.now()))) {
       return;
     }
     try {
-      if (!matches(message, envelope) || message.getJobType() != AsyncJobType.DOCUMENT_PDF) {
+      if (!OutboxMessageSupport.matchesEnvelope(message, envelope)
+          || message.getJobType() != AsyncJobType.DOCUMENT_PDF) {
         throw new DocumentPdfJobException(DocumentApiMessageKey.DOCUMENT_PDF_JOB_INVALID, true);
       }
       final JsonNode payload = readPayload(message);
@@ -115,13 +126,14 @@ public class DocumentPdfJobConsumer {
               MediaEntityType.DOCUMENT,
               documentId,
               MediaUsageType.DOCUMENT_PDF);
-      objectStorage.upload(path, pdf.length, "application/pdf", new ByteArrayInputStream(pdf));
+      objectStorage.upload(
+          path, pdf.length, MediaType.APPLICATION_PDF.toString(), new ByteArrayInputStream(pdf));
       final MediaAsset asset =
           mediaAssetService.save(
               MediaAsset.builder()
                   .objectPath(path)
                   .filename(filename)
-                  .mimeType("application/pdf")
+                  .mimeType(MediaType.APPLICATION_PDF.toString())
                   .fileSize((long) pdf.length)
                   .build());
       mediaUsageService.save(
@@ -185,7 +197,8 @@ public class DocumentPdfJobConsumer {
   }
 
   private byte[] render(final Document document, final String languageTag) {
-    final String html = documentPdfFactory.createHtml(document, languageTag);
+    final String html =
+        documentPdfFactory.createHtml(document, languageTag, productThumbnails(document));
     final RenderRequest request =
         new RenderRequest(
             html,
@@ -225,6 +238,53 @@ public class DocumentPdfJobConsumer {
       throw new DocumentPdfJobException(DocumentApiMessageKey.DOCUMENT_PDF_EMPTY_RESULT, false);
     }
     return result;
+  }
+
+  private Map<Long, String> productThumbnails(final Document document) {
+    final List<Long> productIds =
+        document.getLines() == null
+            ? List.of()
+            : document.getLines().stream()
+                .filter(line -> line.getProduct() != null)
+                .map(line -> line.getProduct().getId())
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    if (productIds.isEmpty()) {
+      return Map.of();
+    }
+    return mediaUsageService
+        .findAllByEntityTypeAndEntityIdInAndUsageTypeOrderByEntityIdAscSortOrderAsc(
+            MediaEntityType.PRODUCT, productIds, MediaUsageType.IMAGE)
+        .stream()
+        .collect(
+            Collectors.toMap(
+                MediaUsage::getEntityId,
+                usage -> thumbnailDataUri(usage.getMediaAsset()),
+                (first, ignored) -> first));
+  }
+
+  private String thumbnailDataUri(final MediaAsset asset) {
+    try {
+      byte[] bytes = null;
+      if (asset.getThumbnailStatus() == MediaThumbnailStatus.READY
+          && asset.getThumbnailObjectPath() != null) {
+        try {
+          bytes = objectStorage.download(asset.getThumbnailObjectPath());
+        } catch (RuntimeException error) {
+          log.info(
+              "Stored thumbnail unavailable for media asset {}; resizing original", asset.getId());
+        }
+      }
+      if (bytes == null || bytes.length == 0) {
+        bytes =
+            thumbnailImageProcessor.createThumbnail(objectStorage.download(asset.getObjectPath()));
+      }
+      return ProductImageFormat.WEBP.dataUriPrefix() + Base64.getEncoder().encodeToString(bytes);
+    } catch (RuntimeException error) {
+      log.warn("Could not load product thumbnail for media asset {}", asset.getId(), error);
+      return "";
+    }
   }
 
   private String value(final String value) {
@@ -284,20 +344,6 @@ public class DocumentPdfJobConsumer {
       throw new DocumentPdfJobException(
           DocumentApiMessageKey.DOCUMENT_PDF_PAYLOAD_INVALID, true, error);
     }
-  }
-
-  private boolean matches(final OutboxMessage message, final AsyncJobEnvelope envelope) {
-    return message.getJobType() == envelope.jobType()
-        && Objects.equals(message.getCompanyId(), envelope.companyId())
-        && Objects.equals(message.getDocumentId(), envelope.documentId())
-        && MessageDigest.isEqual(message.getEncryptedPayload(), envelope.encryptedPayload());
-  }
-
-  private boolean terminal(final OutboxMessage message) {
-    return message.getStatus() == OutboxStatus.SENT
-        || message.getStatus() == OutboxStatus.FAILED
-        || message.getStatus() == OutboxStatus.DLQ_PENDING
-        || message.getStatus() == OutboxStatus.DLQ_PUBLISHING;
   }
 
   private record RenderRequest(String html, RenderOptions options) {}

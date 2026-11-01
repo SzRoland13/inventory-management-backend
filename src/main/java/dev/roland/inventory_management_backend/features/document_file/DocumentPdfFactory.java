@@ -7,6 +7,7 @@ import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
@@ -35,12 +36,27 @@ public class DocumentPdfFactory {
    * @return the requested result
    */
   public String createHtml(final Document document, final String languageTag) {
+    return createHtml(document, languageTag, Map.of());
+  }
+
+  /** Creates a localized HTML snapshot with pre-resolved product thumbnails. */
+  public String createHtml(
+      final Document document, final String languageTag, final Map<Long, String> thumbnails) {
     final Locale locale = Locale.forLanguageTag(languageTag == null ? "en" : languageTag);
     final Context context = new Context(locale);
     final List<Map<String, Object>> lines =
         document.getLines() == null
             ? List.of()
-            : document.getLines().stream().map(line -> lineData(line, locale)).toList();
+            : document.getLines().stream()
+                .map(
+                    line ->
+                        lineData(
+                            line,
+                            locale,
+                            line.getProduct() == null
+                                ? ""
+                                : thumbnails.getOrDefault(line.getProduct().getId(), "")))
+                .toList();
     final DocumentTotalsCalculator.Totals totals =
         DocumentTotalsCalculator.calculate(
             document.getLines() == null ? List.of() : document.getLines());
@@ -78,6 +94,7 @@ public class DocumentPdfFactory {
             Map.entry("quantityLabel", message("pdf.label.quantity", locale)),
             Map.entry("unitPriceLabel", message("pdf.label.unit_price", locale)),
             Map.entry("vatRateLabel", message("pdf.label.vat_rate", locale)),
+            Map.entry("vatAmountLabel", message("pdf.label.vat_amount", locale)),
             Map.entry("netLabel", message("pdf.label.net", locale)),
             Map.entry("vatLabel", message("pdf.label.vat", locale)),
             Map.entry("grossLabel", message("pdf.label.gross", locale)),
@@ -140,7 +157,8 @@ public class DocumentPdfFactory {
     return templateEngine.process(TEMPLATE, context);
   }
 
-  private Map<String, Object> lineData(final DocumentLine line, final Locale locale) {
+  private Map<String, Object> lineData(
+      final DocumentLine line, final Locale locale, final String thumbnail) {
     final var quantity = line.getQuantity() == null ? BigDecimal.ZERO : line.getQuantity();
     final var price = line.getUnitPrice() == null ? BigDecimal.ZERO : line.getUnitPrice();
     final var amounts = DocumentTotalsCalculator.line(line);
@@ -148,6 +166,7 @@ public class DocumentPdfFactory {
         line.getVatRateSnapshot() == null ? BigDecimal.ZERO : line.getVatRateSnapshot();
     return Map.ofEntries(
         Map.entry("product", value(line.getProductNameSnapshot())),
+        Map.entry("thumbnail", Objects.toString(thumbnail, "")),
         Map.entry("code", value(line.getProductSkuSnapshot())),
         Map.entry("unit", value(line.getUnitNameSnapshot())),
         Map.entry("quantity", formatQuantity(quantity, locale)),
