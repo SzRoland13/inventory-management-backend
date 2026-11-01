@@ -27,4 +27,5 @@
     <include file="db/changelog/changes/020-document-currency-rates.xml"/>
     <include file="db/changelog/changes/021-document-line-source-prices.xml"/>
     <include file="db/changelog/changes/022-media-asset-thumbnails.xml"/>
+    <include file="db/changelog/changes/023-warehouse-operations.xml"/>
 </databaseChangeLog>

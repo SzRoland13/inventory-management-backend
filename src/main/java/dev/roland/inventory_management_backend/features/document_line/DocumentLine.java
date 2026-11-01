@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,6 +23,7 @@ import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
 import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document_line.message.DocumentLineMessageKey;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
@@ -56,6 +59,10 @@ public class DocumentLine implements IdInterface<Long> {
   @JoinColumn(name = "document_id", nullable = false)
   private Document document;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "source_line_id")
+  private DocumentLine sourceLine;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "product_id", nullable = false)
   private Product product;
@@ -86,6 +93,38 @@ public class DocumentLine implements IdInterface<Long> {
 
   @Column(name = "closure_reason", length = 1000)
   private String closureReason;
+
+  @Column(name = "returned_quantity", nullable = false, precision = 24, scale = 8)
+  @Builder.Default
+  private BigDecimal returnedQuantity = BigDecimal.ZERO;
+
+  @Column(name = "released_quantity", nullable = false, precision = 24, scale = 8)
+  @Builder.Default
+  private BigDecimal releasedQuantity = BigDecimal.ZERO;
+
+  @Column(name = "replaced_quantity", nullable = false, precision = 24, scale = 8)
+  @Builder.Default
+  private BigDecimal replacedQuantity = BigDecimal.ZERO;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "workflow_disposition", length = 40)
+  private ReturnDisposition workflowDisposition;
+
+  @Column(name = "in_transit_quantity", nullable = false, precision = 24, scale = 8)
+  @Builder.Default
+  private BigDecimal inTransitQuantity = BigDecimal.ZERO;
+
+  @Column(name = "expected_quantity", precision = 24, scale = 8)
+  private BigDecimal expectedQuantity;
+
+  @Column(name = "counted_quantity", precision = 24, scale = 8)
+  private BigDecimal countedQuantity;
+
+  @Column(name = "variance", precision = 24, scale = 8)
+  private BigDecimal variance;
+
+  @Column(name = "variance_reason", length = 1000)
+  private String varianceReason;
 
   @Column(name = "unit_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal unitPrice;

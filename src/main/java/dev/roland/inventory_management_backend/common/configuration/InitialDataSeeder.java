@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.common.configuration;
 
+import java.util.List;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -39,33 +41,39 @@ public class InitialDataSeeder implements CommandLineRunner {
       jdbcTemplate.execute("SELECT pg_advisory_xact_lock(" + SEED_LOCK_ID + ")");
     }
 
-    if (!companyService.findAll().isEmpty()) {
-      return;
+    List<Company> companies = companyService.findAll();
+    if (companies.isEmpty()) {
+      requireConfiguration("INITIAL_ADMIN_USERNAME", appConfiguration.getInitialAdminUsername());
+      requireConfiguration("INITIAL_ADMIN_EMAIL", appConfiguration.getInitialAdminEmail());
+      requireConfiguration("INITIAL_COMPANY_NAME", appConfiguration.getInitialCompanyName());
+
+      final Company company =
+          companyService.save(
+              Company.builder().name(appConfiguration.getInitialCompanyName()).build());
+      userService.save(
+          User.builder()
+              .username(appConfiguration.getInitialAdminUsername())
+              .email(appConfiguration.getInitialAdminEmail())
+              .role(UserRole.ADMIN)
+              .status(UserStatus.SETUP_REQUIRED)
+              .company(company)
+              .build());
+      companies = List.of(company);
     }
 
-    requireConfiguration("INITIAL_ADMIN_USERNAME", appConfiguration.getInitialAdminUsername());
-    requireConfiguration("INITIAL_ADMIN_EMAIL", appConfiguration.getInitialAdminEmail());
-    requireConfiguration("INITIAL_COMPANY_NAME", appConfiguration.getInitialCompanyName());
-
-    final Company company =
-        companyService.save(
-            Company.builder().name(appConfiguration.getInitialCompanyName()).build());
-    userService.save(
-        User.builder()
-            .username(appConfiguration.getInitialAdminUsername())
-            .email(appConfiguration.getInitialAdminEmail())
-            .role(UserRole.ADMIN)
-            .status(UserStatus.SETUP_REQUIRED)
-            .company(company)
-            .build());
-
-    for (final DocumentType type : DocumentType.values()) {
-      documentPrefixService.save(
-          DocumentPrefix.builder()
-              .company(company)
-              .documentType(type)
-              .prefix(type.getDefaultPrefix())
-              .build());
+    for (final Company company : companies) {
+      for (final DocumentType type : DocumentType.values()) {
+        if (documentPrefixService
+            .findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(company.getId(), type)
+            .isEmpty()) {
+          documentPrefixService.save(
+              DocumentPrefix.builder()
+                  .company(company)
+                  .documentType(type)
+                  .prefix(type.getDefaultPrefix())
+                  .build());
+        }
+      }
     }
   }
 

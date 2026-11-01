@@ -11,6 +11,9 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 
 /** Coordinates document workflow operations. */
 public interface DocumentWorkflowFacade {
@@ -129,4 +132,14 @@ public interface DocumentWorkflowFacade {
    * @return the requested result
    */
   DocumentResponse retryPdf(Long id, String idempotencyKey);
+
+  WarehouseOperationPreview previewWarehouseOperation(
+      Long id, WarehouseOperationType operation, WarehouseOperationRequest request);
+
+  DocumentResponse applyWarehouseOperation(
+      Long id,
+      WarehouseOperationType operation,
+      WarehouseOperationRequest request,
+      String idempotencyKey,
+      String expectedVersion);
 }

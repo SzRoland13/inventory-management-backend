@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.stock_movement.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,12 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
 /** Defines operations supported by the stock movement feature. */
 public interface StockMovementService extends BaseService<StockMovement, Long> {
+  List<StockMovement> findEffectiveThrough(
+      Long productId, Long warehouseId, LocalDateTime effectiveAt);
+
+  List<StockMovement> findEffectiveAfter(
+      Long productId, Long warehouseId, LocalDateTime effectiveAt);
+
   /**
    * Searches posted movements within a company and optional filters.
    *

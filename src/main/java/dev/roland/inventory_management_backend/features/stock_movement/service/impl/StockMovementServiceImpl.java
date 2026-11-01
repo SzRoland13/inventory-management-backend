@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.stock_movement.service.
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.transaction.Transactional;
@@ -40,6 +41,22 @@ public class StockMovementServiceImpl implements StockMovementService {
   private final StockMovementRepository stockMovementRepository;
   private final StockBalanceRepository stockBalanceRepository;
   private final WarehouseRepository warehouseRepository;
+
+  @Override
+  public List<StockMovement> findEffectiveThrough(
+      final Long productId, final Long warehouseId, final LocalDateTime time) {
+    return stockMovementRepository
+        .findAllByProduct_IdAndWarehouse_IdAndEffectiveAtLessThanEqualOrderByEffectiveAtAscIdAsc(
+            productId, warehouseId, time);
+  }
+
+  @Override
+  public List<StockMovement> findEffectiveAfter(
+      final Long productId, final Long warehouseId, final LocalDateTime time) {
+    return stockMovementRepository
+        .findAllByProduct_IdAndWarehouse_IdAndEffectiveAtGreaterThanOrderByEffectiveAtAscIdAsc(
+            productId, warehouseId, time);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -121,6 +138,7 @@ public class StockMovementServiceImpl implements StockMovementService {
             .product(documentLine.getProduct())
             .quantityChange(quantityChange)
             .movementType(movementType)
+            .effectiveAt(LocalDateTime.now())
             .createdByUser(createdByUser)
             .build();
 
@@ -148,14 +166,20 @@ public class StockMovementServiceImpl implements StockMovementService {
 
     final DocumentType documentType = line.getDocument().getType();
     final boolean validTransitReceipt =
-        documentType == DocumentType.TRANSFER_RECEIPT
+        (documentType == DocumentType.TRANSFER_RECEIPT
+                || documentType == DocumentType.TRANSFER_DELIVERY)
             && movementType == StockMovementType.TRANSFER_IN
             && quantityChange.signum() > 0;
     final boolean validTransitDelivery =
-        documentType == DocumentType.TRANSFER_DELIVERY
+        (documentType == DocumentType.TRANSFER_DELIVERY
+                || documentType == DocumentType.TRANSFER_RECEIPT)
             && movementType == StockMovementType.TRANSFER_OUT
             && quantityChange.signum() < 0;
-    if (!validTransitReceipt && !validTransitDelivery) {
+    final boolean validCorrection =
+        documentType == DocumentType.CORRECTION
+            && (movementType == StockMovementType.ADJUSTMENT_INCREASE
+                || movementType == StockMovementType.ADJUSTMENT_DECREASE);
+    if (!validTransitReceipt && !validTransitDelivery && !validCorrection) {
       throw new ApiException(WarehouseMessageKey.INVALID_TRANSIT_DOCUMENT);
     }
   }

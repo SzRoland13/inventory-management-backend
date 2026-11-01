@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.stock_movement.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,14 @@ import dev.roland.inventory_management_backend.features.stock_movement.dto.Stock
 
 /** Provides database queries for stock movement records. */
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
+  List<StockMovement>
+      findAllByProduct_IdAndWarehouse_IdAndEffectiveAtLessThanEqualOrderByEffectiveAtAscIdAsc(
+          Long productId, Long warehouseId, LocalDateTime effectiveAt);
+
+  List<StockMovement>
+      findAllByProduct_IdAndWarehouse_IdAndEffectiveAtGreaterThanOrderByEffectiveAtAscIdAsc(
+          Long productId, Long warehouseId, LocalDateTime effectiveAt);
+
   String MOVEMENT_SELECT =
       "select m.id as id, m.createdAt as date, p.id as productId, p.sku as productSku, "
           + "p.name as productName, w.id as warehouseId, w.name as warehouseName, "

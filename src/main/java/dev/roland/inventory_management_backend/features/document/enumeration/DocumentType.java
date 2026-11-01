@@ -35,6 +35,9 @@ public enum DocumentType {
   STOCK_ADJUSTMENT("SA"),
   /** Represents the return value. */
   RETURN("RE"),
+  STOCK_COUNT("SC"),
+  WAREHOUSE_TRANSFER("WT"),
+  CORRECTION("COR"),
   ;
 
   private final String defaultPrefix;

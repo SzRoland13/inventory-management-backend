@@ -36,4 +36,10 @@ public record LineResponse(
     BigDecimal unitPrice,
     BigDecimal sourceUnitPrice,
     Long sourceCurrencyId,
-    Long sourceLineId) {}
+    Long sourceLineId,
+    BigDecimal returnedQuantity,
+    BigDecimal returnableQuantity,
+    BigDecimal inTransitQuantity,
+    BigDecimal expectedQuantity,
+    BigDecimal countedQuantity,
+    BigDecimal variance) {}

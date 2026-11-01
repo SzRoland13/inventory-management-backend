@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="023-release-two-warehouse-operations" author="roland">
+        <addColumn tableName="documents">
+            <column name="transit_warehouse_id" type="BIGINT"/>
+            <column name="workflow_reason" type="TEXT"/>
+            <column name="workflow_direction" type="VARCHAR(50)"/>
+            <column name="workflow_disposition" type="VARCHAR(50)"/>
+            <column name="counted_at" type="TIMESTAMP"/>
+            <column name="calculation_version" type="VARCHAR(100)"/>
+            <column name="non_billable" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transit_warehouse_code_snapshot" type="VARCHAR(50)"/>
+            <column name="transit_warehouse_name_snapshot" type="VARCHAR(255)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="documents" baseColumnNames="transit_warehouse_id"
+                                 referencedTableName="warehouses" referencedColumnNames="id"
+                                 constraintName="fk_documents_transit_warehouse"/>
+        <addColumn tableName="document_lines">
+            <column name="source_line_id" type="BIGINT"/>
+            <column name="returned_quantity" type="NUMERIC(24,8)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="released_quantity" type="NUMERIC(24,8)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="replaced_quantity" type="NUMERIC(24,8)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="workflow_disposition" type="VARCHAR(50)"/>
+            <column name="in_transit_quantity" type="NUMERIC(24,8)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_quantity" type="NUMERIC(24,8)"/>
+            <column name="counted_quantity" type="NUMERIC(24,8)"/>
+            <column name="variance" type="NUMERIC(24,8)"/>
+            <column name="variance_reason" type="VARCHAR(1000)"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="document_lines" baseColumnNames="source_line_id"
+                                 referencedTableName="document_lines" referencedColumnNames="id"
+                                 constraintName="fk_document_lines_source_line"/>
+        <addColumn tableName="stock_movements">
+            <column name="effective_at" type="TIMESTAMP"/>
+            <column name="reason" type="TEXT"/>
+        </addColumn>
+        <update tableName="stock_movements">
+            <column name="effective_at" valueComputed="created_at"/>
+        </update>
+        <addNotNullConstraint tableName="stock_movements" columnName="effective_at" columnDataType="TIMESTAMP"/>
+        <createIndex tableName="stock_movements" indexName="idx_stock_movement_effective_at">
+            <column name="effective_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

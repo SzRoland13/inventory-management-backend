@@ -26,6 +26,9 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 import dev.roland.inventory_management_backend.features.document.facade.DocumentWorkflowFacade;
 import lombok.RequiredArgsConstructor;
 
@@ -47,6 +50,25 @@ public class DocumentController {
   public static final String FILES_ENDPOINT = ID_PARAM + "/files";
   public static final String PDF_ENDPOINT = ID_PARAM + "/pdf";
   public static final String PDF_RETRY_ENDPOINT = PDF_ENDPOINT + "/retry";
+  public static final String TRANSFER_DRAFTS = "/transfers/drafts";
+  public static final String TRANSFER_PREVIEW = "/transfers/preview";
+  public static final String TRANSFER_RESOLUTION_PREVIEW = "/transfers/{id}/resolution-preview";
+  public static final String TRANSFER_DISPATCH = "/transfers/{id}/dispatch";
+  public static final String TRANSFER_RECEIPT = "/transfers/{id}/receipt";
+  public static final String TRANSFER_RESOLVE = "/transfers/{id}/resolve";
+  public static final String RETURNS = "/returns";
+  public static final String RETURN_PREVIEW = "/returns/preview";
+  public static final String QUARANTINE_RELEASE_PREVIEW = ID_PARAM + "/quarantine-release/preview";
+  public static final String QUARANTINE_RELEASE = ID_PARAM + "/quarantine-release";
+  public static final String REPLACEMENT_DELIVERY_PREVIEW =
+      "/returns/replacement-deliveries/preview";
+  public static final String REPLACEMENT_DELIVERY = "/returns/replacement-deliveries";
+  public static final String STOCK_COUNTS = "/stock-counts";
+  public static final String STOCK_COUNT_RECONCILIATION_PREVIEW =
+      "/stock-counts/{id}/reconciliation-preview";
+  public static final String STOCK_COUNT_POST = "/stock-counts/{id}/post";
+  public static final String CORRECTION_PREVIEW = ID_PARAM + "/corrections/preview";
+  public static final String CORRECTION = ID_PARAM + "/corrections";
 
   private final DocumentWorkflowFacade facade;
 
@@ -225,6 +247,157 @@ public class DocumentController {
       @PathVariable final Long id,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
     return success(facade.retryPdf(id, key));
+  }
+
+  @PostMapping(TRANSFER_DRAFTS)
+  public ResponseEntity<ApiResponse<DocumentResponse>> createTransferDraft(
+      @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.applyWarehouseOperation(
+            null, WarehouseOperationType.TRANSFER_DRAFT, request, null, null));
+  }
+
+  @PostMapping(TRANSFER_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransfer(
+      @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(null, WarehouseOperationType.TRANSFER_PREVIEW, request));
+  }
+
+  @PostMapping(TRANSFER_RESOLUTION_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransferResolution(
+      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(id, WarehouseOperationType.TRANSFER_RESOLUTION, request));
+  }
+
+  @PostMapping(TRANSFER_DISPATCH)
+  public ResponseEntity<ApiResponse<DocumentResponse>> dispatchTransfer(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.TRANSFER_DISPATCH, request, key, version));
+  }
+
+  @PostMapping(TRANSFER_RECEIPT)
+  public ResponseEntity<ApiResponse<DocumentResponse>> receiveTransfer(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.TRANSFER_RECEIPT, request, key, version));
+  }
+
+  @PostMapping(TRANSFER_RESOLVE)
+  public ResponseEntity<ApiResponse<DocumentResponse>> resolveTransfer(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.TRANSFER_RESOLVE, request, key, version));
+  }
+
+  @PostMapping(RETURNS)
+  public ResponseEntity<ApiResponse<DocumentResponse>> createReturn(
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
+    return success(
+        facade.applyWarehouseOperation(
+            null, WarehouseOperationType.RETURN_CREATE, request, key, null));
+  }
+
+  @PostMapping(RETURN_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReturn(
+      @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(null, WarehouseOperationType.RETURN_CREATE, request));
+  }
+
+  @PostMapping(QUARANTINE_RELEASE_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewQuarantineRelease(
+      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(id, WarehouseOperationType.QUARANTINE_RELEASE, request));
+  }
+
+  @PostMapping(QUARANTINE_RELEASE)
+  public ResponseEntity<ApiResponse<DocumentResponse>> releaseQuarantine(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.QUARANTINE_RELEASE, request, key, version));
+  }
+
+  @PostMapping(REPLACEMENT_DELIVERY_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReplacement(
+      @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(
+            null, WarehouseOperationType.REPLACEMENT_DELIVERY, request));
+  }
+
+  @PostMapping(REPLACEMENT_DELIVERY)
+  public ResponseEntity<ApiResponse<DocumentResponse>> createReplacement(
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
+    return success(
+        facade.applyWarehouseOperation(
+            null, WarehouseOperationType.REPLACEMENT_DELIVERY, request, key, null));
+  }
+
+  @PostMapping(STOCK_COUNTS)
+  public ResponseEntity<ApiResponse<DocumentResponse>> createStockCount(
+      @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.applyWarehouseOperation(
+            null, WarehouseOperationType.STOCK_COUNT_CREATE, request, null, null));
+  }
+
+  @PostMapping(STOCK_COUNT_RECONCILIATION_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewStockCount(
+      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(
+            id, WarehouseOperationType.STOCK_COUNT_RECONCILE, request));
+  }
+
+  @PostMapping(STOCK_COUNT_POST)
+  public ResponseEntity<ApiResponse<DocumentResponse>> postStockCount(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.STOCK_COUNT_POST, request, key, version));
+  }
+
+  @PostMapping(CORRECTION_PREVIEW)
+  public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewCorrection(
+      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+    return success(
+        facade.previewWarehouseOperation(id, WarehouseOperationType.CORRECTION, request));
+  }
+
+  @PostMapping(CORRECTION)
+  public ResponseEntity<ApiResponse<DocumentResponse>> correctDocument(
+      @PathVariable final Long id,
+      @RequestBody final WarehouseOperationRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) final String key,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(
+        facade.applyWarehouseOperation(
+            id, WarehouseOperationType.CORRECTION, request, key, version));
   }
 
   private <T> ResponseEntity<ApiResponse<T>> success(final T payload) {
