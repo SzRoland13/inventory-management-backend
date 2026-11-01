@@ -77,4 +77,11 @@ public class MediaUsageServiceImpl implements MediaUsageService {
   public Long usageCountByMediaAssetId(final Long id) {
     return mediaUsageRepository.countByMediaAssetId(id);
   }
+
+  @Override
+  public boolean existsByMediaAssetIdAndEntityTypeAndUsageType(
+      final Long mediaAssetId, final MediaEntityType entityType, final MediaUsageType usageType) {
+    return mediaUsageRepository.existsByMediaAssetIdAndEntityTypeAndUsageType(
+        mediaAssetId, entityType, usageType);
+  }
 }

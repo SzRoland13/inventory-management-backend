@@ -7,6 +7,8 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -61,6 +63,13 @@ public class MediaAsset implements IdInterface<Long> {
 
   @Column(name = "file_size", nullable = false)
   private Long fileSize;
+
+  @Column(name = "thumbnail_object_path", length = 500)
+  private String thumbnailObjectPath;
+
+  @Column(name = "thumbnail_status", length = 20)
+  @Enumerated(EnumType.STRING)
+  private MediaThumbnailStatus thumbnailStatus;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "uploaded_by_user_id")

@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.media_asset.service.imp
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -40,5 +41,10 @@ public class MediaAssetServiceImpl implements MediaAssetService {
   @Override
   public List<MediaAsset> findOrphanAssetsOlderThan(final LocalDateTime threshold) {
     return mediaAssetRepository.findOrphanAssetsOlderThan(threshold);
+  }
+
+  @Override
+  public Optional<MediaAsset> findById(final Long id) {
+    return mediaAssetRepository.findById(id);
   }
 }

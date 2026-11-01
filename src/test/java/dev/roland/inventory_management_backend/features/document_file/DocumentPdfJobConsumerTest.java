@@ -25,8 +25,11 @@ import dev.roland.inventory_management_backend.common.async.OutboxMessage;
 import dev.roland.inventory_management_backend.common.async.OutboxMessageRepository;
 import dev.roland.inventory_management_backend.common.async.OutboxStatus;
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
+import dev.roland.inventory_management_backend.features.company.Company;
+import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_asset.service.ThumbnailImageProcessor;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,9 +43,21 @@ class DocumentPdfJobConsumerTest {
   @Mock private MediaUsageService mediaUsageService;
   @Mock private dev.roland.inventory_management_backend.common.service.ObjectStorageService storage;
   @Mock private DocumentPdfFactory pdfFactory;
+
+  @Mock private ThumbnailImageProcessor thumbnailImageProcessor;
+
   @Mock private AppConfiguration appConfiguration;
 
   @InjectMocks private DocumentPdfJobConsumer consumer;
+
+  @Test
+  void usesDocumentNumberForPdfFilenameAndSafeDraftFallback() {
+    final var numbered = Document.builder().id(3L).documentNumber("DN/2026 00184").build();
+    assertEquals("DN-2026-00184.pdf", consumer.pdfFilename(numbered));
+
+    final var draft = Document.builder().id(7L).build();
+    assertEquals("draft-document-7.pdf", consumer.pdfFilename(draft));
+  }
 
   @Test
   void rejectsAnEnvelopeForAMissingOutboxJob() {
@@ -88,13 +103,7 @@ class DocumentPdfJobConsumerTest {
     final var envelope = new AsyncJobEnvelope(jobId, AsyncJobType.DOCUMENT_PDF, encrypted, 9L, 3L);
     final var message = new OutboxMessage(jobId, AsyncJobType.DOCUMENT_PDF, encrypted, 9L, 3L);
     final var document =
-        dev.roland.inventory_management_backend.features.document.Document.builder()
-            .id(3L)
-            .company(
-                dev.roland.inventory_management_backend.features.company.Company.builder()
-                    .id(9L)
-                    .build())
-            .build();
+        Document.builder().id(3L).company(Company.builder().id(9L).build()).build();
     final var file = new DocumentFile();
     file.setDocument(document);
     file.setSource(DocumentFileSource.GENERATED_PDF);
@@ -121,6 +130,7 @@ class DocumentPdfJobConsumerTest {
             mediaUsageService,
             storage,
             pdfFactory,
+            thumbnailImageProcessor,
             appConfiguration);
 
     realConsumer.consume(envelope);

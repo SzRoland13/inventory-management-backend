@@ -20,15 +20,13 @@ public class CurrencyResponse {
    * @return to dto result
    */
   public static CurrencyResponse toDto(final Currency currency) {
-    if (currency == null) {
-      return null;
-    }
-
-    return CurrencyResponse.builder()
-        .id(currency.getId())
-        .code(currency.getCode())
-        .name(currency.getName())
-        .symbol(currency.getSymbol())
-        .build();
+    return currency == null
+        ? null
+        : CurrencyResponse.builder()
+            .id(currency.getId())
+            .code(currency.getCode())
+            .name(currency.getName())
+            .symbol(currency.getSymbol())
+            .build();
   }
 }

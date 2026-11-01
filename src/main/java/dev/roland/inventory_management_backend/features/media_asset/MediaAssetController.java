@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaPreviewResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaThumbnailPreviewResponse;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitResponse;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
@@ -27,6 +28,8 @@ public class MediaAssetController {
   public static final String MEDIA_ASSET_BASE_ENDPOINT = "api/v1/media";
   public static final String ID_PARAM = "/{id}";
   public static final String MEDIA_ASSET_PREVIEW_ENDPOINT = ID_PARAM + "/preview";
+  public static final String MEDIA_ASSET_THUMBNAIL_PREVIEW_ENDPOINT =
+      ID_PARAM + "/thumbnail/preview";
 
   private final MediaAssetFacade mediaAssetFacade;
 
@@ -56,6 +59,20 @@ public class MediaAssetController {
   public ResponseEntity<ApiResponse<MediaPreviewResponse>> getPreview(@PathVariable final Long id) {
     return ResponseEntity.ok(
         ApiResponse.success(MediaMessageKey.URL_GENERATED, mediaAssetFacade.getPreview(id)));
+  }
+
+  /**
+   * Returns the generated thumbnail URL and processing state.
+   *
+   * @param id media asset identifier
+   * @return thumbnail preview response
+   */
+  @GetMapping(MEDIA_ASSET_THUMBNAIL_PREVIEW_ENDPOINT)
+  public ResponseEntity<ApiResponse<MediaThumbnailPreviewResponse>> getThumbnailPreview(
+      @PathVariable final Long id) {
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            MediaMessageKey.URL_GENERATED, mediaAssetFacade.getThumbnailPreview(id)));
   }
 
   /**

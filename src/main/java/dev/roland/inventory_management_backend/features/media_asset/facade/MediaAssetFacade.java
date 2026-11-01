@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.media_asset.facade;
 
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaPreviewResponse;
+import dev.roland.inventory_management_backend.features.media_asset.dto.MediaThumbnailPreviewResponse;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitResponse;
 
@@ -21,6 +22,14 @@ public interface MediaAssetFacade {
    * @return media preview details
    */
   MediaPreviewResponse getPreview(Long id);
+
+  /**
+   * Returns the thumbnail URL and processing state for a media asset.
+   *
+   * @param id media asset identifier
+   * @return thumbnail URL and processing status
+   */
+  MediaThumbnailPreviewResponse getThumbnailPreview(Long id);
 
   /**
    * Deletes the media asset with the given identifier when it is no longer in use.
