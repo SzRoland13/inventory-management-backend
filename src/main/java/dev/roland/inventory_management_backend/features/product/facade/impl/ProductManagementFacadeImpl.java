@@ -24,7 +24,9 @@ import dev.roland.inventory_management_backend.features.brand.service.BrandServi
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.service.CurrencyService;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.ProductImageFormat;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_asset.service.ProductThumbnailService;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
@@ -79,6 +81,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
   private final StockMovementService movementService;
   private final StockBalanceService stockBalanceService;
   private final MediaAssetService mediaAssetService;
+  private final ProductThumbnailService productThumbnailService;
   private final MediaUsageService mediaUsageService;
 
   @Transactional
@@ -333,9 +336,13 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
         MediaEntityType.PRODUCT, product.getId(), MediaUsageType.IMAGE);
 
     for (int index = 0; index < assets.size(); index++) {
+      final MediaAsset asset = assets.get(index);
+      if (productThumbnailService.enqueueIfNeeded(asset, product.getCompany().getId())) {
+        mediaAssetService.save(asset);
+      }
       mediaUsageService.save(
           MediaUsage.builder()
-              .mediaAsset(assets.get(index))
+              .mediaAsset(asset)
               .entityType(MediaEntityType.PRODUCT)
               .entityId(product.getId())
               .usageType(MediaUsageType.IMAGE)
@@ -348,7 +355,7 @@ public class ProductManagementFacadeImpl implements ProductManagementFacade {
     return asset.getFileSize() != null
         && asset.getFileSize() > 0
         && asset.getFileSize() <= 5_242_880
-        && List.of("image/jpeg", "image/png", "image/webp").contains(asset.getMimeType());
+        && ProductImageFormat.supports(asset.getMimeType());
   }
 
   private ProductAttributeValue makeAttributeValue(

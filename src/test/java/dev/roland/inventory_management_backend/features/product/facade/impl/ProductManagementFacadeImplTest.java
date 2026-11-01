@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import dev.roland.inventory_management_backend.common.async.OutboxService;
 import dev.roland.inventory_management_backend.common.dto.PageResponse;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
@@ -89,6 +90,7 @@ class ProductManagementFacadeImplTest {
   @Mock private StockBalanceService stockBalanceService;
   @Mock private MediaAssetService mediaAssetService;
   @Mock private MediaUsageService mediaUsageService;
+  @Mock private OutboxService outboxService;
 
   private ProductManagementFacadeImpl facade;
   private Company company;
@@ -111,7 +113,8 @@ class ProductManagementFacadeImplTest {
             movementService,
             stockBalanceService,
             mediaAssetService,
-            mediaUsageService);
+            mediaUsageService,
+            outboxService);
     company = Company.builder().id(1L).build();
   }
 

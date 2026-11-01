@@ -60,6 +60,14 @@ public class AsyncJobConfiguration {
         .build();
   }
 
+  @Bean
+  Queue productImageThumbnailQueue() {
+    return QueueBuilder.durable(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getQueueName())
+        .deadLetterExchange(EXCHANGE)
+        .deadLetterRoutingKey(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getDeadLetterRoutingKey())
+        .build();
+  }
+
   /**
    * Declares a delayed retry queue for email jobs.
    *
@@ -85,6 +93,14 @@ public class AsyncJobConfiguration {
     return retryQueue(
         AsyncJobType.DOCUMENT_PDF.getRetryQueueName(),
         AsyncJobType.DOCUMENT_PDF.getRoutingKey(),
+        appConfiguration.getOutboxRetryDelayMs());
+  }
+
+  @Bean
+  Queue productImageThumbnailRetryQueue(final AppConfiguration appConfiguration) {
+    return retryQueue(
+        AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getRetryQueueName(),
+        AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getRoutingKey(),
         appConfiguration.getOutboxRetryDelayMs());
   }
 
@@ -124,6 +140,12 @@ public class AsyncJobConfiguration {
     return QueueBuilder.durable(AsyncJobType.DOCUMENT_PDF.getDeadLetterQueueName()).build();
   }
 
+  @Bean
+  Queue productImageThumbnailDeadLetterQueue() {
+    return QueueBuilder.durable(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getDeadLetterQueueName())
+        .build();
+  }
+
   /**
    * Binds the email queue to its routing key.
    *
@@ -153,6 +175,15 @@ public class AsyncJobConfiguration {
     return BindingBuilder.bind(documentPdfQueue)
         .to(jobsExchange)
         .with(AsyncJobType.DOCUMENT_PDF.getRoutingKey());
+  }
+
+  @Bean
+  Binding productImageThumbnailBinding(
+      @Qualifier("productImageThumbnailQueue") final Queue queue,
+      final DirectExchange jobsExchange) {
+    return BindingBuilder.bind(queue)
+        .to(jobsExchange)
+        .with(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getRoutingKey());
   }
 
   /**
@@ -187,6 +218,15 @@ public class AsyncJobConfiguration {
         .with(AsyncJobType.DOCUMENT_PDF.getRetryRoutingKey());
   }
 
+  @Bean
+  Binding productImageThumbnailRetryBinding(
+      @Qualifier("productImageThumbnailRetryQueue") final Queue queue,
+      final DirectExchange jobsExchange) {
+    return BindingBuilder.bind(queue)
+        .to(jobsExchange)
+        .with(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getRetryRoutingKey());
+  }
+
   /**
    * Binds the email dead-letter queue to its routing key.
    *
@@ -217,6 +257,15 @@ public class AsyncJobConfiguration {
     return BindingBuilder.bind(documentPdfDeadLetterQueue)
         .to(jobsExchange)
         .with(AsyncJobType.DOCUMENT_PDF.getDeadLetterRoutingKey());
+  }
+
+  @Bean
+  Binding productImageThumbnailDlqBinding(
+      @Qualifier("productImageThumbnailDeadLetterQueue") final Queue queue,
+      final DirectExchange jobsExchange) {
+    return BindingBuilder.bind(queue)
+        .to(jobsExchange)
+        .with(AsyncJobType.PRODUCT_IMAGE_THUMBNAIL.getDeadLetterRoutingKey());
   }
 
   /**

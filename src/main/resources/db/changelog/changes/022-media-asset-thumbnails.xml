@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="022-media-asset-thumbnails" author="roland">
+        <addColumn tableName="media_assets">
+            <column name="thumbnail_object_path" type="VARCHAR(500)"/>
+            <column name="thumbnail_status" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

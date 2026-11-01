@@ -20,7 +20,14 @@ public enum AsyncJobType {
       "inventory.document-pdf.retry",
       "document-pdf-retry",
       "inventory.document-pdf.dlq",
-      "document-pdf-dlq");
+      "document-pdf-dlq"),
+  PRODUCT_IMAGE_THUMBNAIL(
+      "inventory.product-image-thumbnail",
+      "product-image-thumbnail",
+      "inventory.product-image-thumbnail.retry",
+      "product-image-thumbnail-retry",
+      "inventory.product-image-thumbnail.dlq",
+      "product-image-thumbnail-dlq");
 
   private final String queueName;
   private final String routingKey;

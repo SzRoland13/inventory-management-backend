@@ -60,4 +60,8 @@ public interface MediaUsageService extends BaseService<MediaUsage, Long> {
    * @return number of usages referencing the media asset
    */
   Long usageCountByMediaAssetId(Long id);
+
+  /** Checks whether an asset is currently attached as a product image. */
+  boolean existsByMediaAssetIdAndEntityTypeAndUsageType(
+      Long mediaAssetId, MediaEntityType entityType, MediaUsageType usageType);
 }

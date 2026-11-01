@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.media_asset.facade.impl
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,24 +14,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import dev.roland.inventory_management_backend.common.async.OutboxService;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
+import dev.roland.inventory_management_backend.features.media_asset.MediaThumbnailStatus;
 import dev.roland.inventory_management_backend.features.media_asset.dto.GeneratedMediaPathAndName;
 import dev.roland.inventory_management_backend.features.media_asset.dto.MediaUploadInitRequest;
 import dev.roland.inventory_management_backend.features.media_asset.dto.PresignedUrlData;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
+import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
 
 @ExtendWith(MockitoExtension.class)
 class MediaAssetFacadeImplTest {
 
   @Mock private MediaAssetService mediaAssetService;
   @Mock private ObjectStorageService objectStorageService;
+  @Mock private MediaUsageService mediaUsageService;
+  @Mock private OutboxService outboxService;
 
   private MediaAssetFacadeImpl facade;
 
   @BeforeEach
   void setUp() {
-    facade = new MediaAssetFacadeImpl(mediaAssetService, objectStorageService);
+    facade =
+        new MediaAssetFacadeImpl(
+            mediaAssetService, objectStorageService, mediaUsageService, outboxService);
   }
 
   @Test
@@ -85,5 +93,51 @@ class MediaAssetFacadeImplTest {
 
     verify(objectStorageService).delete(asset.getObjectPath());
     verify(mediaAssetService).delete(asset);
+  }
+
+  @Test
+  void thumbnailPreviewQueuesLegacyProductImageAndReportsPending() {
+    final MediaAsset asset =
+        MediaAsset.builder().id(25L).objectPath("temp/image.png").mimeType("image/png").build();
+    when(mediaAssetService.findByIdOrThrow(25L)).thenReturn(asset);
+    when(mediaUsageService.existsByMediaAssetIdAndEntityTypeAndUsageType(eq(25L), any(), any()))
+        .thenReturn(true);
+
+    final var preview = facade.getThumbnailPreview(25L);
+
+    assertEquals(MediaThumbnailStatus.PENDING, preview.status());
+    assertEquals(null, preview.getUrl());
+    assertEquals("thumbnails/25.webp", asset.getThumbnailObjectPath());
+    verify(outboxService)
+        .enqueue(
+            eq(
+                dev.roland.inventory_management_backend.common.async.AsyncJobType
+                    .PRODUCT_IMAGE_THUMBNAIL),
+            any(),
+            eq(null),
+            eq(null));
+  }
+
+  @Test
+  void thumbnailPreviewSignsTheDerivativeWhenReady() {
+    final MediaAsset asset =
+        MediaAsset.builder()
+            .id(26L)
+            .objectPath("temp/original.png")
+            .thumbnailObjectPath("thumbnails/26.webp")
+            .thumbnailStatus(MediaThumbnailStatus.READY)
+            .build();
+    when(mediaAssetService.findByIdOrThrow(26L)).thenReturn(asset);
+    when(objectStorageService.generatePresignedGetUrl("thumbnails/26.webp"))
+        .thenReturn(
+            PresignedUrlData.builder()
+                .url("https://storage/thumbnail")
+                .expiry(Instant.parse("2030-01-01T00:00:00Z"))
+                .build());
+
+    final var preview = facade.getThumbnailPreview(26L);
+
+    assertEquals(MediaThumbnailStatus.READY, preview.status());
+    assertEquals("https://storage/thumbnail", preview.getUrl());
   }
 }

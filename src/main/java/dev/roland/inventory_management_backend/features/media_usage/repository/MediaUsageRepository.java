@@ -70,4 +70,8 @@ public interface MediaUsageRepository extends JpaRepository<MediaUsage, Long> {
    */
   @Query("select count(u) from MediaUsage u where u.mediaAsset.id = ?1")
   Long countByMediaAssetId(Long id);
+
+  /** Checks whether an asset is currently attached as a product image. */
+  boolean existsByMediaAssetIdAndEntityTypeAndUsageType(
+      Long mediaAssetId, MediaEntityType entityType, MediaUsageType usageType);
 }
