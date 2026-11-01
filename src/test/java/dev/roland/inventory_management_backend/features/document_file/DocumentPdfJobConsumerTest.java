@@ -45,6 +45,20 @@ class DocumentPdfJobConsumerTest {
   @InjectMocks private DocumentPdfJobConsumer consumer;
 
   @Test
+  void usesDocumentNumberForPdfFilenameAndSafeDraftFallback() {
+    final var numbered =
+        dev.roland.inventory_management_backend.features.document.Document.builder()
+            .id(3L)
+            .documentNumber("DN/2026 00184")
+            .build();
+    assertEquals("DN-2026-00184.pdf", consumer.pdfFilename(numbered));
+
+    final var draft =
+        dev.roland.inventory_management_backend.features.document.Document.builder().id(7L).build();
+    assertEquals("draft-document-7.pdf", consumer.pdfFilename(draft));
+  }
+
+  @Test
   void rejectsAnEnvelopeForAMissingOutboxJob() {
     final var envelope = envelope(AsyncJobType.DOCUMENT_PDF, new byte[] {1});
     when(outboxRepository.lockById(envelope.id())).thenReturn(Optional.empty());

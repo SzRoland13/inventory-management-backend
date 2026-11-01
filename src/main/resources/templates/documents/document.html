@@ -3,42 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <style>
-    body { font-family: Arial, sans-serif; color: #202124; font-size: 11pt; }
-    h1 { font-size: 20pt; margin-bottom: 4px; }
-    .muted { color: #5f6368; }
-    table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-    th, td { border-bottom: 1px solid #dadce0; padding: 8px; text-align: left; }
-    .number { text-align: right; }
-    .totals { margin: 24px 0 0 auto; width: 260px; }
-    .totals p { display: flex; justify-content: space-between; }
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #17243b; font-size: 9pt; line-height: 1.45; }
+    .top-rule { height: 4px; background: #3974f6; border-radius: 4px; margin-bottom: 24px; }
+    .brand { display: table; width: 100%; color: #60718d; font-size: 8pt; }
+    .brand-left, .brand-right { display: table-cell; vertical-align: top; width: 50%; }
+    .brand-right { text-align: right; }
+    .brand-mark { display: inline-block; vertical-align: middle; width: 28px; height: 28px; line-height: 28px; text-align: center; color: white; background: #2857ce; border-radius: 9px; font-size: 14pt; font-weight: bold; margin-right: 7px; }
+    .brand-copy { display: inline-block; vertical-align: middle; }
+    .brand-name { color: #17243b; font-size: 14pt; font-weight: 700; }
+    .brand-detail { display: block; }
+    .heading { margin: 65px 0 24px; }
+    .eyebrow { color: #3167e9; font-size: 8pt; letter-spacing: 2px; font-weight: bold; text-transform: uppercase; }
+    h1 { font-size: 25pt; margin: 3px 0 0; }
+    .number { float: right; text-align: right; color: #60718d; font-size: 9pt; margin-top: 7px; }
+    .number strong { display: block; color: #17243b; font-size: 13pt; margin-top: 3px; }
+    .status { display: inline-block; margin-top: 7px; padding: 4px 10px; border: 1px solid #b9e7d5; border-radius: 14px; color: #16845d; background: #effaf5; font-size: 8pt; }
+    .details { display: table; width: 100%; background: #f2f5fa; border: 1px solid #dce4ef; border-radius: 9px; padding: 15px; margin: 20px 0 26px; }
+    .detail { display: table-cell; width: 33.33%; vertical-align: top; padding-right: 12px; }
+    .details.two-columns .detail { width: 50%; }
+    .detail:last-child { padding-right: 0; }
+    .label { color: #647590; font-weight: bold; font-size: 7.5pt; letter-spacing: 1px; text-transform: uppercase; }
+    .detail strong { display: block; margin: 5px 0; }
+    .muted { display: block; color: #647590; font-size: 8pt; }
+    .section-title { font-size: 11pt; margin: 0; }
+    .section-head { display: table; width: 100%; margin-bottom: 10px; }
+    .section-head > * { display: table-cell; }
+    .hint { color: #647590; text-align: right; font-size: 8pt; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th { background: #f4f6fa; color: #647590; font-size: 7pt; letter-spacing: .6px; text-transform: uppercase; text-align: left; padding: 9px 7px; border-top: 1px solid #dce4ef; border-bottom: 1px solid #dce4ef; }
+    td { padding: 10px 7px; border-bottom: 1px solid #dce4ef; vertical-align: top; }
+    th:first-child, td:first-child { width: 43%; }
+    th:nth-child(2), td:nth-child(2) { width: 13%; text-align: right; }
+    th:nth-child(3), td:nth-child(3) { width: 13%; }
+    th:nth-child(4), td:nth-child(4) { width: 15%; text-align: right; }
+    th:nth-child(5), td:nth-child(5) { width: 16%; text-align: right; }
+    .product { font-weight: bold; }
+    .sku { color: #647590; font-size: 7.5pt; margin-top: 2px; }
+    .qty { font-weight: bold; }
+    .totals { width: 42%; margin: 17px 0 24px auto; }
+    .total-row { display: table; width: 100%; padding: 4px 0; color: #647590; }
+    .total-row span, .total-row strong { display: table-cell; }
+    .total-row strong { color: #17243b; text-align: right; }
+    .grand-total { background: #17243b; color: white; border-radius: 6px; padding: 10px; margin-top: 5px; }
+    .grand-total strong { color: white; font-size: 12pt; }
+    .notes { background: #f2f5fa; border-left: 3px solid #3974f6; padding: 11px 13px; margin: 18px 0; }
+    .notes p { margin: 4px 0 0; color: #647590; }
+    .signatures { display: table; width: 100%; margin-top: 40px; page-break-inside: avoid; }
+    .signature { display: table-cell; width: 50%; padding-right: 22px; }
+    .signature:last-child { padding: 0 0 0 22px; }
+    .signature-line { border-top: 1px solid #afbdd0; padding-top: 6px; color: #647590; font-size: 8pt; }
+    .footer { border-top: 1px solid #dce4ef; margin-top: 22px; padding-top: 8px; color: #647590; font-size: 7pt; }
+    .footer-number { float: right; color: #17243b; font-weight: bold; }
+    tr { page-break-inside: avoid; }
   </style>
 </head>
 <body>
-  <h1 th:text="${documentType}">Document</h1>
-  <p><strong><span th:text="${numberLabel}">Document number</span>:</strong> <span th:text="${number}">Number</span></p>
-  <p><strong th:text="${dateLabel}">Date</strong>: <span th:text="${date}">Date</span></p>
-  <p><strong th:text="${documentStatus}">Status</strong></p>
-  <p th:if="${partnerName != null and !partnerName.isEmpty()}"><strong th:text="${partnerLabel}">Partner</strong>: <span th:text="${partnerName}">Partner</span></p>
-  <p class="muted" th:if="${partnerAddress != null}" th:text="${partnerAddress}">Address</p>
-  <p class="muted" th:if="${warehouseName != null and !warehouseName.isEmpty()}"><span th:text="${warehouseLabel}">Warehouse</span>: <span th:text="${warehouseName}">Warehouse</span></p>
-  <h2 th:text="${itemsTitle}">Items</h2>
-  <table>
-    <thead><tr><th th:text="${productLabel}">Product</th><th th:text="${codeLabel}">Code</th><th th:text="${unitLabel}">Unit</th><th class="number" th:text="${quantityLabel}">Quantity</th><th class="number" th:text="${unitPriceLabel}">Unit price</th><th class="number" th:text="${vatRateLabel}">VAT %</th><th class="number" th:text="${netLabel}">Net</th><th class="number" th:text="${vatLabel}">VAT</th><th class="number" th:text="${grossLabel}">Gross</th></tr></thead>
-    <tbody>
-      <tr th:each="line : ${lines}">
-        <td th:text="${line.product}">Product</td><td th:text="${line.code}">Code</td>
-        <td th:text="${line.unit}">Unit</td><td class="number" th:text="${line.quantity}">0</td>
-        <td class="number" th:text="${line.price}">0</td><td class="number" th:text="${line.vatRate}">0</td>
-        <td class="number" th:text="${line.net}">0</td><td class="number" th:text="${line.tax}">0</td>
-        <td class="number" th:text="${line.gross}">0</td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="totals">
-    <p><span><span th:text="${netLabel}">Net</span> (<span th:text="${currencyCode}">Currency</span>)</span><strong th:text="${netTotal}">0</strong></p>
-    <p><span th:text="${vatLabel}">VAT</span><strong th:text="${taxTotal}">0</strong></p>
-    <p><span th:text="${totalLabel}">Total</span><strong th:text="${grossTotal}">0</strong></p>
+  <div class="top-rule"></div>
+  <div class="brand">
+    <div class="brand-left"><span class="brand-mark" th:if="${!companyInitial.isEmpty()}" th:text="${companyInitial}">C</span><span class="brand-copy"><span class="brand-name" th:text="${companyName}">Company</span><span class="brand-detail" th:if="${!companyDescription.isEmpty()}" th:text="${companyDescription}">Company description</span></span></div>
+    <div class="brand-right">
+      <span class="brand-detail" th:if="${!companyAddress.isEmpty()}" th:text="${companyAddress}">Address</span>
+      <span class="brand-detail" th:if="${!companyPhone.isEmpty()}" th:text="${companyPhone}">Phone</span>
+      <span class="brand-detail" th:if="${!companyEmail.isEmpty()}" th:text="${companyEmail}">Email</span>
+    </div>
   </div>
-  <p th:if="${notes != null and !notes.isEmpty()}"><strong th:text="${notesLabel}">Notes</strong>: <span th:text="${notes}">Notes</span></p>
+
+  <div class="heading">
+    <div class="number"><span th:text="${numberLabel}">Document number</span><strong th:text="${number}">Number</strong></div>
+    <div class="eyebrow" th:text="${eyebrow}">Warehouse document</div>
+    <h1 th:text="${documentType}">Document</h1>
+    <span class="status" th:text="${documentStatus}">Status</span>
+  </div>
+
+  <div class="details" th:classappend="${warehouseName.isEmpty()} ? 'two-columns' : ''">
+    <div class="detail" th:if="${!warehouseName.isEmpty()}">
+      <div class="label" th:text="${deliveredToLabel}">Partner</div>
+      <strong th:text="${partnerName}">Partner name</strong>
+      <span class="muted" th:if="${!partnerAddress.isEmpty()}" th:text="${partnerAddress}">Partner address</span>
+      <span class="muted" th:if="${!partnerTaxNumber.isEmpty()}" th:text="|Tax number: ${partnerTaxNumber}|">Tax number</span>
+    </div>
+    <div class="detail">
+      <div class="label" th:text="${documentDateLabel}">Document date</div>
+      <strong th:text="${date}">Date</strong>
+      <span class="muted" th:if="${!referenceNumber.isEmpty()}" th:text="|Reference: ${referenceNumber}|">Reference</span>
+    </div>
+    <div class="detail">
+      <div class="label" th:text="${dispatchWarehouseLabel}">Warehouse</div>
+      <strong th:text="${warehouseName}">Warehouse</strong>
+      <span class="muted" th:if="${!warehouseCode.isEmpty()}" th:text="|Warehouse code: ${warehouseCode}|">Warehouse code</span>
+    </div>
+  </div>
+
+  <div class="section-head"><h2 class="section-title" th:text="${itemsTitle}">Items</h2><span class="hint" th:text="${quantityHint}">Quantity hint</span></div>
+  <table>
+    <thead><tr><th th:text="${productLabel}">Product</th><th th:text="${quantityLabel}">Quantity</th><th th:text="${unitLabel}">Unit</th><th th:text="${unitPriceLabel}">Unit price</th><th th:text="${lineTotalLabel}">Line total</th></tr></thead>
+    <tbody><tr th:each="line : ${lines}">
+      <td><div class="product" th:text="${line.product}">Product</div><div class="sku" th:if="${!line.code.isEmpty()}" th:text="|SKU ${line.code}|">SKU</div></td>
+      <td class="qty" th:text="${line.quantity}">0</td><td th:text="${line.unit}">Unit</td>
+      <td th:text="|${currencySymbol} ${line.price}|">Price</td><td th:text="|${currencySymbol} ${line.gross}|">Total</td>
+    </tr></tbody>
+  </table>
+
+  <div class="totals">
+    <div class="total-row"><span th:text="${subtotalLabel}">Subtotal</span><strong th:text="|${currencySymbol} ${netTotal}|">Subtotal</strong></div>
+    <div class="total-row"><span th:text="${vatLabel}">VAT</span><strong th:text="|${currencySymbol} ${taxTotal}|">VAT</strong></div>
+    <div class="total-row grand-total"><span th:text="${totalValueLabel}">Total</span><strong th:text="|${currencySymbol} ${grossTotal}|">Total</strong></div>
+  </div>
+
+  <div class="notes" th:if="${!notes.isEmpty()}"><strong th:text="${notesLabel}">Notes</strong><p th:text="${notes}">Document notes</p></div>
+  <div class="signatures"><div class="signature"><div class="signature-line" th:text="${deliveredByLabel}">Delivered by · Name and signature</div></div><div class="signature"><div class="signature-line" th:text="${receivedByLabel}">Received by · Name, date and signature</div></div></div>
+  <div class="footer"><span th:if="${!companyName.isEmpty()}" th:text="${companyName}">Company</span><span th:if="${!companyTaxNumber.isEmpty()}" th:text="| · ${companyTaxNumber}|">Tax number</span><span class="footer-number" th:text="${number}">Number</span></div>
 </body>
 </html>

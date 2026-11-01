@@ -108,9 +108,10 @@ public class DocumentPdfJobConsumer {
                           DocumentApiMessageKey.DOCUMENT_PDF_JOB_INVALID, true));
       file.setStatus(DocumentFileStatus.PROCESSING);
       final byte[] pdf = render(document, file.getLanguageTag());
+      final String filename = pdfFilename(document);
       final String path =
           objectStorage.generateSolidObjectPath(
-              "document-" + documentId + "-attempt-" + file.getAttempt() + ".pdf",
+              "attempt-" + file.getAttempt() + "/" + filename,
               MediaEntityType.DOCUMENT,
               documentId,
               MediaUsageType.DOCUMENT_PDF);
@@ -119,7 +120,7 @@ public class DocumentPdfJobConsumer {
           mediaAssetService.save(
               MediaAsset.builder()
                   .objectPath(path)
-                  .filename("document-" + documentId + ".pdf")
+                  .filename(filename)
                   .mimeType("application/pdf")
                   .fileSize((long) pdf.length)
                   .build());
@@ -172,6 +173,15 @@ public class DocumentPdfJobConsumer {
       message.setLeaseToken(null);
       message.setLockedUntil(null);
     }
+  }
+
+  String pdfFilename(final Document document) {
+    final String number =
+        document.getDocumentNumber() == null || document.getDocumentNumber().isBlank()
+            ? "draft-document-" + document.getId()
+            : document.getDocumentNumber();
+    final String safeNumber = number.replaceAll("[^A-Za-z0-9._-]", "-");
+    return safeNumber + ".pdf";
   }
 
   private byte[] render(final Document document, final String languageTag) {

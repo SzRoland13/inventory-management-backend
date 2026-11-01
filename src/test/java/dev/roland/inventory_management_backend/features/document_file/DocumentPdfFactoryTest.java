@@ -22,6 +22,7 @@ import org.springframework.context.MessageSource;
 import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.context.IContext;
 
+import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
@@ -41,6 +42,15 @@ class DocumentPdfFactoryTest {
   @Test
   void createsEnglishHtmlForAnEmptyDraft() {
     final Document document = document(List.of());
+    when(document.getCompany())
+        .thenReturn(
+            Company.builder()
+                .name("Northstar Supply")
+                .address("48 Rivergate Avenue")
+                .email("hello@example.test")
+                .phone("+36 1 555 0140")
+                .taxNumber("HU-123")
+                .build());
     when(document.getDocumentNumber()).thenReturn(null);
     when(document.getPartnerNameSnapshot()).thenReturn(null);
     when(document.getPartnerAddressSnapshot()).thenReturn(null);
@@ -59,6 +69,10 @@ class DocumentPdfFactoryTest {
     assertEquals("pdf.document.draft", context.getVariable("number"));
     assertEquals(List.of(), context.getVariable("lines"));
     assertEquals("", context.getVariable("partnerName"));
+    assertEquals("Northstar Supply", context.getVariable("companyName"));
+    assertEquals("48 Rivergate Avenue", context.getVariable("companyAddress"));
+    assertEquals("HU-123", context.getVariable("companyTaxNumber"));
+    assertEquals("pdf.label.delivered_to", context.getVariable("deliveredToLabel"));
   }
 
   @Test

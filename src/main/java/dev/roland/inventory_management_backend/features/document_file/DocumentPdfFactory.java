@@ -64,6 +64,10 @@ public class DocumentPdfFactory {
                         DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale))),
             Map.entry("numberLabel", message("pdf.label.number", locale)),
             Map.entry("dateLabel", message("pdf.label.date", locale)),
+            Map.entry("eyebrow", message("pdf.label.eyebrow", locale)),
+            Map.entry("deliveredToLabel", message("pdf.label.delivered_to", locale)),
+            Map.entry("documentDateLabel", message("pdf.label.document_date", locale)),
+            Map.entry("dispatchWarehouseLabel", message("pdf.label.dispatch_warehouse", locale)),
             Map.entry("partnerLabel", message("pdf.label.partner", locale)),
             Map.entry("warehouseLabel", message("pdf.label.warehouse", locale)),
             Map.entry("itemsTitle", message("pdf.label.items", locale)),
@@ -77,19 +81,58 @@ public class DocumentPdfFactory {
             Map.entry("netLabel", message("pdf.label.net", locale)),
             Map.entry("vatLabel", message("pdf.label.vat", locale)),
             Map.entry("grossLabel", message("pdf.label.gross", locale)),
+            Map.entry("lineTotalLabel", message("pdf.label.line_total", locale)),
             Map.entry("totalLabel", message("pdf.label.total", locale)),
             Map.entry("notesLabel", message("pdf.label.notes", locale)),
+            Map.entry("deliveredByLabel", message("pdf.label.delivered_by", locale)),
+            Map.entry("receivedByLabel", message("pdf.label.received_by", locale)),
+            Map.entry("subtotalLabel", message("pdf.label.subtotal", locale)),
+            Map.entry("totalValueLabel", message("pdf.label.total_value", locale)),
+            Map.entry(
+                "companyName",
+                document.getCompany() == null ? "" : value(document.getCompany().getName())),
+            Map.entry(
+                "companyInitial",
+                document.getCompany() == null
+                        || document.getCompany().getName() == null
+                        || document.getCompany().getName().isBlank()
+                    ? ""
+                    : document.getCompany().getName().substring(0, 1).toUpperCase(locale)),
+            Map.entry(
+                "companyDescription",
+                document.getCompany() == null ? "" : value(document.getCompany().getDescription())),
+            Map.entry(
+                "companyAddress",
+                document.getCompany() == null ? "" : value(document.getCompany().getAddress())),
+            Map.entry(
+                "companyPhone",
+                document.getCompany() == null ? "" : value(document.getCompany().getPhone())),
+            Map.entry(
+                "companyEmail",
+                document.getCompany() == null ? "" : value(document.getCompany().getEmail())),
+            Map.entry(
+                "companyTaxNumber",
+                document.getCompany() == null ? "" : value(document.getCompany().getTaxNumber())),
             Map.entry("partnerName", value(document.getPartnerNameSnapshot())),
             Map.entry("partnerAddress", value(document.getPartnerAddressSnapshot())),
+            Map.entry("partnerTaxNumber", value(document.getPartnerTaxNumberSnapshot())),
             Map.entry(
                 "warehouseName",
                 document.getSourceWarehouseNameSnapshot() != null
                     ? document.getSourceWarehouseNameSnapshot()
                     : value(document.getTargetWarehouseNameSnapshot())),
+            Map.entry(
+                "warehouseCode",
+                document.getSourceWarehouseNameSnapshot() != null
+                    ? value(document.getSourceWarehouseCodeSnapshot())
+                    : value(document.getTargetWarehouseCodeSnapshot())),
+            Map.entry("referenceNumber", value(document.getReferenceNumber())),
             Map.entry("notes", value(document.getNotes())),
             Map.entry(
-                "currencyCode",
-                document.getCurrency() == null ? "" : document.getCurrency().getCode()),
+                "currencySymbol",
+                document.getCurrency() == null || document.getCurrency().getSymbol() == null
+                    ? (document.getCurrency() == null ? "" : document.getCurrency().getCode())
+                    : document.getCurrency().getSymbol()),
             Map.entry("lines", lines),
             Map.entry("netTotal", formatMoney(totals.net(), locale)),
             Map.entry("taxTotal", formatMoney(totals.tax(), locale)),
