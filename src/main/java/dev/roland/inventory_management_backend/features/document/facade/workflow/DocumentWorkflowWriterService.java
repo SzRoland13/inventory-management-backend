@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.time.LocalDateTime;
 

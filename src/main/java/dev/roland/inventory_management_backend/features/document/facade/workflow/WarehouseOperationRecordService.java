@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentLineMapper;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
@@ -56,7 +57,6 @@ public class WarehouseOperationRecordService {
   private final DocumentWorkflowAccessService accessService;
   private final DocumentWorkflowWriterService writer;
   private final DocumentResponseMapper responseMapper;
-  private final DocumentDraftWorkflowService draftWorkflowService;
   private final WarehouseOperationSupportService warehouseOperationSupportService;
   private final WarehouseOperationPreviewService previewService;
 
@@ -217,7 +217,7 @@ public class WarehouseOperationRecordService {
             reversalLine, warehouses.get(i), reversalDelta, user, request.reason());
         final BigDecimal correctedDelta = correctedDeltas.get(i);
         final DocumentLine correctedLine =
-            draftWorkflowService.buildLine(
+            DocumentLineMapper.buildLine(
                 correction,
                 correctedProduct,
                 correctedProduct.getUnit(),
@@ -380,7 +380,7 @@ public class WarehouseOperationRecordService {
                   .findByIdAndCompanyId(item.productId(), company.getId())
                   .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
       final DocumentLine line =
-          draftWorkflowService.buildLine(
+          DocumentLineMapper.buildLine(
               delivery, product, product.getUnit(), quantity, BigDecimal.ZERO);
       line.setSourceLine(source);
       delivery.getLines().add(lineService.save(line));

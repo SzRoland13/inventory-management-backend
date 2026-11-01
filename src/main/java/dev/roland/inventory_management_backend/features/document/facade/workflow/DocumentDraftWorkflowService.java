@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +34,7 @@ import dev.roland.inventory_management_backend.features.document.dto.ExchangeRat
 import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentLineMapper;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
@@ -232,7 +233,8 @@ public class DocumentDraftWorkflowService {
               ? DocumentWorkflowValues.nz(draft.unitPrice())
               : DocumentWorkflowValues.nz(draft.sourceUnitPrice());
       final DocumentLine line =
-          buildLine(document, product, unit, quantity, sourceUnitPrice.multiply(rate));
+          DocumentLineMapper.buildLine(
+              document, product, unit, quantity, sourceUnitPrice.multiply(rate));
       line.setCurrency(document.getCurrency());
       line.setSourceCurrency(sourceCurrency);
       line.setExchangeRateSnapshot(rate);
@@ -344,7 +346,7 @@ public class DocumentDraftWorkflowService {
       final Unit unit,
       final BigDecimal quantity,
       final BigDecimal price) {
-    final DocumentLine line = buildLine(doc, product, unit, quantity, price);
+    final DocumentLine line = DocumentLineMapper.buildLine(doc, product, unit, quantity, price);
     line.setSourceUnitPrice(price);
     line.setCurrency(doc.getCurrency());
     line.setSourceCurrency(doc.getCurrency());
@@ -355,62 +357,11 @@ public class DocumentDraftWorkflowService {
 
   public DocumentLine copyOperationLine(
       final Document doc, final DocumentLine source, final BigDecimal quantity) {
-    final DocumentLine line =
-        DocumentLine.builder()
-            .document(doc)
-            .product(source.getProduct())
-            .unitSnapshot(source.getUnitSnapshot())
-            .unitCodeSnapshot(source.getUnitCodeSnapshot())
-            .unitNameSnapshot(source.getUnitNameSnapshot())
-            .conversionFactorSnapshot(source.getConversionFactorSnapshot())
-            .quantity(quantity)
-            .fulfilledQuantity(BigDecimal.ZERO)
-            .unitPrice(DocumentWorkflowValues.nz(source.getUnitPrice()))
-            .sourceUnitPrice(DocumentWorkflowValues.nz(source.getSourceUnitPrice()))
-            .totalPrice(DocumentWorkflowValues.nz(source.getUnitPrice()).multiply(quantity))
-            .currency(source.getCurrency())
-            .sourceCurrency(source.getSourceCurrency())
-            .exchangeRateSnapshot(source.getExchangeRateSnapshot())
-            .productNameSnapshot(source.getProductNameSnapshot())
-            .productSkuSnapshot(source.getProductSkuSnapshot())
-            .vatRateSnapshot(source.getVatRateSnapshot())
-            .build();
+    final DocumentLine line = DocumentLineMapper.copyOperationLine(doc, source, quantity);
     doc.getLines().add(line);
     lineService.save(line);
 
     return line;
-  }
-
-  public DocumentLine buildLine(
-      final Document doc,
-      final Product product,
-      final Unit unit,
-      final BigDecimal quantity,
-      final BigDecimal price) {
-    return DocumentLine.builder()
-        .document(doc)
-        .product(product)
-        .unitSnapshot(unit)
-        .unitCodeSnapshot(unit.getCode())
-        .unitNameSnapshot(unit.getName())
-        .conversionFactorSnapshot(expectedFactor(product, unit))
-        .quantity(quantity)
-        .fulfilledQuantity(BigDecimal.ZERO)
-        .unitPrice(price)
-        .sourceUnitPrice(price)
-        .totalPrice(price.multiply(quantity))
-        .productNameSnapshot(product.getName())
-        .productSkuSnapshot(product.getSku())
-        .vatRateSnapshot(product.getVatRate())
-        .build();
-  }
-
-  public BigDecimal expectedFactor(final Product product, final Unit unit) {
-    return product.getUnit() != null
-            && product.getUnit().getId().equals(unit.getId())
-            && product.getSecondaryUnit() != null
-        ? product.getSecondaryUnitsPerMainUnit()
-        : BigDecimal.ONE;
   }
 
   public void setWarehouse(
@@ -433,15 +384,12 @@ public class DocumentDraftWorkflowService {
   public void snapshotPartner(
       final Document document, final Partner partner, final Long companyId) {
     document.setPartnerTaxNumberSnapshot(partner.getTaxNumber());
+    final List<Contact> contacts = contactService.list(partner.getId(), companyId);
     final Contact address =
-        contactService.list(partner.getId(), companyId).stream()
+        contacts.stream()
             .filter(c -> c.getType() == ContactType.BILLING || c.getType() == ContactType.BOTH)
             .findFirst()
-            .orElseGet(
-                () ->
-                    contactService.list(partner.getId(), companyId).stream()
-                        .findFirst()
-                        .orElse(null));
+            .orElseGet(() -> contacts.stream().findFirst().orElse(null));
     if (address != null) {
       document.setPartnerAddressSnapshot(
           String.join(

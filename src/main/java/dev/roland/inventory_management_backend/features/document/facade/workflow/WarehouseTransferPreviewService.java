@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -70,28 +70,16 @@ public class WarehouseTransferPreviewService {
                           && requested.compareTo(available) <= 0);
       if (!valid) blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
       previewLines.add(
-          new WarehouseOperationPreview.Line(
-              source == null ? item.sourceLineId() : source.getId(),
-              source == null ? item.productId() : source.getProduct().getId(),
-              available,
-              transit,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              null,
-              requested.negate(),
-              receipt ? transit.subtract(requested) : available.subtract(requested),
-              null,
-              valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey()));
+          WarehouseOperationPreview.Line.builder()
+              .sourceLineId(source == null ? item.sourceLineId() : source.getId())
+              .productId(source == null ? item.productId() : source.getProduct().getId())
+              .sourceQuantity(available)
+              .transitQuantity(transit)
+              .quantityDelta(requested.negate())
+              .resultingQuantity(
+                  receipt ? transit.subtract(requested) : available.subtract(requested))
+              .errorMessageKey(valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey())
+              .build());
     }
     WarehouseOperationPreviewAssembler.validateTransferRequest(operation, request, blockers);
   }

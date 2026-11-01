@@ -22,28 +22,13 @@ public final class WarehouseOperationPreviewAssembler {
       final List<WarehouseOperationPreview.Line> previewLines) {
     for (var item : request.lines()) {
       previewLines.add(
-          new WarehouseOperationPreview.Line(
-              item.sourceLineId(),
-              item.productId(),
-              null,
-              null,
-              null,
-              null,
-              item.countedQuantity(),
-              null,
-              null,
-              null,
-              null,
-              item.correctedQuantity(),
-              null,
-              null,
-              null,
-              null,
-              null,
-              item.quantity(),
-              null,
-              null,
-              null));
+          WarehouseOperationPreview.Line.builder()
+              .sourceLineId(item.sourceLineId())
+              .productId(item.productId())
+              .countedQuantity(item.countedQuantity())
+              .correctedQuantity(item.correctedQuantity())
+              .quantityDelta(item.quantity())
+              .build());
     }
   }
 

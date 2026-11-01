@@ -18,7 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,6 +44,17 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentDraftWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFileWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFulfillmentWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowAccessService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowWriterService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationCommandService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationPreviewService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationRecordService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationSupportService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseTransferPreviewService;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
@@ -105,7 +115,7 @@ class DocumentWorkflowFacadeImplTest {
   @Mock private OutboxService outboxService;
   @Mock private StockMovementService stockMovementService;
 
-  @InjectMocks private DocumentWorkflowFacadeImpl facade;
+  private DocumentWorkflowFacadeImpl facade;
 
   private Company company;
   private User user;
@@ -113,6 +123,136 @@ class DocumentWorkflowFacadeImplTest {
 
   @BeforeEach
   void setUp() {
+    var documentWorkflowAccessService =
+        new DocumentWorkflowAccessService(
+            documentService,
+            companyProvider,
+            userService,
+            allocationService,
+            lineService,
+            relationService);
+    var documentResponseMapper =
+        new DocumentResponseMapper(
+            documentWorkflowAccessService,
+            allocationService,
+            relationService,
+            activityService,
+            mediaUsageService,
+            fileService,
+            objectStorage);
+    var documentWorkflowWriterService =
+        new DocumentWorkflowWriterService(
+            activityService,
+            documentWorkflowAccessService,
+            documentService,
+            prefixService,
+            sequenceService,
+            relationService,
+            stockMovementService);
+    var documentDraftWorkflowService =
+        new DocumentDraftWorkflowService(
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentService,
+            lineService,
+            partnerService,
+            contactService,
+            warehouseService,
+            companyProvider,
+            currencyService,
+            productService,
+            unitService);
+    var warehouseOperationSupportService =
+        new WarehouseOperationSupportService(
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentDraftWorkflowService,
+            lineService,
+            warehouseService,
+            companyProvider);
+    var warehouseTransferPreviewService =
+        new WarehouseTransferPreviewService(balanceService, warehouseOperationSupportService);
+    var warehouseOperationPreviewService =
+        new WarehouseOperationPreviewService(
+            productService,
+            warehouseService,
+            companyProvider,
+            relationService,
+            allocationService,
+            balanceService,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseTransferPreviewService);
+    var warehouseOperationRecordService =
+        new WarehouseOperationRecordService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            relationService,
+            allocationService,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseOperationPreviewService);
+    var warehouseOperationCommandService =
+        new WarehouseOperationCommandService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            companyProvider,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseOperationPreviewService,
+            warehouseOperationRecordService);
+    var documentFulfillmentWorkflowService =
+        new DocumentFulfillmentWorkflowService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            companyProvider,
+            postingService,
+            relationService,
+            allocationService,
+            balanceService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentDraftWorkflowService);
+    var documentFileWorkflowService =
+        new DocumentFileWorkflowService(
+            companyProvider,
+            fileService,
+            mediaAssetService,
+            mediaUsageService,
+            objectStorage,
+            outboxService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper);
+    var documentWorkflowFacadeImpl =
+        new DocumentWorkflowFacadeImpl(
+            documentService,
+            companyProvider,
+            documentWorkflowAccessService,
+            documentResponseMapper,
+            warehouseOperationCommandService,
+            warehouseOperationPreviewService,
+            documentFulfillmentWorkflowService,
+            documentFileWorkflowService,
+            documentDraftWorkflowService);
+    facade = documentWorkflowFacadeImpl;
     preferredCurrency = Currency.builder().id(1L).code("EUR").name("Euro").build();
     company =
         Company.builder()
@@ -207,7 +347,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.PURCHASE_ORDER,
             DocumentType.SALES_ORDER,
             DocumentType.GOODS_RECEIPT,
-            DocumentType.DELIVERY_NOTE),
+            DocumentType.DELIVERY_NOTE,
+            DocumentType.TRANSFER_REQUEST,
+            DocumentType.STOCK_COUNT,
+            DocumentType.RETURN),
         capabilities.creatableTypes());
     assertFalse(capabilities.availableQueueViews().isEmpty());
   }
@@ -232,7 +375,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.PURCHASE_ORDER,
             DocumentType.SALES_ORDER,
             DocumentType.GOODS_RECEIPT,
-            DocumentType.DELIVERY_NOTE),
+            DocumentType.DELIVERY_NOTE,
+            DocumentType.TRANSFER_REQUEST,
+            DocumentType.STOCK_COUNT,
+            DocumentType.RETURN),
         facade.capabilities().creatableTypes());
   }
 

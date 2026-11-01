@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +22,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentLineMapper;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
@@ -53,7 +54,6 @@ public class WarehouseOperationCommandService {
   private final DocumentWorkflowAccessService accessService;
   private final DocumentWorkflowWriterService writer;
   private final DocumentResponseMapper responseMapper;
-  private final DocumentDraftWorkflowService draftWorkflowService;
   private final WarehouseOperationSupportService warehouseOperationSupportService;
   private final WarehouseOperationPreviewService previewService;
 
@@ -157,7 +157,7 @@ public class WarehouseOperationCommandService {
                 .findByIdAndCompanyId(item.productId(), company.getId())
                 .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
         final DocumentLine line =
-            draftWorkflowService.buildLine(
+            DocumentLineMapper.buildLine(
                 root,
                 product,
                 product.getUnit(),
@@ -202,7 +202,7 @@ public class WarehouseOperationCommandService {
                 .findByIdAndCompanyId(item.productId(), company.getId())
                 .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
         final DocumentLine line =
-            draftWorkflowService.buildLine(
+            DocumentLineMapper.buildLine(
                 root, product, product.getUnit(), BigDecimal.ZERO, BigDecimal.ZERO);
         line.setCountedQuantity(DocumentWorkflowValues.nz(item.countedQuantity()));
         line.setExpectedQuantity(

@@ -1,4 +1,4 @@
-package dev.roland.inventory_management_backend.features.document.service.impl;
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +30,7 @@ import dev.roland.inventory_management_backend.features.document.dto.PreviewResp
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentFulfillmentMapper;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
@@ -326,6 +327,34 @@ public class DocumentFulfillmentWorkflowService {
         warehouseId != null && lines.stream().noneMatch(l -> l.errorMessageKey() != null), lines);
   }
 
+  private void validateRemainingAllocations(
+      final List<DocumentLineAllocation> allocations, final Company company) {
+    if (!allocations.isEmpty()) {
+      final Map<Long, BigDecimal> requested = new HashMap<>();
+      allocations.forEach(
+          a -> requested.merge(a.getSourceOrderLine().getId(), a.getQuantity(), BigDecimal::add));
+      for (DocumentLineAllocation allocation : allocations) {
+        final Document source =
+            accessService.lock(
+                allocation.getSourceOrderLine().getDocument().getId(), company.getId());
+        final DocumentLine sourceLine =
+            source.getLines().stream()
+                .filter(l -> l.getId().equals(allocation.getSourceOrderLine().getId()))
+                .findFirst()
+                .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+        final BigDecimal remaining =
+            sourceLine
+                .getQuantity()
+                .subtract(accessService.fulfilledFor(sourceLine))
+                .subtract(DocumentWorkflowValues.nz(sourceLine.getClosedQuantity()));
+        final BigDecimal requestQty = requested.get(sourceLine.getId());
+        if (requestQty.compareTo(remaining) > 0) {
+          throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+        }
+      }
+    }
+  }
+
   @Transactional
   public DocumentResponse post(
       final Long id, final String idempotencyKey, final String expectedVersion) {
@@ -358,46 +387,8 @@ public class DocumentFulfillmentWorkflowService {
           document.getLines().stream()
               .flatMap(l -> allocationService.findAllByFulfillmentLineId(l.getId()).stream())
               .toList();
-      if (!allocations.isEmpty()) {
-        final Map<Long, BigDecimal> requested = new HashMap<>();
-        allocations.forEach(
-            a -> requested.merge(a.getSourceOrderLine().getId(), a.getQuantity(), BigDecimal::add));
-        for (DocumentLineAllocation allocation : allocations) {
-          final Document source =
-              accessService.lock(
-                  allocation.getSourceOrderLine().getDocument().getId(), company.getId());
-          final DocumentLine sourceLine =
-              source.getLines().stream()
-                  .filter(l -> l.getId().equals(allocation.getSourceOrderLine().getId()))
-                  .findFirst()
-                  .orElseThrow(
-                      () -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
-          final BigDecimal remaining =
-              sourceLine
-                  .getQuantity()
-                  .subtract(accessService.fulfilledFor(sourceLine))
-                  .subtract(DocumentWorkflowValues.nz(sourceLine.getClosedQuantity()));
-          final BigDecimal requestQty = requested.get(sourceLine.getId());
-          if (requestQty.compareTo(remaining) > 0) {
-            throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
-          }
-        }
-      }
-      final PreviewResponse preview =
-          preview(
-              new FulfillmentPreview(
-                  null,
-                  id,
-                  document.getType(),
-                  document.getType() == DocumentType.GOODS_RECEIPT
-                      ? DocumentWorkflowValues.idOf(document.getTargetWarehouse())
-                      : DocumentWorkflowValues.idOf(document.getSourceWarehouse()),
-                  document.getLines().stream()
-                      .map(
-                          l ->
-                              new FulfillmentLine(
-                                  l.getId(), l.getProduct().getId(), l.getQuantity()))
-                      .toList()));
+      validateRemainingAllocations(allocations, company);
+      final PreviewResponse preview = preview(DocumentFulfillmentMapper.toPreview(document));
       if (!preview.valid()) {
         final boolean insufficientStock =
             preview.lines().stream()

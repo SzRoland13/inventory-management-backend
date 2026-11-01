@@ -14,6 +14,7 @@ public record WarehouseOperationPreview(
     List<String> blockers,
     List<Movement> relatedMovements,
     List<DocumentRef> relatedReturns) {
+  @lombok.Builder(toBuilder = true)
   public record Line(
       Long sourceLineId,
       Long productId,
@@ -37,82 +38,13 @@ public record WarehouseOperationPreview(
       Long targetWarehouseId,
       String errorMessageKey,
       String productName) {
-    public Line(
-        final Long sourceLineId,
-        final Long productId,
-        final BigDecimal sourceQuantity,
-        final BigDecimal transitQuantity,
-        final BigDecimal destinationQuantity,
-        final BigDecimal expectedAtCount,
-        final BigDecimal countedQuantity,
-        final BigDecimal variance,
-        final BigDecimal rebasedTargetQuantity,
-        final BigDecimal adjustmentQuantity,
-        final BigDecimal originalQuantity,
-        final BigDecimal correctedQuantity,
-        final BigDecimal correctedFulfilledQuantity,
-        final BigDecimal closedQuantity,
-        final BigDecimal returnedQuantity,
-        final BigDecimal returnableQuantity,
-        final BigDecimal remainingQuantity,
-        final BigDecimal quantityDelta,
-        final BigDecimal resultingQuantity,
-        final Long targetWarehouseId,
-        final String errorMessageKey) {
-      this(
-          sourceLineId,
-          productId,
-          sourceQuantity,
-          transitQuantity,
-          destinationQuantity,
-          expectedAtCount,
-          countedQuantity,
-          variance,
-          rebasedTargetQuantity,
-          adjustmentQuantity,
-          originalQuantity,
-          correctedQuantity,
-          correctedFulfilledQuantity,
-          closedQuantity,
-          returnedQuantity,
-          returnableQuantity,
-          remainingQuantity,
-          quantityDelta,
-          resultingQuantity,
-          targetWarehouseId,
-          errorMessageKey,
-          null);
-    }
-
     @JsonProperty("expectedQuantity")
     public BigDecimal expectedQuantity() {
       return expectedAtCount;
     }
 
     public Line withProductName(final String value) {
-      return new Line(
-          sourceLineId,
-          productId,
-          sourceQuantity,
-          transitQuantity,
-          destinationQuantity,
-          expectedAtCount,
-          countedQuantity,
-          variance,
-          rebasedTargetQuantity,
-          adjustmentQuantity,
-          originalQuantity,
-          correctedQuantity,
-          correctedFulfilledQuantity,
-          closedQuantity,
-          returnedQuantity,
-          returnableQuantity,
-          remainingQuantity,
-          quantityDelta,
-          resultingQuantity,
-          targetWarehouseId,
-          errorMessageKey,
-          value);
+      return toBuilder().productName(value).build();
     }
   }
 

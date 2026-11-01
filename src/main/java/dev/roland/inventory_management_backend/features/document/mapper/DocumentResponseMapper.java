@@ -21,7 +21,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
-import dev.roland.inventory_management_backend.features.document.service.impl.DocumentWorkflowAccessService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowAccessService;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentTotalsCalculator;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
@@ -55,6 +55,57 @@ public class DocumentResponseMapper {
   private final ObjectStorageService objectStorage;
 
   public DocumentResponse toResponse(final Document doc) {
+    final List<LineResponse> lines = mapLines(doc);
+    final List<RelatedDocument> related = mapRelatedDocuments(doc);
+    final List<Activity> activity = mapActivity(doc);
+    final List<FileEntry> files = mapFiles(doc);
+    final DocumentTotalsCalculator.Totals totals =
+        DocumentTotalsCalculator.calculate(DocumentWorkflowValues.safe(doc.getLines()));
+    return new DocumentResponse(
+        doc.getId(),
+        doc.getType(),
+        DocumentWorkflowValues.number(doc),
+        doc.getDocumentDate(),
+        doc.getCreatedByUser() == null ? null : doc.getCreatedByUser().getUsername(),
+        doc.getPartnerNameSnapshot(),
+        doc.getSourceWarehouseNameSnapshot() != null
+            ? doc.getSourceWarehouseNameSnapshot()
+            : doc.getTargetWarehouseNameSnapshot(),
+        doc.getPartner() == null ? null : doc.getPartner().getId(),
+        doc.getSourceWarehouse() != null
+            ? doc.getSourceWarehouse().getId()
+            : DocumentWorkflowValues.idOf(doc.getTargetWarehouse()),
+        doc.getSourceWarehouse() == null ? null : doc.getSourceWarehouse().getId(),
+        doc.getTargetWarehouse() == null ? null : doc.getTargetWarehouse().getId(),
+        doc.getTransitWarehouse() == null ? null : doc.getTransitWarehouse().getId(),
+        doc.getCountedAt(),
+        doc.getWorkflowReason(),
+        doc.getWorkflowDisposition() == null ? null : doc.getWorkflowDisposition().name(),
+        doc.getWorkflowDirection() == null ? null : doc.getWorkflowDirection().name(),
+        doc.getCalculationVersion(),
+        doc.isNonBillable(),
+        doc.getNotes(),
+        doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
+        doc.getCurrency() == null ? null : doc.getCurrency().getId(),
+        DocumentWorkflowValues.safe(doc.getExchangeRates()).stream()
+            .map(r -> new ExchangeRateResponse(r.getSourceCurrency().getId(), r.getRate()))
+            .toList(),
+        new DocumentTotals(
+            doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
+            totals.net(),
+            totals.tax(),
+            totals.gross(),
+            BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY)),
+        doc.getStatus().name(),
+        String.valueOf(doc.getVersion() == null ? 0 : doc.getVersion()),
+        lines,
+        allowedActions(doc),
+        related,
+        activity,
+        files);
+  }
+
+  private List<LineResponse> mapLines(final Document doc) {
     final List<LineResponse> lines =
         DocumentWorkflowValues.safe(doc.getLines()).stream()
             .map(
@@ -105,6 +156,10 @@ public class DocumentResponseMapper {
                       line.getVariance());
                 })
             .toList();
+    return lines;
+  }
+
+  private List<RelatedDocument> mapRelatedDocuments(final Document doc) {
     final List<RelatedDocument> related =
         relationService
             .findAllBySourceDocumentIdOrTargetDocumentId(doc.getId(), doc.getId())
@@ -123,6 +178,10 @@ public class DocumentResponseMapper {
                 })
             .distinct()
             .toList();
+    return related;
+  }
+
+  private List<Activity> mapActivity(final Document doc) {
     final List<Activity> activity =
         activityService.findAllByDocumentIdOrderByOccurredAtAsc(doc.getId()).stream()
             .map(
@@ -133,6 +192,10 @@ public class DocumentResponseMapper {
                         a.getActor() == null ? "System" : a.getActor().getUsername(),
                         a.getOccurredAt()))
             .toList();
+    return activity;
+  }
+
+  private List<FileEntry> mapFiles(final Document doc) {
     final List<FileEntry> files = new ArrayList<>();
     for (MediaUsage usage :
         mediaUsageService.findAllByEntityTypeAndEntityIdAndUsageTypeOrderBySortOrderAsc(
@@ -169,50 +232,7 @@ public class DocumentResponseMapper {
                   : objectStorage.generatePresignedGetUrl(asset.getObjectPath()).getUrl(),
               file.getCreatedAt()));
     }
-    final DocumentTotalsCalculator.Totals totals =
-        DocumentTotalsCalculator.calculate(DocumentWorkflowValues.safe(doc.getLines()));
-    return new DocumentResponse(
-        doc.getId(),
-        doc.getType(),
-        DocumentWorkflowValues.number(doc),
-        doc.getDocumentDate(),
-        doc.getCreatedByUser() == null ? null : doc.getCreatedByUser().getUsername(),
-        doc.getPartnerNameSnapshot(),
-        doc.getSourceWarehouseNameSnapshot() != null
-            ? doc.getSourceWarehouseNameSnapshot()
-            : doc.getTargetWarehouseNameSnapshot(),
-        doc.getPartner() == null ? null : doc.getPartner().getId(),
-        doc.getSourceWarehouse() != null
-            ? doc.getSourceWarehouse().getId()
-            : DocumentWorkflowValues.idOf(doc.getTargetWarehouse()),
-        doc.getSourceWarehouse() == null ? null : doc.getSourceWarehouse().getId(),
-        doc.getTargetWarehouse() == null ? null : doc.getTargetWarehouse().getId(),
-        doc.getTransitWarehouse() == null ? null : doc.getTransitWarehouse().getId(),
-        doc.getCountedAt(),
-        doc.getWorkflowReason(),
-        doc.getWorkflowDisposition() == null ? null : doc.getWorkflowDisposition().name(),
-        doc.getWorkflowDirection() == null ? null : doc.getWorkflowDirection().name(),
-        doc.getCalculationVersion(),
-        doc.isNonBillable(),
-        doc.getNotes(),
-        doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
-        doc.getCurrency() == null ? null : doc.getCurrency().getId(),
-        DocumentWorkflowValues.safe(doc.getExchangeRates()).stream()
-            .map(r -> new ExchangeRateResponse(r.getSourceCurrency().getId(), r.getRate()))
-            .toList(),
-        new DocumentTotals(
-            doc.getCurrency() == null ? null : doc.getCurrency().getCode(),
-            totals.net(),
-            totals.tax(),
-            totals.gross(),
-            BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY)),
-        doc.getStatus().name(),
-        String.valueOf(doc.getVersion() == null ? 0 : doc.getVersion()),
-        lines,
-        allowedActions(doc),
-        related,
-        activity,
-        files);
+    return files;
   }
 
   private boolean isSupportedDraftType(final DocumentType type) {
