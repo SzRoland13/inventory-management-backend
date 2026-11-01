@@ -13,7 +13,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>inventory-management-backend</name>
 	<description>Inventory Management Backend</description>
-	<url/>
+	<url>https://github.com/SzRoland13/inventory-management-backend</url>
 	<licenses>
 		<license/>
 	</licenses>
@@ -47,6 +47,7 @@
 
 		<coverage.line.minimum>0.80</coverage.line.minimum>
 		<coverage.branch.minimum>0.70</coverage.branch.minimum>
+		<mockito.version>5.17.0</mockito.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -162,6 +163,13 @@
 
     <build>
         <plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+				</configuration>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

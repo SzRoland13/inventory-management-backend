@@ -41,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping(AUTH_BASE_ENDPOINT)
 @RequiredArgsConstructor
 public class AuthController {
-  public static final String AUTH_BASE_ENDPOINT = "api/v1/auth";
+  public static final String AUTH_BASE_ENDPOINT = "/api/v1/auth";
   public static final String CHECK_FIRST_LOGIN_ENDPOINT = "/check-first-login";
   public static final String SEND_OTC_ENDPOINT = "/send-one-time-code";
   public static final String VALIDATE_OTC_ENDPOINT = "/validate-one-time-code";
