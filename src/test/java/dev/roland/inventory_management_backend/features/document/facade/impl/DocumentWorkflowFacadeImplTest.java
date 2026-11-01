@@ -401,7 +401,8 @@ class DocumentWorkflowFacadeImplTest {
     document.setCreatedByUser(user);
     document.setCurrency(targetCurrency);
     document.setExchangeRates(
-        List.of(exchangeRate(document, sourceCurrency, new BigDecimal("1.08"))));
+        new java.util.ArrayList<>(
+            List.of(exchangeRate(document, sourceCurrency, new BigDecimal("1.08")))));
     product.setCurrency(Currency.builder().id(4L).code("JPY").name("Yen").build());
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
 
@@ -530,6 +531,54 @@ class DocumentWorkflowFacadeImplTest {
             "0", new Draft(DocumentType.PURCHASE_ORDER, null, null, null, "updated", List.of())));
 
     assertTrue(document.getLines() == managedLines);
+  }
+
+  @Test
+  void updateDraftUpdatesExchangeRatesInPlaceAndRecalculatesLinePrices() {
+    final Currency targetCurrency = Currency.builder().id(2L).code("USD").name("Dollar").build();
+    final Currency sourceCurrency = Currency.builder().id(3L).code("GBP").name("Pound").build();
+    final Unit unit = Unit.builder().id(7L).code("EA").name("Each").build();
+    final Product product =
+        Product.builder().id(24L).name("Widget").unit(unit).currency(sourceCurrency).build();
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
+    document.setCreatedByUser(user);
+    document.setCurrency(targetCurrency);
+    final List<DocumentExchangeRate> managedRates =
+        new java.util.ArrayList<>(
+            List.of(exchangeRate(document, sourceCurrency, new BigDecimal("1.08"))));
+    document.setExchangeRates(managedRates);
+    when(currencyService.findById(2L)).thenReturn(Optional.of(targetCurrency));
+    when(currencyService.findById(3L)).thenReturn(Optional.of(sourceCurrency));
+    when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(unitService.findById(7L)).thenReturn(Optional.of(unit));
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(documentService.save(document)).thenReturn(document);
+
+    final var response =
+        facade.updateDraft(
+            3L,
+            new DraftUpdate(
+                "0",
+                new Draft(
+                    DocumentType.PURCHASE_ORDER,
+                    null,
+                    null,
+                    null,
+                    null,
+                    List.of(
+                        new LineDraft(
+                            24L,
+                            7L,
+                            new BigDecimal("2"),
+                            new BigDecimal("5.00"),
+                            new BigDecimal("5.00"),
+                            3L)),
+                    2L,
+                    List.of(new ExchangeRateDraft(3L, new BigDecimal("1.25"))))));
+
+    assertTrue(document.getExchangeRates() == managedRates);
+    assertEquals(new BigDecimal("1.25"), managedRates.getFirst().getRate());
+    assertEquals(new BigDecimal("6.2500"), response.lines().getFirst().unitPrice());
   }
 
   @Test

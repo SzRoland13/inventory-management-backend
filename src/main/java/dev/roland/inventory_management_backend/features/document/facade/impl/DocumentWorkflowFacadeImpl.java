@@ -976,28 +976,60 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
     document.setCurrency(target);
-    final List<DocumentExchangeRate> saved = new ArrayList<>();
+    final Map<Long, DocumentExchangeRate> saved = new HashMap<>();
     for (ExchangeRateDraft entry : safe(draft.exchangeRates())) {
       if (entry == null
           || entry.sourceCurrencyId() == null
           || entry.rate() == null
           || entry.rate().signum() <= 0
           || entry.sourceCurrencyId().equals(target.getId())
-          || saved.stream()
-              .anyMatch(r -> r.getSourceCurrency().getId().equals(entry.sourceCurrencyId()))) {
+          || saved.containsKey(entry.sourceCurrencyId())) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
       }
       final Currency source =
           currencyService
               .findById(entry.sourceCurrencyId())
               .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
-      final DocumentExchangeRate rate = new DocumentExchangeRate();
-      rate.setDocument(document);
-      rate.setSourceCurrency(source);
-      rate.setRate(entry.rate());
-      saved.add(rate);
+      final DocumentExchangeRate rate =
+          saved.get(entry.sourceCurrencyId()) != null
+              ? saved.get(entry.sourceCurrencyId())
+              : document.getExchangeRates() == null
+                  ? null
+                  : document.getExchangeRates().stream()
+                      .filter(
+                          existingRate ->
+                              existingRate
+                                  .getSourceCurrency()
+                                  .getId()
+                                  .equals(entry.sourceCurrencyId()))
+                      .findFirst()
+                      .orElse(null);
+      if (rate == null) {
+        final DocumentExchangeRate newRate = new DocumentExchangeRate();
+        newRate.setDocument(document);
+        newRate.setSourceCurrency(source);
+        newRate.setRate(entry.rate());
+        saved.put(entry.sourceCurrencyId(), newRate);
+      } else {
+        rate.setSourceCurrency(source);
+        rate.setRate(entry.rate());
+        saved.put(entry.sourceCurrencyId(), rate);
+      }
     }
-    document.setExchangeRates(saved);
+    if (document.getExchangeRates() == null) {
+      document.setExchangeRates(new ArrayList<>());
+    }
+    final List<DocumentExchangeRate> existing = document.getExchangeRates();
+    existing.removeIf(rate -> !saved.containsKey(rate.getSourceCurrency().getId()));
+    for (ExchangeRateDraft entry : safe(draft.exchangeRates())) {
+      if (entry == null || entry.sourceCurrencyId() == null) {
+        continue;
+      }
+      final DocumentExchangeRate rate = saved.get(entry.sourceCurrencyId());
+      if (rate != null && !existing.contains(rate)) {
+        existing.add(rate);
+      }
+    }
     document.setExchangeRate(null);
   }
 
