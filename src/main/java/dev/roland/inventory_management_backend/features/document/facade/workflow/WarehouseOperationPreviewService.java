@@ -83,18 +83,19 @@ public class WarehouseOperationPreviewService {
           document, company, operation, request, previewLines, blockers);
     } else {
       if (operation == WarehouseOperationType.RETURN_CREATE) {
-        appendReturnLines(document, company, request, previewLines, blockers);
+        appendReturnLines(company, request, previewLines, blockers);
       } else if (operation == WarehouseOperationType.CORRECTION) {
         appendCorrectionLines(
             document, company, request, previewLines, blockers, movements, relatedReturns);
       } else if (operation == WarehouseOperationType.QUARANTINE_RELEASE) {
         appendQuarantineLines(document, company, request, previewLines, blockers);
       } else if (operation == WarehouseOperationType.REPLACEMENT_DELIVERY) {
-        appendReplacementLines(document, company, request, previewLines, blockers);
+        appendReplacementLines(company, request, previewLines, blockers);
       } else {
         WarehouseOperationPreviewAssembler.addUnmappedLines(request, previewLines);
       }
     }
+
     return WarehouseOperationPreviewAssembler.finish(
         company,
         productService,
@@ -107,7 +108,6 @@ public class WarehouseOperationPreviewService {
   }
 
   private void appendReturnLines(
-      final Document document,
       final Company company,
       final WarehouseOperationRequest request,
       final List<WarehouseOperationPreview.Line> previewLines,
@@ -458,7 +458,6 @@ public class WarehouseOperationPreviewService {
   }
 
   private void appendReplacementLines(
-      final Document document,
       final Company company,
       final WarehouseOperationRequest request,
       final List<WarehouseOperationPreview.Line> previewLines,

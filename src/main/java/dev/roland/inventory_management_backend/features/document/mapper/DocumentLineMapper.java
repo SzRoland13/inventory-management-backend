@@ -38,24 +38,24 @@ public final class DocumentLineMapper {
 
   public static DocumentLine copyOperationLine(
       final Document doc, final DocumentLine source, final BigDecimal quantity) {
-      return DocumentLine.builder()
-          .document(doc)
-          .product(source.getProduct())
-          .unitSnapshot(source.getUnitSnapshot())
-          .unitCodeSnapshot(source.getUnitCodeSnapshot())
-          .unitNameSnapshot(source.getUnitNameSnapshot())
-          .conversionFactorSnapshot(source.getConversionFactorSnapshot())
-          .quantity(quantity)
-          .fulfilledQuantity(BigDecimal.ZERO)
-          .unitPrice(DocumentWorkflowValues.nz(source.getUnitPrice()))
-          .sourceUnitPrice(DocumentWorkflowValues.nz(source.getSourceUnitPrice()))
-          .totalPrice(DocumentWorkflowValues.nz(source.getUnitPrice()).multiply(quantity))
-          .currency(source.getCurrency())
-          .sourceCurrency(source.getSourceCurrency())
-          .exchangeRateSnapshot(source.getExchangeRateSnapshot())
-          .productNameSnapshot(source.getProductNameSnapshot())
-          .productSkuSnapshot(source.getProductSkuSnapshot())
-          .vatRateSnapshot(source.getVatRateSnapshot())
-          .build();
+    return DocumentLine.builder()
+        .document(doc)
+        .product(source.getProduct())
+        .unitSnapshot(source.getUnitSnapshot())
+        .unitCodeSnapshot(source.getUnitCodeSnapshot())
+        .unitNameSnapshot(source.getUnitNameSnapshot())
+        .conversionFactorSnapshot(source.getConversionFactorSnapshot())
+        .quantity(quantity)
+        .fulfilledQuantity(BigDecimal.ZERO)
+        .unitPrice(DocumentWorkflowValues.nz(source.getUnitPrice()))
+        .sourceUnitPrice(DocumentWorkflowValues.nz(source.getSourceUnitPrice()))
+        .totalPrice(DocumentWorkflowValues.nz(source.getUnitPrice()).multiply(quantity))
+        .currency(source.getCurrency())
+        .sourceCurrency(source.getSourceCurrency())
+        .exchangeRateSnapshot(source.getExchangeRateSnapshot())
+        .productNameSnapshot(source.getProductNameSnapshot())
+        .productSkuSnapshot(source.getProductSkuSnapshot())
+        .vatRateSnapshot(source.getVatRateSnapshot())
+        .build();
   }
 }
