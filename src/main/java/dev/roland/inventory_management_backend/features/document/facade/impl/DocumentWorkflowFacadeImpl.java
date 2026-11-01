@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.document.facade.impl;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,28 +60,26 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.exception.DocumentConflictException;
 import dev.roland.inventory_management_backend.features.document.facade.DocumentWorkflowFacade;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
-import dev.roland.inventory_management_backend.features.document.repository.DocumentPostingKeyRepository;
-import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentTotalsCalculator;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivity;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
-import dev.roland.inventory_management_backend.features.document_activity.repository.DocumentActivityRepository;
+import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFile;
-import dev.roland.inventory_management_backend.features.document_file.DocumentFileRepository;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFileSource;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus;
+import dev.roland.inventory_management_backend.features.document_file.service.DocumentFileService;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.document_line_allocation.DocumentLineAllocation;
-import dev.roland.inventory_management_backend.features.document_line_allocation.repository.DocumentLineAllocationRepository;
+import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
-import dev.roland.inventory_management_backend.features.document_prefix.repository.DocumentPrefixRepository;
+import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
 import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
-import dev.roland.inventory_management_backend.features.document_relation.repository.DocumentRelationRepository;
+import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
-import dev.roland.inventory_management_backend.features.document_sequence.repository.DocumentSequenceRepository;
+import dev.roland.inventory_management_backend.features.document_sequence.service.DocumentSequenceService;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
@@ -91,7 +90,7 @@ import dev.roland.inventory_management_backend.features.partner.Partner;
 import dev.roland.inventory_management_backend.features.partner.service.PartnerService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
-import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
+import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.unit.service.UnitService;
@@ -100,6 +99,7 @@ import dev.roland.inventory_management_backend.features.user.enumeration.UserRol
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import lombok.RequiredArgsConstructor;
 
 /** Coordinates company-scoped document workflows. */
@@ -114,7 +114,6 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
           DocumentType.DELIVERY_NOTE);
   private static final List<DocumentQueueView> VIEWS = List.of(DocumentQueueView.values());
 
-  private final DocumentRepository documentRepository;
   private final DocumentService documentService;
   private final DocumentLineService lineService;
   private final ProductService productService;
@@ -125,14 +124,13 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private final CurrentCompanyProvider companyProvider;
   private final UserService userService;
   private final DocumentPostingService postingService;
-  private final DocumentRelationRepository relationRepository;
-  private final DocumentLineAllocationRepository allocationRepository;
-  private final DocumentActivityRepository activityRepository;
-  private final DocumentPostingKeyRepository postingKeyRepository;
-  private final DocumentFileRepository fileRepository;
-  private final DocumentPrefixRepository prefixRepository;
-  private final DocumentSequenceRepository sequenceRepository;
-  private final StockBalanceRepository balanceRepository;
+  private final DocumentRelationService relationService;
+  private final DocumentLineAllocationService allocationService;
+  private final DocumentActivityService activityService;
+  private final DocumentFileService fileService;
+  private final DocumentPrefixService prefixService;
+  private final DocumentSequenceService sequenceService;
+  private final StockBalanceService balanceService;
   private final MediaAssetService mediaAssetService;
   private final MediaUsageService mediaUsageService;
   private final ObjectStorageService objectStorage;
@@ -157,7 +155,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Company company = companyProvider.getCurrentCompany();
     final User actor = actor();
     final List<Document> all =
-        documentRepository.findAllByCompanyIdOrderByUpdatedAtDesc(company.getId());
+        documentService.findAllByCompanyIdOrderByUpdatedAtDesc(company.getId());
     final Map<String, Long> counts = new HashMap<>();
     VIEWS.forEach(
         queueView ->
@@ -228,7 +226,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     applyLines(saved, draft.lines(), company.getId());
     addActivity(saved, DocumentActivityEvent.CREATED, null);
     final Document result = documentService.save(saved);
-    documentRepository.flush();
+    documentService.flush();
     return toResponse(result);
   }
 
@@ -238,6 +236,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = lock(id, company.getId());
     if (document.getStatus() != DocumentStatus.DRAFT) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    if (hasFulfillmentSource(document)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
     if (!canManageDocument(document, actor())) {
@@ -285,7 +286,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     addActivity(document, DocumentActivityEvent.EDITED, null);
     touch(document);
     final Document saved = documentService.save(document);
-    documentRepository.flush();
+    documentService.flush();
     return toResponse(saved);
   }
 
@@ -310,21 +311,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         && source.getStatus() != DocumentStatus.PARTIALLY_COMPLETED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
-    final Long warehouseId =
-        request.warehouseId() != null
-            ? request.warehouseId()
-            : source == null
-                ? null
-                : request.type() == DocumentType.GOODS_RECEIPT
-                    ? source.getTargetWarehouse() == null
-                        ? null
-                        : source.getTargetWarehouse().getId()
-                    : source.getSourceWarehouse() == null
-                        ? null
-                        : source.getSourceWarehouse().getId();
-    if (warehouseId == null) {
-      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
-    }
+    final Long warehouseId = getWarehouseId(request, source);
     final Document operation = new Document();
     operation.setCompany(company);
     operation.setCreatedByUser(actor());
@@ -342,7 +329,11 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       operation.setReferenceNumber(source.getReferenceNumber());
     }
     setWarehouse(operation, request.type(), warehouseId, company.getId());
-    if (source != null) {
+    if (source != null
+        && warehouseId.equals(
+            request.type() == DocumentType.GOODS_RECEIPT
+                ? idOf(source.getTargetWarehouse())
+                : idOf(source.getSourceWarehouse()))) {
       if (request.type() == DocumentType.GOODS_RECEIPT) {
         operation.setTargetWarehouseNameSnapshot(source.getTargetWarehouseNameSnapshot());
         operation.setTargetWarehouseCodeSnapshot(source.getTargetWarehouseCodeSnapshot());
@@ -381,7 +372,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         allocation.setFulfillmentLine(line);
         allocation.setSourceOrderLine(sourceLine);
         allocation.setQuantity(input.quantity());
-        allocationRepository.save(allocation);
+        allocationService.save(allocation);
       }
     }
     if (source != null) {
@@ -389,11 +380,32 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       relation.setSourceDocument(source);
       relation.setTargetDocument(saved);
       relation.setRelationType(DocumentRelationType.FULFILLS);
-      relationRepository.save(relation);
+      relationService.save(relation);
     }
     addActivity(
         saved, DocumentActivityEvent.CREATED, source == null ? null : "source=" + source.getId());
     return toResponse(documentService.save(saved));
+  }
+
+  @NonNull
+  private static Long getWarehouseId(final FulfillmentDraft request, final Document source) {
+    final Long warehouseId =
+        request.warehouseId() != null
+            ? request.warehouseId()
+            : source == null
+                ? null
+                : request.type() == DocumentType.GOODS_RECEIPT
+                    ? source.getTargetWarehouse() == null
+                        ? null
+                        : source.getTargetWarehouse().getId()
+                    : source.getSourceWarehouse() == null
+                        ? null
+                        : source.getSourceWarehouse().getId();
+    if (warehouseId == null) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+
+    return warehouseId;
   }
 
   @Transactional
@@ -440,7 +452,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         final DocumentLine allocatedSourceLine =
             line == null || source != null
                 ? null
-                : allocationRepository.findAllByFulfillmentLineId(line.getId()).stream()
+                : allocationService.findAllByFulfillmentLineId(line.getId()).stream()
                     .map(DocumentLineAllocation::getSourceOrderLine)
                     .findFirst()
                     .orElse(null);
@@ -457,16 +469,24 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                 .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
         final BigDecimal operationQty =
             input.quantity() == null && line != null ? line.getQuantity() : nz(input.quantity());
-        final BigDecimal stockQty =
-            operationQty.multiply(
-                line == null ? BigDecimal.ONE : nz(line.getConversionFactorSnapshot()));
+        final BigDecimal conversionFactor =
+            line == null
+                ? expectedFactor(product, product.getUnit())
+                : nz(line.getConversionFactorSnapshot());
+        final BigDecimal stockQty = operationQty.multiply(conversionFactor);
         final BigDecimal delta = type == DocumentType.DELIVERY_NOTE ? stockQty.negate() : stockQty;
         final BigDecimal available =
-            balanceRepository
+            balanceService
                 .findByWarehouseAndProduct(warehouse, product)
                 .map(b -> nz(b.getQuantity()))
                 .orElse(BigDecimal.ZERO);
-        final BigDecimal result = available.add(delta);
+        final BigDecimal cumulativeDelta =
+            lines.stream()
+                .filter(existing -> Objects.equals(existing.productId(), productId))
+                .map(PreviewLine::quantityDelta)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(delta);
+        final BigDecimal result = available.add(cumulativeDelta);
         BigDecimal shortfall = result.signum() < 0 ? result.abs() : BigDecimal.ZERO;
         String error =
             shortfall.signum() > 0
@@ -520,7 +540,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = lock(id, company.getId());
     DocumentResponse result = toResponse(document);
-    if (!postingKeyRepository.existsByDocumentIdAndIdempotencyKey(id, idempotencyKey)) {
+    if (!documentService.postingKeyExists(id, idempotencyKey)) {
       checkVersion(document, expectedVersion);
       if (!directAllowed(document.getType(), actor())) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_DIRECT_FULFILLMENT_NOT_ALLOWED);
@@ -540,7 +560,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       }
       final List<DocumentLineAllocation> allocations =
           document.getLines().stream()
-              .flatMap(l -> allocationRepository.findAllByFulfillmentLineId(l.getId()).stream())
+              .flatMap(l -> allocationService.findAllByFulfillmentLineId(l.getId()).stream())
               .toList();
       if (!allocations.isEmpty()) {
         final Map<Long, BigDecimal> requested = new HashMap<>();
@@ -598,10 +618,10 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                 preview.lines().stream().filter(line -> line.errorMessageKey() != null).toList()));
       }
       allocateNumber(document);
-      postingKeyRepository.save(postingKey(document, idempotencyKey));
+      documentService.savePostingKey(postingKey(document, idempotencyKey));
       for (DocumentLine line : document.getLines()) {
         final List<DocumentLineAllocation> lineAllocations =
-            allocationRepository.findAllByFulfillmentLineId(line.getId());
+            allocationService.findAllByFulfillmentLineId(line.getId());
         for (DocumentLineAllocation allocation : lineAllocations) {
           final DocumentLine sourceLine = allocation.getSourceOrderLine();
           sourceLine.setFulfilledQuantity(
@@ -612,7 +632,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       document.setStatus(DocumentStatus.CONFIRMED);
       final Document posted = postingService.complete(document);
       for (DocumentRelation relation :
-          relationRepository.findAllBySourceDocumentIdOrTargetDocumentId(id, id)) {
+          relationService.findAllBySourceDocumentIdOrTargetDocumentId(id, id)) {
         final Document source = relation.getSourceDocument();
         if (!source.getId().equals(id)
             && (source.getType() == DocumentType.PURCHASE_ORDER
@@ -624,7 +644,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       }
       addActivity(posted, DocumentActivityEvent.POSTED, idempotencyKey);
       final Document saved = documentService.save(posted);
-      documentRepository.flush();
+      documentService.flush();
       result = toResponse(saved);
     }
     return result;
@@ -657,7 +677,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     document.setStatus(DocumentStatus.CONFIRMED);
     addActivity(document, DocumentActivityEvent.CONFIRMED, null);
     final Document saved = documentService.save(document);
-    documentRepository.flush();
+    documentService.flush();
     return toResponse(saved);
   }
 
@@ -698,7 +718,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     addActivity(order, DocumentActivityEvent.REMAINDER_CLOSED, request.reason().trim());
     touch(order);
     final Document saved = documentService.save(order);
-    documentRepository.flush();
+    documentService.flush();
     return toResponse(saved);
   }
 
@@ -752,7 +772,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       entry.setDocument(document);
       entry.setMediaAsset(asset);
       entry.setSource(DocumentFileSource.UPLOAD);
-      fileRepository.save(entry);
+      fileService.save(entry);
       addActivity(document, DocumentActivityEvent.FILE_UPLOADED, original);
       return toResponse(document);
     } catch (IOException ex) {
@@ -776,7 +796,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private DocumentResponse queuePdf(
       final Long id, final String idempotencyKey, final String requestedLanguage) {
     final Company company = companyProvider.getCurrentCompany();
-    final Document document = find(id);
+    final Document document = lock(id, company.getId());
     if (!canManageDocument(document, actor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
@@ -790,15 +810,15 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
             : idempotencyKey;
     final boolean duplicateRequest =
         idempotencyKey != null
-            && fileRepository.findByDocumentIdAndIdempotencyKey(id, idempotencyKey).isPresent();
+            && fileService.findByDocumentIdAndIdempotencyKey(id, idempotencyKey).isPresent();
     final boolean busy =
-        fileRepository.existsByDocumentIdAndSourceAndStatusIn(
+        fileService.existsByDocumentIdAndSourceAndStatusIn(
             id,
             DocumentFileSource.GENERATED_PDF,
             List.of(DocumentFileStatus.QUEUED, DocumentFileStatus.PROCESSING));
     if (!duplicateRequest && !busy) {
       final List<DocumentFile> prior =
-          fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(id).stream()
+          fileService.findAllByDocumentIdOrderByCreatedAtDesc(id).stream()
               .filter(f -> f.getSource() == DocumentFileSource.GENERATED_PDF)
               .toList();
       final String languageTag =
@@ -819,7 +839,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       if (!prior.isEmpty()) {
         attempt.setParentFile(prior.getFirst());
       }
-      final DocumentFile saved = fileRepository.save(attempt);
+      final DocumentFile saved = fileService.save(attempt);
       outboxService.enqueue(
           AsyncJobType.DOCUMENT_PDF,
           Map.of("documentId", id, "fileId", saved.getId(), "idempotencyKey", key),
@@ -863,7 +883,11 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       final BigDecimal price = nz(draft.unitPrice());
       lines.add(buildLine(document, product, unit, quantity, price));
     }
-    document.setLines(lines);
+    if (document.getLines() == null) {
+      document.setLines(new ArrayList<>());
+    }
+    document.getLines().clear();
+    document.getLines().addAll(lines);
   }
 
   private void addLine(
@@ -982,7 +1006,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
             .map(
                 line -> {
                   final DocumentLine sourceLine =
-                      allocationRepository.findAllByFulfillmentLineId(line.getId()).stream()
+                      allocationService.findAllByFulfillmentLineId(line.getId()).stream()
                           .map(DocumentLineAllocation::getSourceOrderLine)
                           .findFirst()
                           .orElse(null);
@@ -1009,7 +1033,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                 })
             .toList();
     final List<RelatedDocument> related =
-        relationRepository
+        relationService
             .findAllBySourceDocumentIdOrTargetDocumentId(doc.getId(), doc.getId())
             .stream()
             .map(
@@ -1024,7 +1048,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                         d.getId(), number(d), d.getType(), DocumentRelationType.FULFILLS.name()))
             .toList();
     final List<Activity> activity =
-        activityRepository.findAllByDocumentIdOrderByOccurredAtAsc(doc.getId()).stream()
+        activityService.findAllByDocumentIdOrderByOccurredAtAsc(doc.getId()).stream()
             .map(
                 a ->
                     new Activity(
@@ -1050,7 +1074,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
               objectStorage.generatePresignedGetUrl(asset.getObjectPath()).getUrl(),
               asset.getCreatedAt()));
     }
-    for (DocumentFile file : fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(doc.getId())) {
+    for (DocumentFile file : fileService.findAllByDocumentIdOrderByCreatedAtDesc(doc.getId())) {
       if (file.getSource() != DocumentFileSource.GENERATED_PDF) {
         continue;
       }
@@ -1092,7 +1116,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
             totals.net(),
             totals.tax(),
             totals.gross(),
-            BigDecimal.ZERO.setScale(2)),
+            BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY)),
         doc.getStatus().name(),
         String.valueOf(doc.getVersion() == null ? 0 : doc.getVersion()),
         lines,
@@ -1105,7 +1129,9 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private List<DocumentAction> allowedActions(final Document doc) {
     final List<DocumentAction> actions = new ArrayList<>();
     final User user = actor();
-    if (doc.getStatus() == DocumentStatus.DRAFT && canManageDocument(doc, user)) {
+    if (doc.getStatus() == DocumentStatus.DRAFT
+        && canManageDocument(doc, user)
+        && !hasFulfillmentSource(doc)) {
       actions.add(DocumentAction.EDIT);
     }
     if (doc.getStatus() == DocumentStatus.DRAFT
@@ -1127,7 +1153,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         && canManageDocument(doc, user)) {
       actions.add(DocumentAction.GENERATE_PDF);
       final boolean latestPdfFailed =
-          fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(doc.getId()).stream()
+          fileService.findAllByDocumentIdOrderByCreatedAtDesc(doc.getId()).stream()
               .filter(file -> file.getSource() == DocumentFileSource.GENERATED_PDF)
               .findFirst()
               .map(file -> file.getStatus() == DocumentFileStatus.FAILED)
@@ -1152,20 +1178,20 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Long companyId = document.getCompany().getId();
     final int year = document.getDocumentDate().getYear();
     final DocumentPrefix prefix =
-        prefixRepository
+        prefixService
             .findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(companyId, document.getType())
             .orElseGet(
                 () ->
-                    prefixRepository.save(
+                    prefixService.save(
                         DocumentPrefix.builder()
                             .company(document.getCompany())
                             .documentType(document.getType())
                             .prefix(document.getType().getDefaultPrefix())
                             .build()));
     final String prefixText = prefix.getPrefix();
-    sequenceRepository.ensureSequenceExists(companyId, prefix.getId(), year);
+    sequenceService.ensureSequenceExists(companyId, prefix.getId(), year);
     final DocumentSequence sequence =
-        sequenceRepository
+        sequenceService
             .lockByScope(companyId, prefix.getId(), year)
             .orElseThrow(
                 () -> new ApiException(DocumentApiMessageKey.DOCUMENT_SEQUENCE_UNAVAILABLE));
@@ -1182,7 +1208,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     event.setActor(actor());
     event.setEventType(type);
     event.setDetails(details);
-    activityRepository.save(event);
+    activityService.save(event);
   }
 
   private void touch(final Document document) {
@@ -1232,13 +1258,23 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private BigDecimal fulfilledFor(final DocumentLine line) {
     return line.getId() == null
         ? nz(line.getFulfilledQuantity())
-        : nz(allocationRepository.sumPostedAllocated(line.getId(), DocumentStatus.COMPLETED));
+        : nz(allocationService.sumPostedAllocated(line.getId(), DocumentStatus.COMPLETED));
   }
 
   private boolean isMatchingOrder(final Document source, final DocumentType operation) {
     return operation == DocumentType.GOODS_RECEIPT
         ? source.getType() == DocumentType.PURCHASE_ORDER
         : source.getType() == DocumentType.SALES_ORDER;
+  }
+
+  private boolean hasFulfillmentSource(final Document document) {
+    return relationService
+        .findAllBySourceDocumentIdOrTargetDocumentId(document.getId(), document.getId())
+        .stream()
+        .anyMatch(
+            relation ->
+                relation.getRelationType() == DocumentRelationType.FULFILLS
+                    && relation.getTargetDocument().getId().equals(document.getId()));
   }
 
   private boolean isDirectOperation(final DocumentType type) {
@@ -1323,13 +1359,13 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   }
 
   private Document find(final Long id) {
-    return documentRepository
+    return documentService
         .findByIdAndCompanyId(id, companyProvider.getCurrentCompany().getId())
         .orElseThrow(this::notFound);
   }
 
   private Document lock(final Long id, final Long companyId) {
-    return documentRepository.lockByIdAndCompanyId(id, companyId).orElseThrow(this::notFound);
+    return documentService.lockByIdAndCompanyId(id, companyId).orElseThrow(this::notFound);
   }
 
   private NotFoundException notFound() {

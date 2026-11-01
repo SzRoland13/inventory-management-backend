@@ -5,7 +5,6 @@
     <changeSet id="019-document-company-version-number" author="roland">
         <addColumn tableName="documents">
             <column name="company_id" type="INTEGER">
-                <constraints nullable="false"/>
             </column>
             <column name="version" type="BIGINT" defaultValueNumeric="0">
                 <constraints nullable="false"/>
@@ -17,6 +16,15 @@
             <column name="source_warehouse_name_snapshot" type="VARCHAR(255)"/>
             <column name="target_warehouse_name_snapshot" type="VARCHAR(255)"/>
         </addColumn>
+        <sql>UPDATE documents d
+             SET company_id = COALESCE(
+                 (SELECT u.company_id FROM users u WHERE u.id = d.created_by_user_id),
+                 (SELECT p.company_id FROM partners p WHERE p.id = d.partner_id),
+                 (SELECT w.company_id FROM warehouses w WHERE w.id = d.source_warehouse_id),
+                 (SELECT w.company_id FROM warehouses w WHERE w.id = d.target_warehouse_id),
+                 (SELECT MIN(c.id) FROM companies c))
+             WHERE d.company_id IS NULL</sql>
+        <addNotNullConstraint tableName="documents" columnName="company_id" columnDataType="INTEGER"/>
         <addForeignKeyConstraint baseTableName="documents" baseColumnNames="company_id"
                                  constraintName="fk_documents_company" referencedTableName="companies"
                                  referencedColumnNames="id" onDelete="RESTRICT"/>
@@ -47,8 +55,7 @@
         <addForeignKeyConstraint baseTableName="document_line_allocations" baseColumnNames="source_order_line_id"
                                  constraintName="fk_doc_alloc_source_line" referencedTableName="document_lines"
                                  referencedColumnNames="id" onDelete="RESTRICT"/>
-        <addCheckConstraint tableName="document_line_allocations" constraintName="ck_doc_alloc_positive"
-                             checkConstraint="quantity &gt; 0"/>
+        <sql>ALTER TABLE document_line_allocations ADD CONSTRAINT ck_doc_alloc_positive CHECK (quantity &gt; 0)</sql>
         <createIndex tableName="document_line_allocations" indexName="idx_doc_alloc_source_line">
             <column name="source_order_line_id"/>
         </createIndex>

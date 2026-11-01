@@ -42,20 +42,18 @@ import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
-import dev.roland.inventory_management_backend.features.document.repository.DocumentPostingKeyRepository;
-import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
-import dev.roland.inventory_management_backend.features.document_activity.repository.DocumentActivityRepository;
+import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFile;
-import dev.roland.inventory_management_backend.features.document_file.DocumentFileRepository;
+import dev.roland.inventory_management_backend.features.document_file.service.DocumentFileService;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
-import dev.roland.inventory_management_backend.features.document_line_allocation.repository.DocumentLineAllocationRepository;
+import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
-import dev.roland.inventory_management_backend.features.document_prefix.repository.DocumentPrefixRepository;
-import dev.roland.inventory_management_backend.features.document_relation.repository.DocumentRelationRepository;
+import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
+import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
-import dev.roland.inventory_management_backend.features.document_sequence.repository.DocumentSequenceRepository;
+import dev.roland.inventory_management_backend.features.document_sequence.service.DocumentSequenceService;
 import dev.roland.inventory_management_backend.features.media_asset.service.MediaAssetService;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
@@ -63,7 +61,7 @@ import dev.roland.inventory_management_backend.features.media_usage.service.Medi
 import dev.roland.inventory_management_backend.features.partner.service.PartnerService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
-import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
+import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.unit.service.UnitService;
@@ -79,7 +77,6 @@ class DocumentWorkflowFacadeImplTest {
   private static final Long COMPANY_ID = 9L;
   private static final Long USER_ID = 12L;
 
-  @Mock private DocumentRepository documentRepository;
   @Mock private DocumentService documentService;
   @Mock private DocumentLineService lineService;
   @Mock private ProductService productService;
@@ -90,14 +87,13 @@ class DocumentWorkflowFacadeImplTest {
   @Mock private CurrentCompanyProvider companyProvider;
   @Mock private UserService userService;
   @Mock private DocumentPostingService postingService;
-  @Mock private DocumentRelationRepository relationRepository;
-  @Mock private DocumentLineAllocationRepository allocationRepository;
-  @Mock private DocumentActivityRepository activityRepository;
-  @Mock private DocumentPostingKeyRepository postingKeyRepository;
-  @Mock private DocumentFileRepository fileRepository;
-  @Mock private DocumentPrefixRepository prefixRepository;
-  @Mock private DocumentSequenceRepository sequenceRepository;
-  @Mock private StockBalanceRepository balanceRepository;
+  @Mock private DocumentRelationService relationService;
+  @Mock private DocumentLineAllocationService allocationService;
+  @Mock private DocumentActivityService activityService;
+  @Mock private DocumentFileService fileService;
+  @Mock private DocumentPrefixService prefixService;
+  @Mock private DocumentSequenceService sequenceService;
+  @Mock private StockBalanceService balanceService;
   @Mock private MediaAssetService mediaAssetService;
   @Mock private MediaUsageService mediaUsageService;
   @Mock private ObjectStorageService objectStorage;
@@ -116,10 +112,10 @@ class DocumentWorkflowFacadeImplTest {
     lenient().when(companyProvider.getCurrentCompany()).thenReturn(company);
     lenient().when(userService.findByIdOrThrow(USER_ID)).thenReturn(user);
     lenient()
-        .when(relationRepository.findAllBySourceDocumentIdOrTargetDocumentId(anyLong(), anyLong()))
+        .when(relationService.findAllBySourceDocumentIdOrTargetDocumentId(anyLong(), anyLong()))
         .thenReturn(List.of());
     lenient()
-        .when(activityRepository.findAllByDocumentIdOrderByOccurredAtAsc(anyLong()))
+        .when(activityService.findAllByDocumentIdOrderByOccurredAtAsc(anyLong()))
         .thenReturn(List.of());
     lenient()
         .when(
@@ -127,13 +123,11 @@ class DocumentWorkflowFacadeImplTest {
                 any(MediaEntityType.class), anyLong(), any(MediaUsageType.class)))
         .thenReturn(List.of());
     lenient()
-        .when(fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(anyLong()))
+        .when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(anyLong()))
         .thenReturn(List.of());
+    lenient().when(allocationService.findAllByFulfillmentLineId(anyLong())).thenReturn(List.of());
     lenient()
-        .when(allocationRepository.findAllByFulfillmentLineId(anyLong()))
-        .thenReturn(List.of());
-    lenient()
-        .when(allocationRepository.sumPostedAllocated(anyLong(), any(DocumentStatus.class)))
+        .when(allocationService.sumPostedAllocated(anyLong(), any(DocumentStatus.class)))
         .thenReturn(java.math.BigDecimal.ZERO);
     authenticateAsAdmin();
   }
@@ -156,8 +150,7 @@ class DocumentWorkflowFacadeImplTest {
 
   @Test
   void listReturnsCountsAndAnEmptyPageWhenCompanyHasNoDocuments() {
-    when(documentRepository.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID))
-        .thenReturn(List.of());
+    when(documentService.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID)).thenReturn(List.of());
 
     var page = facade.list("ALL", "  ", 0, 20);
 
@@ -177,7 +170,7 @@ class DocumentWorkflowFacadeImplTest {
     final Document partial =
         document(DocumentType.DELIVERY_NOTE, DocumentStatus.PARTIALLY_COMPLETED);
     final Document completed = document(DocumentType.SALES_ORDER, DocumentStatus.COMPLETED);
-    when(documentRepository.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID))
+    when(documentService.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID))
         .thenReturn(List.of(myDraft, purchase, sales, partial, completed));
 
     final var drafts = facade.list("MY_DRAFTS", "north", 0, 1);
@@ -237,7 +230,7 @@ class DocumentWorkflowFacadeImplTest {
     document.setDocumentNumber("PO-001");
     document.setDocumentDate(LocalDate.of(2026, 10, 31));
     document.setCreatedByUser(user);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
 
     var response = facade.get(3L);
@@ -245,7 +238,12 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals("PO-001", response.number());
     assertEquals("PURCHASE_ORDER", response.type().name());
     assertEquals("admin", response.ownerName());
-    assertEquals(0, response.totals().gross().compareTo(java.math.BigDecimal.ZERO.setScale(2)));
+    assertEquals(
+        0,
+        response
+            .totals()
+            .gross()
+            .compareTo(java.math.BigDecimal.ZERO.setScale(2, java.math.RoundingMode.UNNECESSARY)));
   }
 
   @Test
@@ -258,8 +256,8 @@ class DocumentWorkflowFacadeImplTest {
             .GENERATED_PDF);
     failedPdf.setStatus(
         dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus.FAILED);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
-    when(fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(failedPdf));
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(failedPdf));
 
     final var response = facade.get(3L);
 
@@ -279,7 +277,7 @@ class DocumentWorkflowFacadeImplTest {
     final Document otherDraft = document(DocumentType.SALES_ORDER, DocumentStatus.DRAFT);
     otherDraft.setCreatedByUser(
         User.builder().id(99L).username("other").role(UserRole.SALES).build());
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(Optional.of(ownDraft), Optional.of(otherDraft));
 
     final var ownResponse = facade.get(3L);
@@ -357,7 +355,7 @@ class DocumentWorkflowFacadeImplTest {
   @Test
   void updateRejectsNonDraftDocuments() {
     final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
 
     ApiException exception =
@@ -378,7 +376,7 @@ class DocumentWorkflowFacadeImplTest {
   void updateDraftSavesAnAuthorizedDraft() {
     final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
     document.setCreatedByUser(user);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
     when(documentService.save(document)).thenReturn(document);
 
@@ -391,6 +389,51 @@ class DocumentWorkflowFacadeImplTest {
 
     assertEquals("updated", response.notes());
     assertEquals("DRAFT", response.status());
+  }
+
+  @Test
+  void updateDraftPreservesTheManagedLinesCollection() {
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
+    document.setCreatedByUser(user);
+    final List<dev.roland.inventory_management_backend.features.document_line.DocumentLine>
+        managedLines = document.getLines();
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(documentService.save(document)).thenReturn(document);
+
+    facade.updateDraft(
+        3L,
+        new DraftUpdate(
+            "0", new Draft(DocumentType.PURCHASE_ORDER, null, null, null, "updated", List.of())));
+
+    assertTrue(document.getLines() == managedLines);
+  }
+
+  @Test
+  void linkedFulfillmentDraftCannotBeEditedWithoutReallocatingItsLines() {
+    final Document fulfillment = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
+    fulfillment.setCreatedByUser(user);
+    final var relation =
+        new dev.roland.inventory_management_backend.features.document_relation.DocumentRelation();
+    relation.setSourceDocument(document(DocumentType.SALES_ORDER, DocumentStatus.CONFIRMED));
+    relation.setTargetDocument(fulfillment);
+    relation.setRelationType(
+        dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType
+            .FULFILLS);
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(fulfillment));
+    when(relationService.findAllBySourceDocumentIdOrTargetDocumentId(3L, 3L))
+        .thenReturn(List.of(relation));
+
+    ApiException exception =
+        assertThrows(
+            ApiException.class,
+            () ->
+                facade.updateDraft(
+                    3L,
+                    new DraftUpdate(
+                        "0",
+                        new Draft(DocumentType.DELIVERY_NOTE, null, null, 55L, null, List.of()))));
+
+    assertEquals(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION, exception.getMessageKey());
   }
 
   @Test
@@ -435,7 +478,7 @@ class DocumentWorkflowFacadeImplTest {
     source.setTargetWarehouse(
         Warehouse.builder().id(55L).code("WH-1").name("Main warehouse").company(company).build());
     source.getLines().getFirst().setDocument(source);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(source));
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(source));
     when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID))
         .thenReturn(source.getTargetWarehouse());
     when(documentService.save(any(Document.class)))
@@ -453,6 +496,25 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals("Northwind", response.partnerName());
     assertEquals(1, response.lines().size());
     assertEquals(new BigDecimal("2"), response.lines().getFirst().orderedQuantity());
+  }
+
+  @Test
+  void fulfillmentWarehouseOverrideKeepsTheSelectedWarehouseSnapshot() {
+    final Document source = documentWithLine(DocumentType.SALES_ORDER, DocumentStatus.CONFIRMED);
+    source.setSourceWarehouse(
+        Warehouse.builder().id(55L).code("OLD").name("Old warehouse").company(company).build());
+    final Warehouse selected =
+        Warehouse.builder().id(56L).code("NEW").name("New warehouse").company(company).build();
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(source));
+    when(warehouseService.findEntityByIdAndCompanyId(56L, COMPANY_ID)).thenReturn(selected);
+    when(documentService.save(any(Document.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    final var response =
+        facade.createFulfillmentDraft(
+            new FulfillmentDraft(3L, DocumentType.DELIVERY_NOTE, 56L, List.of()));
+
+    assertEquals("New warehouse", response.routeName());
   }
 
   @Test
@@ -486,8 +548,7 @@ class DocumentWorkflowFacadeImplTest {
     final Product product = Product.builder().id(24L).name("Widget").build();
     when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID)).thenReturn(warehouse);
     when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
-    when(balanceRepository.findByWarehouseAndProduct(warehouse, product))
-        .thenReturn(Optional.empty());
+    when(balanceService.findByWarehouseAndProduct(warehouse, product)).thenReturn(Optional.empty());
 
     final var preview =
         facade.preview(
@@ -506,16 +567,77 @@ class DocumentWorkflowFacadeImplTest {
   }
 
   @Test
+  void directPreviewAppliesProductConversionFactor() {
+    final Warehouse warehouse =
+        Warehouse.builder().id(55L).code("WH-1").name("Main warehouse").company(company).build();
+    final Unit main = Unit.builder().id(2L).build();
+    final Unit secondary = Unit.builder().id(3L).build();
+    final Product product =
+        Product.builder()
+            .id(24L)
+            .name("Widget")
+            .unit(main)
+            .secondaryUnit(secondary)
+            .secondaryUnitsPerMainUnit(new BigDecimal("10"))
+            .build();
+    when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID)).thenReturn(warehouse);
+    when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(balanceService.findByWarehouseAndProduct(warehouse, product)).thenReturn(Optional.empty());
+
+    final var preview =
+        facade.preview(
+            new FulfillmentPreview(
+                null,
+                null,
+                DocumentType.DELIVERY_NOTE,
+                55L,
+                List.of(new FulfillmentLine(null, 24L, new BigDecimal("2")))));
+
+    assertEquals(new BigDecimal("-20"), preview.lines().getFirst().quantityDelta());
+    assertEquals(new BigDecimal("20"), preview.lines().getFirst().shortfall());
+  }
+
+  @Test
+  void previewAccumulatesRepeatedProductLinesAgainstOneStockBalance() {
+    final Warehouse warehouse =
+        Warehouse.builder().id(55L).code("WH-1").name("Main warehouse").company(company).build();
+    final Product product = Product.builder().id(24L).name("Widget").build();
+    when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID)).thenReturn(warehouse);
+    when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(balanceService.findByWarehouseAndProduct(warehouse, product))
+        .thenReturn(
+            Optional.of(
+                dev.roland.inventory_management_backend.features.stock_balance.StockBalance
+                    .builder()
+                    .quantity(new BigDecimal("10"))
+                    .build()));
+
+    final var preview =
+        facade.preview(
+            new FulfillmentPreview(
+                null,
+                null,
+                DocumentType.DELIVERY_NOTE,
+                55L,
+                List.of(
+                    new FulfillmentLine(null, 24L, new BigDecimal("6")),
+                    new FulfillmentLine(null, 24L, new BigDecimal("6")))));
+
+    assertFalse(preview.valid());
+    assertEquals(new BigDecimal("-2"), preview.lines().getLast().resultingQuantity());
+  }
+
+  @Test
   void previewUsesTheSourceOrderLineAndRejectsQuantityAboveRemaining() {
     final Document source = documentWithLine(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
     final Product product = source.getLines().getFirst().getProduct();
     source.setTargetWarehouse(
         Warehouse.builder().id(55L).code("WH-1").name("Main warehouse").company(company).build());
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(source));
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(source));
     when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID))
         .thenReturn(source.getTargetWarehouse());
     when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
-    when(balanceRepository.findByWarehouseAndProduct(source.getTargetWarehouse(), product))
+    when(balanceService.findByWarehouseAndProduct(source.getTargetWarehouse(), product))
         .thenReturn(Optional.empty());
 
     final var preview =
@@ -534,7 +656,7 @@ class DocumentWorkflowFacadeImplTest {
   void uploadRejectsAnEmptyFileAndPdfGenerationRejectsUnsupportedLanguage() {
     final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
     document.setCreatedByUser(user);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
 
     ApiException emptyFile = assertThrows(ApiException.class, () -> facade.uploadFile(3L, null));
@@ -549,13 +671,12 @@ class DocumentWorkflowFacadeImplTest {
   void generatePdfQueuesLocalizedJobAndSkipsDuplicateRequests() {
     final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
     document.setCreatedByUser(user);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
-    when(fileRepository.findByDocumentIdAndIdempotencyKey(3L, "pdf-key"))
-        .thenReturn(Optional.empty());
-    when(fileRepository.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.findByDocumentIdAndIdempotencyKey(3L, "pdf-key")).thenReturn(Optional.empty());
+    when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
         .thenReturn(false);
-    when(fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of());
-    when(fileRepository.save(any(DocumentFile.class)))
+    when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of());
+    when(fileService.save(any(DocumentFile.class)))
         .thenAnswer(
             invocation -> {
               final DocumentFile file = invocation.getArgument(0);
@@ -586,11 +707,11 @@ class DocumentWorkflowFacadeImplTest {
     previous.setLanguageTag("hu");
     previous.setStatus(
         dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus.FAILED);
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
-    when(fileRepository.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
         .thenReturn(false);
-    when(fileRepository.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(previous));
-    when(fileRepository.save(any(DocumentFile.class)))
+    when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(previous));
+    when(fileService.save(any(DocumentFile.class)))
         .thenAnswer(
             invocation -> {
               final DocumentFile file = invocation.getArgument(0);
@@ -615,7 +736,7 @@ class DocumentWorkflowFacadeImplTest {
   void confirmMovesAValidOrderToConfirmed() {
     final Document document = documentWithLine(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
     document.setDocumentNumber("PO-001");
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
     when(documentService.save(document)).thenReturn(document);
 
@@ -629,7 +750,7 @@ class DocumentWorkflowFacadeImplTest {
   void transitionEndpointsRejectMissingVersionsAndInvalidReasons() {
     final Document draft = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
     draft.setCreatedByUser(user);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(draft));
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(draft));
 
     final ApiException missingVersion =
         assertThrows(ApiException.class, () -> facade.confirm(3L, " "));
@@ -651,7 +772,7 @@ class DocumentWorkflowFacadeImplTest {
   void closeRemainingMarksOutstandingLineAndCompletesOrder() {
     final Document order = documentWithLine(DocumentType.SALES_ORDER, DocumentStatus.CONFIRMED);
     order.setDocumentNumber("SO-001");
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(order));
     when(documentService.save(order)).thenReturn(order);
 
@@ -664,9 +785,9 @@ class DocumentWorkflowFacadeImplTest {
   @Test
   void duplicatePostingIsIdempotent() {
     final Document document = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.of(document));
-    when(postingKeyRepository.existsByDocumentIdAndIdempotencyKey(3L, "key")).thenReturn(true);
+    when(documentService.postingKeyExists(3L, "key")).thenReturn(true);
 
     var response = facade.post(3L, "key", "0");
 
@@ -682,9 +803,9 @@ class DocumentWorkflowFacadeImplTest {
 
     final Document completed = document(DocumentType.GOODS_RECEIPT, DocumentStatus.COMPLETED);
     final Document order = document(DocumentType.PURCHASE_ORDER, DocumentStatus.DRAFT);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(Optional.of(completed), Optional.of(order));
-    when(postingKeyRepository.existsByDocumentIdAndIdempotencyKey(3L, "key")).thenReturn(false);
+    when(documentService.postingKeyExists(3L, "key")).thenReturn(false);
 
     final ApiException terminal =
         assertThrows(ApiException.class, () -> facade.post(3L, "key", "0"));
@@ -698,7 +819,7 @@ class DocumentWorkflowFacadeImplTest {
   void confirmationAndClosureRejectWrongDocumentKindsAndStates() {
     final Document receipt = document(DocumentType.GOODS_RECEIPT, DocumentStatus.DRAFT);
     final Document cancelledOrder = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CANCELLED);
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(Optional.of(receipt), Optional.of(cancelledOrder));
 
     final ApiException wrongType = assertThrows(ApiException.class, () -> facade.confirm(3L, "0"));
@@ -729,18 +850,17 @@ class DocumentWorkflowFacadeImplTest {
             .documentPrefix(prefix)
             .year(2026)
             .build();
-    when(documentRepository.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(receipt));
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(receipt));
-    when(postingKeyRepository.existsByDocumentIdAndIdempotencyKey(3L, "post-key"))
-        .thenReturn(false);
-    when(prefixRepository.findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(receipt));
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(receipt));
+    when(documentService.postingKeyExists(3L, "post-key")).thenReturn(false);
+    when(prefixService.findFirstByCompanyIdAndDocumentTypeOrderByIdAsc(
             COMPANY_ID, DocumentType.GOODS_RECEIPT))
         .thenReturn(Optional.of(prefix));
-    when(sequenceRepository.lockByScope(COMPANY_ID, 6L, 2026)).thenReturn(Optional.of(sequence));
+    when(sequenceService.lockByScope(COMPANY_ID, 6L, 2026)).thenReturn(Optional.of(sequence));
     when(warehouseService.findEntityByIdAndCompanyId(55L, COMPANY_ID))
         .thenReturn(receipt.getTargetWarehouse());
     when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
-    when(balanceRepository.findByWarehouseAndProduct(receipt.getTargetWarehouse(), product))
+    when(balanceService.findByWarehouseAndProduct(receipt.getTargetWarehouse(), product))
         .thenReturn(Optional.empty());
     when(postingService.complete(receipt)).thenReturn(receipt);
     when(documentService.save(receipt)).thenReturn(receipt);
@@ -749,12 +869,12 @@ class DocumentWorkflowFacadeImplTest {
 
     assertEquals("GR-2026-00005", response.number());
     assertEquals("CONFIRMED", response.status());
-    org.mockito.Mockito.verify(postingKeyRepository).save(any());
+    org.mockito.Mockito.verify(documentService).save(any());
   }
 
   @Test
   void getRejectsDocumentsOutsideTheCurrentCompany() {
-    when(documentRepository.findByIdAndCompanyId(3L, COMPANY_ID))
+    when(documentService.findByIdAndCompanyId(3L, COMPANY_ID))
         .thenReturn(java.util.Optional.empty());
 
     assertThrows(RuntimeException.class, () -> facade.get(3L));
@@ -777,7 +897,7 @@ class DocumentWorkflowFacadeImplTest {
         .status(status)
         .documentDate(LocalDate.of(2026, 10, 31))
         .version(0L)
-        .lines(List.of())
+        .lines(new java.util.ArrayList<>())
         .build();
   }
 

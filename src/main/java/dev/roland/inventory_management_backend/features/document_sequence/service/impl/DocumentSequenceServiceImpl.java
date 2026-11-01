@@ -31,4 +31,15 @@ public class DocumentSequenceServiceImpl implements DocumentSequenceService {
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.DOCUMENT_SEQUENCE;
   }
+
+  @Override
+  public int ensureSequenceExists(final Long companyId, final Long prefixId, final Integer year) {
+    return documentSequenceRepository.ensureSequenceExists(companyId, prefixId, year);
+  }
+
+  @Override
+  public java.util.Optional<DocumentSequence> lockByScope(
+      final Long companyId, final Long prefixId, final Integer year) {
+    return documentSequenceRepository.lockByScope(companyId, prefixId, year);
+  }
 }
