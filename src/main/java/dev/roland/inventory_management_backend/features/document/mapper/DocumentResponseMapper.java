@@ -54,6 +54,12 @@ public class DocumentResponseMapper {
   private final DocumentFileService fileService;
   private final ObjectStorageService objectStorage;
 
+  /**
+   * Maps a persisted document and its related data to an API response.
+   *
+   * @param doc the doc value
+   * @return the resulting value
+   */
   public DocumentResponse toResponse(final Document doc) {
     final List<LineResponse> lines = mapLines(doc);
     final List<RelatedDocument> related = mapRelatedDocuments(doc);
@@ -237,6 +243,12 @@ public class DocumentResponseMapper {
     return type == DocumentType.GOODS_RECEIPT || type == DocumentType.DELIVERY_NOTE;
   }
 
+  /**
+   * Performs the allowedActions operation.
+   *
+   * @param doc the doc value
+   * @return the resulting value
+   */
   List<DocumentAction> allowedActions(final Document doc) {
     final List<DocumentAction> actions = new ArrayList<>();
     final User user = accessService.currentActor();
@@ -299,7 +311,9 @@ public class DocumentResponseMapper {
                     l ->
                         DocumentWorkflowValues.nz(l.getFulfilledQuantity())
                                 .compareTo(DocumentWorkflowValues.nz(l.getQuantity()))
-                            < 0)) actions.add(DocumentAction.DISPATCH);
+                            < 0)) {
+          actions.add(DocumentAction.DISPATCH);
+        }
         if (DocumentWorkflowValues.safe(doc.getLines()).stream()
             .anyMatch(l -> DocumentWorkflowValues.nz(l.getInTransitQuantity()).signum() > 0)) {
           actions.add(DocumentAction.RECEIVE_TRANSFER);
@@ -314,15 +328,19 @@ public class DocumentResponseMapper {
                   l ->
                       DocumentWorkflowValues.nz(l.getQuantity())
                               .compareTo(DocumentWorkflowValues.nz(l.getReturnedQuantity()))
-                          > 0)) actions.add(DocumentAction.CREATE_RETURN);
-      if (doc.getType() == DocumentType.STOCK_COUNT && doc.getStatus() == DocumentStatus.DRAFT)
+                          > 0)) {
+        actions.add(DocumentAction.CREATE_RETURN);
+      }
+      if (doc.getType() == DocumentType.STOCK_COUNT && doc.getStatus() == DocumentStatus.DRAFT) {
         actions.add(DocumentAction.RECONCILE);
+      }
       if (doc.getStatus() == DocumentStatus.COMPLETED
           && (doc.getType() == DocumentType.DELIVERY_NOTE
               || doc.getType() == DocumentType.GOODS_RECEIPT
               || doc.getType() == DocumentType.TRANSFER_DELIVERY
-              || doc.getType() == DocumentType.TRANSFER_RECEIPT))
+              || doc.getType() == DocumentType.TRANSFER_RECEIPT)) {
         actions.add(DocumentAction.CORRECT);
+      }
       if (doc.getType() == DocumentType.RETURN
           && DocumentWorkflowValues.safe(doc.getLines()).stream()
               .anyMatch(
@@ -331,13 +349,16 @@ public class DocumentResponseMapper {
                               || l.getWorkflowDisposition() == ReturnDisposition.DAMAGED)
                           && DocumentWorkflowValues.nz(l.getReleasedQuantity())
                                   .compareTo(DocumentWorkflowValues.nz(l.getQuantity()))
-                              < 0)) actions.add(DocumentAction.RELEASE_QUARANTINE);
+                              < 0)) {
+        actions.add(DocumentAction.RELEASE_QUARANTINE);
+      }
     }
     if (user != null
         && user.getRole() != UserRole.SALES
         && doc.getType() == DocumentType.RETURN
-        && doc.getWorkflowDirection() == ReturnDirection.CUSTOMER_RETURN)
+        && doc.getWorkflowDirection() == ReturnDirection.CUSTOMER_RETURN) {
       actions.add(DocumentAction.CREATE_REPLACEMENT_DELIVERY);
+    }
     return actions;
   }
 }

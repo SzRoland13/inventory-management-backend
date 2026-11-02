@@ -125,12 +125,7 @@ class DocumentWorkflowFacadeImplTest {
   void setUp() {
     var documentWorkflowAccessService =
         new DocumentWorkflowAccessService(
-            documentService,
-            companyProvider,
-            userService,
-            allocationService,
-            lineService,
-            relationService);
+            documentService, companyProvider, userService, allocationService, relationService);
     var documentResponseMapper =
         new DocumentResponseMapper(
             documentWorkflowAccessService,

@@ -57,7 +57,6 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
           DocumentType.STOCK_COUNT,
           DocumentType.RETURN);
   static final List<DocumentQueueView> VIEWS = List.of(DocumentQueueView.values());
-
   private final DocumentService documentService;
   private final CurrentCompanyProvider companyProvider;
   private final DocumentWorkflowAccessService accessService;
@@ -91,10 +90,11 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     final Map<String, Long> counts = new HashMap<>();
     VIEWS.forEach(
         queueView -> {
-          if (canView(queueView, actor))
+          if (canView(queueView, actor)) {
             counts.put(
                 queueView.name(),
                 all.stream().filter(d -> matchesView(d, queueView, actor)).count());
+          }
         });
     final String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
     final List<Document> selected =
@@ -205,6 +205,13 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
         id, operation, request, suppliedKey, suppliedVersion);
   }
 
+  /**
+   * Performs the queueView operation.
+   *
+   * @param view the view value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   DocumentQueueView queueView(final String view) {
     final DocumentQueueView selected =
         view == null || view.isBlank()
@@ -214,11 +221,20 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
                 .findFirst()
                 .orElseThrow(
                     () -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_QUEUE_VIEW));
-    if (!canView(selected, accessService.currentActor()))
+    if (!canView(selected, accessService.currentActor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_QUEUE_VIEW);
+    }
     return selected;
   }
 
+  /**
+   * Performs the matchesView operation.
+   *
+   * @param actor the actor value
+   * @param d the d value
+   * @param view the view value
+   * @return the resulting value
+   */
   boolean matchesView(final Document d, final DocumentQueueView view, final User actor) {
     return switch (view) {
       case MY_DRAFTS -> d.getStatus() == DocumentStatus.DRAFT
@@ -247,6 +263,13 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
     };
   }
 
+  /**
+   * Performs the canView operation.
+   *
+   * @param user the user value
+   * @param view the view value
+   * @return the resulting value
+   */
   boolean canView(final DocumentQueueView view, final User user) {
     return view == DocumentQueueView.ALL
         || view == DocumentQueueView.MY_DRAFTS

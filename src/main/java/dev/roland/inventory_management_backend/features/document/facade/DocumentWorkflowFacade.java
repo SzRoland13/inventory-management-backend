@@ -133,9 +133,27 @@ public interface DocumentWorkflowFacade {
    */
   DocumentResponse retryPdf(Long id, String idempotencyKey);
 
+  /**
+   * Previews a warehouse operation for a document.
+   *
+   * @param id the id value
+   * @param operation the operation value
+   * @param request the request value
+   * @return the resulting value
+   */
   WarehouseOperationPreview previewWarehouseOperation(
       Long id, WarehouseOperationType operation, WarehouseOperationRequest request);
 
+  /**
+   * Applies a warehouse operation to a document.
+   *
+   * @param expectedVersion the expectedVersion value
+   * @param id the id value
+   * @param idempotencyKey the idempotencyKey value
+   * @param operation the operation value
+   * @param request the request value
+   * @return the resulting value
+   */
   DocumentResponse applyWarehouseOperation(
       Long id,
       WarehouseOperationType operation,

@@ -60,6 +60,15 @@ public class WarehouseOperationRecordService {
   private final WarehouseOperationSupportService warehouseOperationSupportService;
   private final WarehouseOperationPreviewService previewService;
 
+  /**
+   * Performs the createReturn operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   */
   DocumentResponse createReturn(
       final WarehouseOperationRequest request,
       final Company company,
@@ -69,32 +78,49 @@ public class WarehouseOperationRecordService {
     warehouseOperationSupportService.requireReason(request.reason());
     warehouseOperationSupportService.requireKey(key);
     final Document sourceDocument = accessService.lock(request.sourceDocumentId(), company.getId());
+    final DocumentResponse result;
     if (documentService.postingKeyExists(sourceDocument.getId(), key)) {
-      return relationService
-          .findAllBySourceDocumentIdOrTargetDocumentId(
-              sourceDocument.getId(), sourceDocument.getId())
-          .stream()
-          .map(DocumentRelation::getTargetDocument)
-          .filter(d -> d.getType() == DocumentType.RETURN)
-          .max(java.util.Comparator.comparing(Document::getCreatedAt))
-          .map(responseMapper::toResponse)
-          .orElseThrow(accessService::notFound);
+      result =
+          relationService
+              .findAllBySourceDocumentIdOrTargetDocumentId(
+                  sourceDocument.getId(), sourceDocument.getId())
+              .stream()
+              .map(DocumentRelation::getTargetDocument)
+              .filter(d -> d.getType() == DocumentType.RETURN)
+              .max(java.util.Comparator.comparing(Document::getCreatedAt))
+              .map(responseMapper::toResponse)
+              .orElseThrow(accessService::notFound);
+    } else {
+      result = createReturnRecord(request, company, user, key, sourceDocument);
     }
+    return result;
+  }
+
+  private DocumentResponse createReturnRecord(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key,
+      final Document sourceDocument) {
     final WarehouseOperationPreview preview =
         previewService.preview(
             sourceDocument.getId(), WarehouseOperationType.RETURN_CREATE, request);
-    if (!preview.valid()) throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     if (request.direction() == ReturnDirection.CUSTOMER_RETURN
             && sourceDocument.getType() != DocumentType.DELIVERY_NOTE
         || request.direction() == ReturnDirection.SUPPLIER_RETURN
-            && sourceDocument.getType() != DocumentType.GOODS_RECEIPT)
+            && sourceDocument.getType() != DocumentType.GOODS_RECEIPT) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     if (DocumentWorkflowValues.safe(request.lines()).stream()
         .anyMatch(
             line ->
                 (request.direction() == ReturnDirection.SUPPLIER_RETURN)
-                    != (line.disposition() == ReturnDisposition.SUPPLIER_RETURN)))
+                    != (line.disposition() == ReturnDisposition.SUPPLIER_RETURN))) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     final Document returned =
         warehouseOperationSupportService.operationDocument(
             sourceDocument, DocumentType.RETURN, request.reason());
@@ -136,7 +162,9 @@ public class WarehouseOperationRecordService {
               .map(WarehouseOperationRequest.WarehouseOperationLine::disposition)
               .distinct()
               .count()
-          == 1) returned.setWorkflowDisposition(item.disposition());
+          == 1) {
+        returned.setWorkflowDisposition(item.disposition());
+      }
       writer.saveStockMovement(
           stockMovementService.postMovement(
               line,
@@ -154,6 +182,17 @@ public class WarehouseOperationRecordService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * Performs the createCorrection operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param original the original value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   DocumentResponse createCorrection(
       final Document original,
       final WarehouseOperationRequest request,
@@ -165,7 +204,9 @@ public class WarehouseOperationRecordService {
     warehouseOperationSupportService.requireReason(request.reason());
     final WarehouseOperationPreview preview =
         previewService.preview(original.getId(), WarehouseOperationType.CORRECTION, request);
-    if (!preview.valid()) throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     final Document correction =
         warehouseOperationSupportService.operationDocument(
             original, DocumentType.CORRECTION, request.reason());
@@ -256,13 +297,24 @@ public class WarehouseOperationRecordService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * * * * * Performs the postCorrectionMovement operation.
+   *
+   * @param delta the delta value
+   * @param line the line value
+   * @param reason the reason value
+   * @param user the user value
+   * @param warehouse the warehouse value
+   */
   void postCorrectionMovement(
       final DocumentLine line,
       final Warehouse warehouse,
       final BigDecimal delta,
       final User user,
       final String reason) {
-    if (warehouse == null || delta.signum() == 0) return;
+    if (warehouse == null || delta.signum() == 0) {
+      return;
+    }
     writer.saveStockMovement(
         stockMovementService.postMovement(
             line,
@@ -275,6 +327,17 @@ public class WarehouseOperationRecordService {
         reason);
   }
 
+  /**
+   * Performs the releaseQuarantine operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param returned the returned value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   DocumentResponse releaseQuarantine(
       final Document returned,
       final WarehouseOperationRequest request,
@@ -284,8 +347,9 @@ public class WarehouseOperationRecordService {
     warehouseOperationSupportService.requireKey(key);
     warehouseOperationSupportService.requireReason(request.reason());
     warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
-    if (returned.getType() != DocumentType.RETURN || request.targetWarehouseId() == null)
+    if (returned.getType() != DocumentType.RETURN || request.targetWarehouseId() == null) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final Warehouse quarantine =
         warehouseOperationSupportService.quarantineWarehouse(company.getId());
     final Warehouse target =
@@ -295,7 +359,9 @@ public class WarehouseOperationRecordService {
                 .QUARANTINE
         || target.getType()
             == dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType
-                .TRANSIT) throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+                .TRANSIT) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     final Document release =
         warehouseOperationSupportService.operationDocument(
             returned, DocumentType.STOCK_ADJUSTMENT, request.reason());
@@ -306,14 +372,16 @@ public class WarehouseOperationRecordService {
           warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
       if (!returnedLine.getDocument().getId().equals(returned.getId())
           || !(returnedLine.getWorkflowDisposition() == ReturnDisposition.QUARANTINE
-              || returnedLine.getWorkflowDisposition() == ReturnDisposition.DAMAGED))
+              || returnedLine.getWorkflowDisposition() == ReturnDisposition.DAMAGED)) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
       final BigDecimal remaining =
           DocumentWorkflowValues.nz(returnedLine.getQuantity())
               .subtract(DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity()));
-      if (quantity.signum() <= 0 || quantity.compareTo(remaining) > 0)
+      if (quantity.signum() <= 0 || quantity.compareTo(remaining) > 0) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
       final DocumentLine line =
           warehouseOperationSupportService.cloneLine(release, returnedLine, quantity);
       release.getLines().add(lineService.save(line));
@@ -337,6 +405,15 @@ public class WarehouseOperationRecordService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * Performs the createReplacement operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   */
   DocumentResponse createReplacement(
       final WarehouseOperationRequest request,
       final Company company,
@@ -346,23 +423,41 @@ public class WarehouseOperationRecordService {
     warehouseOperationSupportService.requireKey(key);
     final Document returned = accessService.lock(request.returnDocumentId(), company.getId());
     final Document original = accessService.find(request.originalDeliveryId());
-    if (documentService.postingKeyExists(returned.getId(), key))
-      return relationService
-          .findAllBySourceDocumentIdOrTargetDocumentId(returned.getId(), returned.getId())
-          .stream()
-          .map(DocumentRelation::getTargetDocument)
-          .filter(d -> d.getType() == DocumentType.DELIVERY_NOTE && d.isNonBillable())
-          .max(java.util.Comparator.comparing(Document::getCreatedAt))
-          .map(responseMapper::toResponse)
-          .orElseThrow(accessService::notFound);
+    final DocumentResponse result;
+    if (documentService.postingKeyExists(returned.getId(), key)) {
+      result =
+          relationService
+              .findAllBySourceDocumentIdOrTargetDocumentId(returned.getId(), returned.getId())
+              .stream()
+              .map(DocumentRelation::getTargetDocument)
+              .filter(d -> d.getType() == DocumentType.DELIVERY_NOTE && d.isNonBillable())
+              .max(java.util.Comparator.comparing(Document::getCreatedAt))
+              .map(responseMapper::toResponse)
+              .orElseThrow(accessService::notFound);
+    } else {
+      result = createReplacementRecord(request, company, user, key, returned, original);
+    }
+    return result;
+  }
+
+  private DocumentResponse createReplacementRecord(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key,
+      final Document returned,
+      final Document original) {
     if (returned.getType() != DocumentType.RETURN
-        || original.getType() != DocumentType.DELIVERY_NOTE)
+        || original.getType() != DocumentType.DELIVERY_NOTE) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final Warehouse warehouse =
         warehouseService.findEntityByIdAndCompanyId(request.warehouseId(), company.getId());
     final WarehouseOperationPreview preview =
         previewService.preview(null, WarehouseOperationType.REPLACEMENT_DELIVERY, request);
-    if (!preview.valid()) throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
     final Document delivery =
         warehouseOperationSupportService.operationDocument(
             original, DocumentType.DELIVERY_NOTE, "Replacement delivery");
@@ -401,6 +496,17 @@ public class WarehouseOperationRecordService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * Performs the postCount operation.
+   *
+   * @param company the company value
+   * @param count the count value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   DocumentResponse postCount(
       final Document count,
       final WarehouseOperationRequest request,
@@ -409,15 +515,17 @@ public class WarehouseOperationRecordService {
       final String key) {
     warehouseOperationSupportService.requireKey(key);
     warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
-    if (!Boolean.TRUE.equals(request.confirmed()))
+    if (!Boolean.TRUE.equals(request.confirmed())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final WarehouseOperationPreview preview =
         previewService.preview(
             count.getId(), WarehouseOperationType.STOCK_COUNT_RECONCILE, request);
     if (!preview.valid()
         || request.calculationVersion() == null
-        || !request.calculationVersion().equals(preview.calculationVersion()))
+        || !request.calculationVersion().equals(preview.calculationVersion())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
     final Document adjustment =
         warehouseOperationSupportService.operationDocument(
             count, DocumentType.STOCK_ADJUSTMENT, request.reason());

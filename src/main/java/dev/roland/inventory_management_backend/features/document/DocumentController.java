@@ -69,7 +69,6 @@ public class DocumentController {
   public static final String STOCK_COUNT_POST = "/stock-counts/{id}/post";
   public static final String CORRECTION_PREVIEW = ID_PARAM + "/corrections/preview";
   public static final String CORRECTION = ID_PARAM + "/corrections";
-
   private final DocumentWorkflowFacade facade;
 
   /**
@@ -249,6 +248,12 @@ public class DocumentController {
     return success(facade.retryPdf(id, key));
   }
 
+  /**
+   * Creates a transfer draft from the supplied warehouse operation.
+   *
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(TRANSFER_DRAFTS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createTransferDraft(
       @RequestBody final WarehouseOperationRequest request) {
@@ -257,6 +262,12 @@ public class DocumentController {
             null, WarehouseOperationType.TRANSFER_DRAFT, request, null, null));
   }
 
+  /**
+   * Previews a new warehouse transfer.
+   *
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(TRANSFER_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransfer(
       @RequestBody final WarehouseOperationRequest request) {
@@ -264,6 +275,13 @@ public class DocumentController {
         facade.previewWarehouseOperation(null, WarehouseOperationType.TRANSFER_PREVIEW, request));
   }
 
+  /**
+   * Previews resolution of an existing transfer.
+   *
+   * @param id transfer document identifier
+   * @param request transfer resolution details
+   * @return the transfer resolution preview
+   */
   @PostMapping(TRANSFER_RESOLUTION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransferResolution(
       @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
@@ -271,6 +289,15 @@ public class DocumentController {
         facade.previewWarehouseOperation(id, WarehouseOperationType.TRANSFER_RESOLUTION, request));
   }
 
+  /**
+   * Dispatches an existing transfer to its transit warehouse.
+   *
+   * @param id transfer document identifier
+   * @param key idempotency key
+   * @param request dispatch details
+   * @param version expected document version
+   * @return the dispatched transfer response
+   */
   @PostMapping(TRANSFER_DISPATCH)
   public ResponseEntity<ApiResponse<DocumentResponse>> dispatchTransfer(
       @PathVariable final Long id,
@@ -282,6 +309,15 @@ public class DocumentController {
             id, WarehouseOperationType.TRANSFER_DISPATCH, request, key, version));
   }
 
+  /**
+   * Receives goods from a transfer into its destination warehouse.
+   *
+   * @param id transfer document identifier
+   * @param key idempotency key
+   * @param request receipt details
+   * @param version expected document version
+   * @return the received transfer response
+   */
   @PostMapping(TRANSFER_RECEIPT)
   public ResponseEntity<ApiResponse<DocumentResponse>> receiveTransfer(
       @PathVariable final Long id,
@@ -293,6 +329,15 @@ public class DocumentController {
             id, WarehouseOperationType.TRANSFER_RECEIPT, request, key, version));
   }
 
+  /**
+   * Resolves a transfer that has goods in transit.
+   *
+   * @param id transfer document identifier
+   * @param key idempotency key
+   * @param request resolution details
+   * @param version expected document version
+   * @return the resolved transfer response
+   */
   @PostMapping(TRANSFER_RESOLVE)
   public ResponseEntity<ApiResponse<DocumentResponse>> resolveTransfer(
       @PathVariable final Long id,
@@ -304,6 +349,13 @@ public class DocumentController {
             id, WarehouseOperationType.TRANSFER_RESOLVE, request, key, version));
   }
 
+  /**
+   * Creates a return document from the supplied request.
+   *
+   * @param key idempotency key
+   * @param request return details
+   * @return the created return response
+   */
   @PostMapping(RETURNS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createReturn(
       @RequestBody final WarehouseOperationRequest request,
@@ -313,6 +365,12 @@ public class DocumentController {
             null, WarehouseOperationType.RETURN_CREATE, request, key, null));
   }
 
+  /**
+   * Previews a return operation.
+   *
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(RETURN_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReturn(
       @RequestBody final WarehouseOperationRequest request) {
@@ -320,6 +378,13 @@ public class DocumentController {
         facade.previewWarehouseOperation(null, WarehouseOperationType.RETURN_CREATE, request));
   }
 
+  /**
+   * Previews release of eligible quarantined goods.
+   *
+   * @param id the id value
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(QUARANTINE_RELEASE_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewQuarantineRelease(
       @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
@@ -327,6 +392,15 @@ public class DocumentController {
         facade.previewWarehouseOperation(id, WarehouseOperationType.QUARANTINE_RELEASE, request));
   }
 
+  /**
+   * Releases eligible returned goods from quarantine.
+   *
+   * @param id the id value
+   * @param key the key value
+   * @param request the request value
+   * @param version the version value
+   * @return the resulting value
+   */
   @PostMapping(QUARANTINE_RELEASE)
   public ResponseEntity<ApiResponse<DocumentResponse>> releaseQuarantine(
       @PathVariable final Long id,
@@ -338,6 +412,12 @@ public class DocumentController {
             id, WarehouseOperationType.QUARANTINE_RELEASE, request, key, version));
   }
 
+  /**
+   * Previews a replacement delivery.
+   *
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(REPLACEMENT_DELIVERY_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReplacement(
       @RequestBody final WarehouseOperationRequest request) {
@@ -346,6 +426,13 @@ public class DocumentController {
             null, WarehouseOperationType.REPLACEMENT_DELIVERY, request));
   }
 
+  /**
+   * Creates a replacement delivery.
+   *
+   * @param key the key value
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(REPLACEMENT_DELIVERY)
   public ResponseEntity<ApiResponse<DocumentResponse>> createReplacement(
       @RequestBody final WarehouseOperationRequest request,
@@ -355,6 +442,12 @@ public class DocumentController {
             null, WarehouseOperationType.REPLACEMENT_DELIVERY, request, key, null));
   }
 
+  /**
+   * Creates a stock-count document.
+   *
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(STOCK_COUNTS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createStockCount(
       @RequestBody final WarehouseOperationRequest request) {
@@ -363,6 +456,13 @@ public class DocumentController {
             null, WarehouseOperationType.STOCK_COUNT_CREATE, request, null, null));
   }
 
+  /**
+   * Previews reconciliation of a stock count.
+   *
+   * @param id the id value
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(STOCK_COUNT_RECONCILIATION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewStockCount(
       @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
@@ -371,6 +471,15 @@ public class DocumentController {
             id, WarehouseOperationType.STOCK_COUNT_RECONCILE, request));
   }
 
+  /**
+   * Posts a stock-count reconciliation.
+   *
+   * @param id the id value
+   * @param key the key value
+   * @param request the request value
+   * @param version the version value
+   * @return the resulting value
+   */
   @PostMapping(STOCK_COUNT_POST)
   public ResponseEntity<ApiResponse<DocumentResponse>> postStockCount(
       @PathVariable final Long id,
@@ -382,6 +491,13 @@ public class DocumentController {
             id, WarehouseOperationType.STOCK_COUNT_POST, request, key, version));
   }
 
+  /**
+   * Previews a correction to a completed document.
+   *
+   * @param id the id value
+   * @param request the request value
+   * @return the resulting value
+   */
   @PostMapping(CORRECTION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewCorrection(
       @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
@@ -389,6 +505,15 @@ public class DocumentController {
         facade.previewWarehouseOperation(id, WarehouseOperationType.CORRECTION, request));
   }
 
+  /**
+   * Creates a correction for a completed document.
+   *
+   * @param id the id value
+   * @param key the key value
+   * @param request the request value
+   * @param version the version value
+   * @return the resulting value
+   */
   @PostMapping(CORRECTION)
   public ResponseEntity<ApiResponse<DocumentResponse>> correctDocument(
       @PathVariable final Long id,

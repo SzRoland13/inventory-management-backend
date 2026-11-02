@@ -20,6 +20,12 @@ import java.math.BigDecimal;
  * @param unitPrice unit price in document currency
  * @param sourceUnitPrice original unit price in the product currency
  * @param sourceCurrencyId source currency snapshot identifier
+ * @param countedQuantity the countedQuantity value
+ * @param expectedQuantity the expectedQuantity value
+ * @param inTransitQuantity the inTransitQuantity value
+ * @param returnableQuantity the returnableQuantity value
+ * @param returnedQuantity the returnedQuantity value
+ * @param variance the variance value
  */
 public record LineResponse(
     Long id,

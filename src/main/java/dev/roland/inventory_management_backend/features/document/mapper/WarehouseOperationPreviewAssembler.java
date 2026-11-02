@@ -17,6 +17,12 @@ import lombok.experimental.UtilityClass;
 /** Builds the common response envelope for warehouse operation previews. */
 @UtilityClass
 public final class WarehouseOperationPreviewAssembler {
+  /**
+   * * Adds request lines that do not map to a source document line.
+   *
+   * @param previewLines the previewLines value
+   * @param request the request value
+   */
   public static void addUnmappedLines(
       final WarehouseOperationRequest request,
       final List<WarehouseOperationPreview.Line> previewLines) {
@@ -32,6 +38,13 @@ public final class WarehouseOperationPreviewAssembler {
     }
   }
 
+  /**
+   * * * Adds blockers for invalid warehouse transfer requests.
+   *
+   * @param blockers the blockers value
+   * @param operation the operation value
+   * @param request the request value
+   */
   public static void validateTransferRequest(
       final WarehouseOperationType operation,
       final WarehouseOperationRequest request,
@@ -66,6 +79,19 @@ public final class WarehouseOperationPreviewAssembler {
             .anyMatch(id -> !ids.add(id));
   }
 
+  /**
+   * Builds the final preview from collected movements and blockers.
+   *
+   * @param blockers the blockers value
+   * @param calculationVersion the calculationVersion value
+   * @param company the company value
+   * @param movements the movements value
+   * @param previewLines the previewLines value
+   * @param productService the productService value
+   * @param relatedReturns the relatedReturns value
+   * @param request the request value
+   * @return the resulting value and blockers.
+   */
   public static WarehouseOperationPreview finish(
       final Company company,
       final ProductService productService,
@@ -75,8 +101,9 @@ public final class WarehouseOperationPreviewAssembler {
       final String calculationVersion,
       final List<WarehouseOperationPreview.Movement> movements,
       final List<WarehouseOperationPreview.DocumentRef> relatedReturns) {
-    if (request != null && hasDuplicateSourceLines(request.lines()))
+    if (request != null && hasDuplicateSourceLines(request.lines())) {
       blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
+    }
     final List<WarehouseOperationPreview.Line> namedLines =
         previewLines.stream()
             .map(

@@ -49,8 +49,22 @@ public class WarehouseOperationSupportService {
   private final WarehouseService warehouseService;
   private final CurrentCompanyProvider companyProvider;
 
+  /**
+   * Identifies a product's stock balance in a warehouse.
+   *
+   * @param productId the productId value
+   * @param warehouseId the warehouseId value
+   */
   public record StockKey(Long warehouseId, Long productId) {}
 
+  /**
+   * Creates a draft operation document based on a parent document.
+   *
+   * @param parent the parent value
+   * @param reason the reason value
+   * @param type the type value
+   * @return the resulting value
+   */
   public Document operationDocument(
       final Document parent, final DocumentType type, final String reason) {
     final Document document = new Document();
@@ -74,11 +88,24 @@ public class WarehouseOperationSupportService {
     return document;
   }
 
+  /**
+   * Marks the document completed and records its completion time.
+   *
+   * @param document the document value
+   */
   public void complete(final Document document) {
     document.setStatus(DocumentStatus.COMPLETED);
     document.setCompletedAt(LocalDateTime.now());
   }
 
+  /**
+   * Copies the supplied line's product and quantities into a new line.
+   *
+   * @param document the document value
+   * @param quantity the quantity value
+   * @param source the source value
+   * @return the resulting value line.
+   */
   public DocumentLine cloneLine(
       final Document document, final DocumentLine source, final BigDecimal quantity) {
     final DocumentLine copy = draftWorkflowService.copyOperationLine(document, source, quantity);
@@ -86,6 +113,13 @@ public class WarehouseOperationSupportService {
     return copy;
   }
 
+  /**
+   * Finds a document line and verifies its company ownership.
+   *
+   * @param companyId the companyId value
+   * @param id the id value
+   * @return the resulting value
+   */
   public DocumentLine line(final Long id, final Long companyId) {
     final DocumentLine line = lineService.findByIdOrThrow(id);
     if (line.getDocument() == null
@@ -96,28 +130,67 @@ public class WarehouseOperationSupportService {
     return line;
   }
 
+  /**
+   * Creates a relation between two documents.
+   *
+   * @param source the source value
+   * @param target the target value
+   * @param type the type value
+   */
   public void relate(
       final Document source, final Document target, final DocumentRelationType type) {
     writer.relate(source, target, type);
   }
 
+  /**
+   * Persists the supplied stock movement.
+   *
+   * @param movement the movement value
+   * @param reason the reason value
+   */
   public void stock(final StockMovement movement, final String reason) {
     writer.saveStockMovement(movement, reason);
   }
 
+  /**
+   * Persists the idempotency key consumed by the document operation.
+   *
+   * @param document the document value
+   * @param key the key value
+   */
   public void consumeKey(final Document document, final String key) {
     writer.consumeKey(document, key);
   }
 
+  /**
+   * Rejects a missing or blank idempotency key.
+   *
+   * @param key the key value
+   * @throws ApiException when the operation cannot be completed
+   */
   public void requireKey(final String key) {
-    if (key == null || key.isBlank())
+    if (key == null || key.isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED);
+    }
   }
 
+  /**
+   * Validates the expected version of the document.
+   *
+   * @param document the document value
+   * @param version the version value
+   */
   public void requireVersion(final Document document, final String version) {
     accessService.checkVersion(document, version, () -> responseMapper.toResponse(document));
   }
 
+  /**
+   * Hashes calculation components to create a stable version token.
+   *
+   * @param components the components value
+   * @return the resulting value
+   * @throws IllegalStateException when the operation cannot be completed
+   */
   public String hashCalculationVersion(final List<String> components) {
     try {
       final MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -127,6 +200,12 @@ public class WarehouseOperationSupportService {
     }
   }
 
+  /**
+   * Checks whether request lines refer to the same source line more than once.
+   *
+   * @param lines the lines value
+   * @return the resulting value than once.
+   */
   public boolean hasDuplicateSourceLines(
       final List<WarehouseOperationRequest.WarehouseOperationLine> lines) {
     final Set<Long> ids = new HashSet<>();
@@ -136,6 +215,15 @@ public class WarehouseOperationSupportService {
         .anyMatch(id -> !ids.add(id));
   }
 
+  /**
+   * Calculates stock changes caused by correcting a document line.
+   *
+   * @param companyId the companyId value
+   * @param document the document value
+   * @param requestLine the requestLine value
+   * @param source the source value
+   * @return the resulting value line.
+   */
   public Map<WarehouseOperationSupportService.StockKey, BigDecimal> correctionStockDeltas(
       final Document document,
       final DocumentLine source,
@@ -187,18 +275,33 @@ public class WarehouseOperationSupportService {
     return result;
   }
 
+  /**
+   * * * * Adds a nonzero product quantity effect for a warehouse.
+   *
+   * @param effects the effects value
+   * @param productId the productId value
+   * @param quantity the quantity value
+   * @param warehouse the warehouse value
+   */
   public void addEffect(
       final Map<WarehouseOperationSupportService.StockKey, BigDecimal> effects,
       final Warehouse warehouse,
       final Long productId,
       final BigDecimal quantity) {
-    if (warehouse != null && quantity.signum() != 0)
+    if (warehouse != null && quantity.signum() != 0) {
       effects.merge(
           new WarehouseOperationSupportService.StockKey(warehouse.getId(), productId),
           quantity,
           BigDecimal::add);
+    }
   }
 
+  /**
+   * Returns the primary warehouse affected by a document correction.
+   *
+   * @param document the document value
+   * @return the resulting value
+   */
   public Warehouse defaultCorrectionWarehouse(final Document document) {
     return document.getType() == DocumentType.GOODS_RECEIPT
             || document.getType() == DocumentType.TRANSFER_RECEIPT
@@ -206,6 +309,13 @@ public class WarehouseOperationSupportService {
         : document.getSourceWarehouse();
   }
 
+  /**
+   * Copies a request with the specified operation type.
+   *
+   * @param operation the operation value
+   * @param request the request value
+   * @return the resulting value
+   */
   public WarehouseOperationRequest withOperation(
       final WarehouseOperationRequest request, final WarehouseOperationType operation) {
     return new WarehouseOperationRequest(
@@ -231,20 +341,43 @@ public class WarehouseOperationSupportService {
         request.lines());
   }
 
+  /**
+   * Requires a nonblank reason for the operation.
+   *
+   * @param reason the reason value
+   * @throws ApiException when the operation cannot be completed
+   */
   public void requireReason(final String reason) {
-    if (reason == null || reason.isBlank())
+    if (reason == null || reason.isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED);
+    }
   }
 
+  /**
+   * Requires the user to have one of the specified roles.
+   *
+   * @param roles the roles value
+   * @param user the user value
+   * @throws ApiException when the operation cannot be completed
+   */
   public void requireRole(final User user, final UserRole... roles) {
-    if (user == null || java.util.Arrays.stream(roles).noneMatch(role -> role == user.getRole()))
+    if (user == null || java.util.Arrays.stream(roles).noneMatch(role -> role == user.getRole())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
   }
 
+  /**
+   * Returns the quarantine warehouse for the current company.
+   *
+   * @param companyId the companyId value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   public Warehouse quarantineWarehouse(final Long companyId) {
     final Company company = companyProvider.getCurrentCompany();
-    if (!company.getId().equals(companyId))
+    if (!company.getId().equals(companyId)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_CROSS_COMPANY_REFERENCE);
+    }
     return warehouseService.ensureQuarantineWarehouse(company);
   }
 }

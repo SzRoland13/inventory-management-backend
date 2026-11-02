@@ -63,33 +63,40 @@ public class WarehouseServiceImpl implements WarehouseService {
   @Transactional
   @Override
   public Warehouse ensureQuarantineWarehouse(final Company company) {
-    return warehouseRepository
-        .findFirstByCompanyIdAndTypeOrderByIdAsc(company.getId(), WarehouseType.QUARANTINE)
-        .map(
-            warehouse -> {
-              if (warehouse.getStatus() == WarehouseStatus.ARCHIVED) {
-                warehouse.setStatus(WarehouseStatus.ACTIVE);
-                return warehouseRepository.save(warehouse);
-              }
-              return warehouse;
-            })
-        .orElseGet(
-            () -> {
-              String code = "QUARANTINE";
-              String name = "Quarantine";
-              if (warehouseRepository.existsByCompanyIdAndCode(company.getId(), code))
-                code = "QUARANTINE-" + company.getId();
-              if (warehouseRepository.existsByCompanyIdAndName(company.getId(), name))
-                name = "Quarantine " + company.getId();
-              return warehouseRepository.save(
-                  Warehouse.builder()
-                      .company(company)
-                      .name(name)
-                      .code(code)
-                      .type(WarehouseType.QUARANTINE)
-                      .status(WarehouseStatus.ACTIVE)
-                      .build());
-            });
+    final Warehouse warehouse =
+        warehouseRepository
+            .findFirstByCompanyIdAndTypeOrderByIdAsc(company.getId(), WarehouseType.QUARANTINE)
+            .map(this::activateIfArchived)
+            .orElseGet(() -> createQuarantineWarehouse(company));
+    return warehouse;
+  }
+
+  private Warehouse activateIfArchived(final Warehouse warehouse) {
+    Warehouse active = warehouse;
+    if (warehouse.getStatus() == WarehouseStatus.ARCHIVED) {
+      warehouse.setStatus(WarehouseStatus.ACTIVE);
+      active = warehouseRepository.save(warehouse);
+    }
+    return active;
+  }
+
+  private Warehouse createQuarantineWarehouse(final Company company) {
+    String code = "QUARANTINE";
+    String name = "Quarantine";
+    if (warehouseRepository.existsByCompanyIdAndCode(company.getId(), code)) {
+      code = "QUARANTINE-" + company.getId();
+    }
+    if (warehouseRepository.existsByCompanyIdAndName(company.getId(), name)) {
+      name = "Quarantine " + company.getId();
+    }
+    return warehouseRepository.save(
+        Warehouse.builder()
+            .company(company)
+            .name(name)
+            .code(code)
+            .type(WarehouseType.QUARANTINE)
+            .status(WarehouseStatus.ACTIVE)
+            .build());
   }
 
   @Transactional

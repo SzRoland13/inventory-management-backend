@@ -23,6 +23,13 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
    */
   List<Warehouse> findAllByCompanyIdOrderByNameAsc(Long companyId);
 
+  /**
+   * Finds the first warehouse of a type belonging to a company.
+   *
+   * @param companyId the companyId value
+   * @param type the type value
+   * @return the resulting value
+   */
   Optional<Warehouse> findFirstByCompanyIdAndTypeOrderByIdAsc(Long companyId, WarehouseType type);
 
   /**

@@ -49,9 +49,16 @@ public class DocumentFileWorkflowService {
   private final DocumentWorkflowAccessService accessService;
   private final DocumentWorkflowWriterService writer;
   private final DocumentResponseMapper responseMapper;
-
   private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
+  /**
+   * Uploads and attaches a file to a document.
+   *
+   * @param file the file value
+   * @param id the id value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse uploadFile(final Long id, final MultipartFile file) {
     final Document document = accessService.find(id);
@@ -107,17 +114,41 @@ public class DocumentFileWorkflowService {
     }
   }
 
+  /**
+   * Generates and attaches the PDF representation of a document.
+   *
+   * @param id the id value
+   * @param idempotencyKey the idempotencyKey value
+   * @param language requested document language
+   * @return the document response with its PDF
+   */
   @Transactional
   public DocumentResponse generatePdf(
       final Long id, final String idempotencyKey, final String language) {
     return queuePdf(id, idempotencyKey, normalizePdfLanguage(language));
   }
 
+  /**
+   * Retries PDF generation for a document.
+   *
+   * @param id the id value
+   * @param idempotencyKey the idempotencyKey value
+   * @return the resulting value
+   */
   @Transactional
   public DocumentResponse retryPdf(final Long id, final String idempotencyKey) {
     return queuePdf(id, idempotencyKey, null);
   }
 
+  /**
+   * * * Performs the queuePdf operation.
+   *
+   * @param id the id value
+   * @param idempotencyKey the idempotencyKey value
+   * @param requestedLanguage the requestedLanguage value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   DocumentResponse queuePdf(
       final Long id, final String idempotencyKey, final String requestedLanguage) {
     final Company company = companyProvider.getCurrentCompany();
@@ -175,6 +206,13 @@ public class DocumentFileWorkflowService {
     return responseMapper.toResponse(document);
   }
 
+  /**
+   * * Performs the normalizePdfLanguage operation.
+   *
+   * @param language the language value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
   String normalizePdfLanguage(final String language) {
     final String languageTag =
         language == null || language.isBlank()

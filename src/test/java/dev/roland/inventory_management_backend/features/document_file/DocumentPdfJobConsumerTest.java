@@ -57,6 +57,9 @@ class DocumentPdfJobConsumerTest {
 
     final var draft = Document.builder().id(7L).build();
     assertEquals("draft-document-7.pdf", consumer.pdfFilename(draft));
+
+    final var blankNumber = Document.builder().id(8L).documentNumber(" ").build();
+    assertEquals("draft-document-8.pdf", consumer.pdfFilename(blankNumber));
   }
 
   @Test

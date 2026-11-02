@@ -10,7 +10,12 @@ import lombok.experimental.UtilityClass;
 /** Maps a persisted fulfillment draft to the stock preview input. */
 @UtilityClass
 public final class DocumentFulfillmentMapper {
-
+  /**
+   * Maps a fulfillment draft to the stock preview input.
+   *
+   * @param document the document value
+   * @return the resulting value
+   */
   public static FulfillmentPreview toPreview(final Document document) {
     return new FulfillmentPreview(
         null,

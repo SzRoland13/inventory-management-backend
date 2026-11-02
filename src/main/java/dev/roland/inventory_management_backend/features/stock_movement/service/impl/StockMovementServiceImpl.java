@@ -45,17 +45,13 @@ public class StockMovementServiceImpl implements StockMovementService {
   @Override
   public List<StockMovement> findEffectiveThrough(
       final Long productId, final Long warehouseId, final LocalDateTime time) {
-    return stockMovementRepository
-        .findAllByProduct_IdAndWarehouse_IdAndEffectiveAtLessThanEqualOrderByEffectiveAtAscIdAsc(
-            productId, warehouseId, time);
+    return stockMovementRepository.findEffectiveThrough(productId, warehouseId, time);
   }
 
   @Override
   public List<StockMovement> findEffectiveAfter(
       final Long productId, final Long warehouseId, final LocalDateTime time) {
-    return stockMovementRepository
-        .findAllByProduct_IdAndWarehouse_IdAndEffectiveAtGreaterThanOrderByEffectiveAtAscIdAsc(
-            productId, warehouseId, time);
+    return stockMovementRepository.findEffectiveAfter(productId, warehouseId, time);
   }
 
   /** {@inheritDoc} */

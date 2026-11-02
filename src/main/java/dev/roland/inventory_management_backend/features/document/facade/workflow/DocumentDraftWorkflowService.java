@@ -82,6 +82,13 @@ public class DocumentDraftWorkflowService {
     }
   }
 
+  /**
+   * Creates a draft document from the supplied data.
+   *
+   * @param draft the draft value
+   * @return the created draft response
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse createDraft(final Draft draft) {
     final Company company = companyProvider.getCurrentCompany();
@@ -126,6 +133,14 @@ public class DocumentDraftWorkflowService {
     return responseMapper.toResponse(result);
   }
 
+  /**
+   * Updates an existing draft document.
+   *
+   * @param id the id value
+   * @param update the update value
+   * @return the updated draft response
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse updateDraft(final Long id, final DraftUpdate update) {
     final Company company = companyProvider.getCurrentCompany();
@@ -188,6 +203,14 @@ public class DocumentDraftWorkflowService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * * Applies requested line changes to a draft document.
+   *
+   * @param companyId the companyId value
+   * @param document the document value
+   * @param drafts the drafts value
+   * @throws ApiException when the operation cannot be completed
+   */
   public void applyLines(
       final Document document, final List<LineDraft> drafts, final Long companyId) {
     final List<DocumentLine> lines = new ArrayList<>();
@@ -261,6 +284,14 @@ public class DocumentDraftWorkflowService {
     document.getLines().addAll(lines);
   }
 
+  /**
+   * * Sets the document currency and applicable exchange rates.
+   *
+   * @param company the company value
+   * @param document the document value
+   * @param draft the draft value
+   * @throws ApiException when the operation cannot be completed
+   */
   public void setCurrencyAndRates(
       final Document document, final Draft draft, final Company company) {
     final Long requested = draft.currencyId();
@@ -340,6 +371,15 @@ public class DocumentDraftWorkflowService {
     document.setExchangeRate(null);
   }
 
+  /**
+   * * * * * Adds a new line to a document.
+   *
+   * @param doc the doc value
+   * @param price the price value
+   * @param product the product value
+   * @param quantity the quantity value
+   * @param unit the unit value
+   */
   public void addLine(
       final Document doc,
       final Product product,
@@ -355,15 +395,30 @@ public class DocumentDraftWorkflowService {
     lineService.save(line);
   }
 
+  /**
+   * Copies an operation line into the target document.
+   *
+   * @param doc the doc value
+   * @param quantity the quantity value
+   * @param source the source value
+   * @return the resulting value
+   */
   public DocumentLine copyOperationLine(
       final Document doc, final DocumentLine source, final BigDecimal quantity) {
     final DocumentLine line = DocumentLineMapper.copyOperationLine(doc, source, quantity);
     doc.getLines().add(line);
     lineService.save(line);
-
     return line;
   }
 
+  /**
+   * * * * Sets the source and target warehouses for a document.
+   *
+   * @param companyId the companyId value
+   * @param document the document value
+   * @param type the type value
+   * @param warehouseId the warehouseId value
+   */
   public void setWarehouse(
       final Document document,
       final DocumentType type,
@@ -381,6 +436,13 @@ public class DocumentDraftWorkflowService {
     }
   }
 
+  /**
+   * Copies partner details onto the document as a stable snapshot.
+   *
+   * @param companyId the companyId value
+   * @param document the document value
+   * @param partner the partner value
+   */
   public void snapshotPartner(
       final Document document, final Partner partner, final Long companyId) {
     document.setPartnerTaxNumberSnapshot(partner.getTaxNumber());

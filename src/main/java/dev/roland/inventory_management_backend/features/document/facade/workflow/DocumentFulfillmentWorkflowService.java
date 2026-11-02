@@ -70,6 +70,13 @@ public class DocumentFulfillmentWorkflowService {
   private final DocumentResponseMapper responseMapper;
   private final DocumentDraftWorkflowService draftWorkflowService;
 
+  /**
+   * Creates a fulfillment draft from the supplied request.
+   *
+   * @param request the request value
+   * @return the created fulfillment draft request.
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse createFulfillmentDraft(final FulfillmentDraft request) {
     final Company company = companyProvider.getCurrentCompany();
@@ -182,6 +189,15 @@ public class DocumentFulfillmentWorkflowService {
     return responseMapper.toResponse(documentService.save(saved));
   }
 
+  /**
+   * Resolves the warehouse used to fulfill the requested draft.
+   *
+   * @param request fulfillment draft details
+   * @param source source document, when the draft is based on another document
+   * @return selected warehouse identifier, or null when none is available warehouse used to fulfill
+   *     the requested draft.
+   * @throws ApiException when the operation cannot be completed
+   */
   @NonNull
   static Long getWarehouseId(final FulfillmentDraft request, final Document source) {
     final Long warehouseId =
@@ -199,10 +215,15 @@ public class DocumentFulfillmentWorkflowService {
     if (warehouseId == null) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
     }
-
     return warehouseId;
   }
 
+  /**
+   * Previews fulfillment of an order.
+   *
+   * @param request the request value
+   * @return the fulfillment preview
+   */
   @Transactional
   public PreviewResponse preview(final FulfillmentPreview request) {
     final Company company = companyProvider.getCurrentCompany();
@@ -355,6 +376,15 @@ public class DocumentFulfillmentWorkflowService {
     }
   }
 
+  /**
+   * Posts the requested fulfillment operation.
+   *
+   * @param expectedVersion expected document version
+   * @param id document identifier
+   * @param idempotencyKey idempotency key
+   * @return the posted document response
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse post(
       final Long id, final String idempotencyKey, final String expectedVersion) {
@@ -441,6 +471,14 @@ public class DocumentFulfillmentWorkflowService {
     return result;
   }
 
+  /**
+   * Confirms a fulfillment document using its expected version.
+   *
+   * @param expectedVersion expected document version
+   * @param id document identifier
+   * @return the confirmed document response version.
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse confirm(final Long id, final String expectedVersion) {
     final Company company = companyProvider.getCurrentCompany();
@@ -472,6 +510,15 @@ public class DocumentFulfillmentWorkflowService {
     return responseMapper.toResponse(saved);
   }
 
+  /**
+   * Closes any unfulfilled quantity remaining on an order.
+   *
+   * @param expectedVersion expected document version
+   * @param id order identifier
+   * @param request remaining quantity closure details
+   * @return the updated order response
+   * @throws ApiException when the operation cannot be completed
+   */
   @Transactional
   public DocumentResponse closeRemaining(
       final Long id, final CloseRemaining request, final String expectedVersion) {

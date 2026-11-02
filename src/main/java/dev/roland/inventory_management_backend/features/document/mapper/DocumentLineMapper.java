@@ -12,6 +12,16 @@ import dev.roland.inventory_management_backend.features.unit.Unit;
 public final class DocumentLineMapper {
   private DocumentLineMapper() {}
 
+  /**
+   * Builds a document line with product and unit snapshots.
+   *
+   * @param doc the doc value
+   * @param price the price value
+   * @param product the product value
+   * @param quantity the quantity value
+   * @param unit the unit value
+   * @return the resulting value
+   */
   public static DocumentLine buildLine(
       final Document doc,
       final Product product,
@@ -36,6 +46,14 @@ public final class DocumentLineMapper {
         .build();
   }
 
+  /**
+   * Copies a source line into a warehouse operation document.
+   *
+   * @param doc the doc value
+   * @param quantity the quantity value
+   * @param source the source value
+   * @return the resulting value
+   */
   public static DocumentLine copyOperationLine(
       final Document doc, final DocumentLine source, final BigDecimal quantity) {
     return DocumentLine.builder()

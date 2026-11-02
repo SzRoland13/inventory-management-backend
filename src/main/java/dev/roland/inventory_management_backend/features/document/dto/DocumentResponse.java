@@ -32,6 +32,15 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param type type value
  * @param version version value
  * @param warehouseId warehouse identifier value
+ * @param calculationVersion the calculationVersion value
+ * @param countedAt the countedAt value
+ * @param destinationWarehouseId the destinationWarehouseId value
+ * @param direction the direction value
+ * @param disposition the disposition value
+ * @param nonBillable the nonBillable value
+ * @param reason the reason value
+ * @param sourceWarehouseId the sourceWarehouseId value
+ * @param transitWarehouseId the transitWarehouseId value
  */
 public record DocumentResponse(
     Long id,

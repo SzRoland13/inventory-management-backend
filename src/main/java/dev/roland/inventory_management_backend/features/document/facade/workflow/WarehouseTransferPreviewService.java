@@ -24,6 +24,16 @@ public class WarehouseTransferPreviewService {
   private final StockBalanceService balanceService;
   private final WarehouseOperationSupportService warehouseOperationSupportService;
 
+  /**
+   * * * * * * Appends validated transfer lines and movements to a preview.
+   *
+   * @param blockers the blockers value
+   * @param previewLines the previewLines value
+   * @param request the request value
+   * @param operation the operation value
+   * @param company the company value
+   * @param document the document value
+   */
   public void appendLines(
       final Document document,
       final Company company,
@@ -68,7 +78,9 @@ public class WarehouseTransferPreviewService {
                       ? requested.compareTo(transit) <= 0
                       : requested.compareTo(remainingToDispatch) <= 0
                           && requested.compareTo(available) <= 0);
-      if (!valid) blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
+      if (!valid) {
+        blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
+      }
       previewLines.add(
           WarehouseOperationPreview.Line.builder()
               .sourceLineId(source == null ? item.sourceLineId() : source.getId())
