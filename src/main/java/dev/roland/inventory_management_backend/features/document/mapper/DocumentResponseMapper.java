@@ -277,6 +277,14 @@ public class DocumentResponseMapper {
         && accessService.directAllowed(DocumentType.GOODS_RECEIPT, user)) {
       actions.add(DocumentAction.POST);
     }
+    if (doc.getType() == DocumentType.SALES_ORDER
+        && (doc.getStatus() == DocumentStatus.CONFIRMED
+            || doc.getStatus() == DocumentStatus.PARTIALLY_COMPLETED)
+        && accessService.hasRemaining(doc)
+        && accessService.canManageDocument(doc, user)
+        && accessService.directAllowed(DocumentType.DELIVERY_NOTE, user)) {
+      actions.add(DocumentAction.POST);
+    }
     if (doc.getStatus() != DocumentStatus.CANCELLED && accessService.canManageDocument(doc, user)) {
       actions.add(DocumentAction.UPLOAD_FILE);
     }
