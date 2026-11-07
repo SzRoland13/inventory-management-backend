@@ -33,6 +33,9 @@ import dev.roland.inventory_management_backend.features.product.dto.UnitResponse
  * @param mainUnit configured main unit
  * @param secondaryUnit configured secondary unit, if present
  * @param secondaryUnitsPerMainUnit configured conversion ratio
+ * @param billedQuantity quantity billed from this source line
+ * @param vatRate VAT rate snapshot
+ * @param netAmount net line amount
  */
 public record LineResponse(
     Long id,
@@ -60,4 +63,7 @@ public record LineResponse(
     BigDecimal conversionFactorSnapshot,
     UnitResponse mainUnit,
     UnitResponse secondaryUnit,
-    BigDecimal secondaryUnitsPerMainUnit) {}
+    BigDecimal secondaryUnitsPerMainUnit,
+    BigDecimal billedQuantity,
+    BigDecimal vatRate,
+    BigDecimal netAmount) {}

@@ -20,6 +20,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param partnerId partner identifier value
  * @param type type value
  * @param warehouseId warehouse identifier value
+ * @param paymentTerms payment terms snapshot
  */
 public record Draft(
     DocumentType type,
@@ -29,7 +30,8 @@ public record Draft(
     String notes,
     List<LineDraft> lines,
     @NotNull Long currencyId,
-    List<ExchangeRateDraft> exchangeRates) {
+    List<ExchangeRateDraft> exchangeRates,
+    String paymentTerms) {
   /**
    * Copies the line list to prevent external mutation.
    *
@@ -62,7 +64,20 @@ public record Draft(
       final Long warehouseId,
       final String notes,
       final List<LineDraft> lines) {
-    this(type, date, partnerId, warehouseId, notes, lines, null, List.of());
+    this(type, date, partnerId, warehouseId, notes, lines, null, List.of(), null);
+  }
+
+  /** Retains source compatibility for callers without payment terms. */
+  public Draft(
+      final DocumentType type,
+      final LocalDate date,
+      final Long partnerId,
+      final Long warehouseId,
+      final String notes,
+      final List<LineDraft> lines,
+      final Long currencyId,
+      final List<ExchangeRateDraft> exchangeRates) {
+    this(type, date, partnerId, warehouseId, notes, lines, currencyId, exchangeRates, null);
   }
 
   /**

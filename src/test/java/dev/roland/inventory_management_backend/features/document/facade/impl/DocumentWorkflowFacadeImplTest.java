@@ -49,6 +49,7 @@ import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.CommercialDocumentWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentDraftWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFileWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFulfillmentWorkflowService;
@@ -136,6 +137,7 @@ class DocumentWorkflowFacadeImplTest {
     var documentResponseMapper =
         new DocumentResponseMapper(
             documentWorkflowAccessService,
+            documentService,
             allocationService,
             relationService,
             activityService,
@@ -244,6 +246,18 @@ class DocumentWorkflowFacadeImplTest {
             documentWorkflowAccessService,
             documentWorkflowWriterService,
             documentResponseMapper);
+    var commercialDocumentWorkflowService =
+        new CommercialDocumentWorkflowService(
+            documentService,
+            lineService,
+            relationService,
+            activityService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            companyProvider,
+            currencyService,
+            userService);
     var documentWorkflowFacadeImpl =
         new DocumentWorkflowFacadeImpl(
             documentService,
@@ -254,7 +268,8 @@ class DocumentWorkflowFacadeImplTest {
             warehouseOperationPreviewService,
             documentFulfillmentWorkflowService,
             documentFileWorkflowService,
-            documentDraftWorkflowService);
+            documentDraftWorkflowService,
+            commercialDocumentWorkflowService);
     facade = documentWorkflowFacadeImpl;
     preferredCurrency = Currency.builder().id(1L).code("EUR").name("Euro").build();
     company =
@@ -353,7 +368,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.DELIVERY_NOTE,
             DocumentType.TRANSFER_REQUEST,
             DocumentType.STOCK_COUNT,
-            DocumentType.RETURN),
+            DocumentType.RETURN,
+            DocumentType.SUPPLIER_BILL,
+            DocumentType.CUSTOMER_INVOICE,
+            DocumentType.FINANCIAL_CREDIT),
         capabilities.creatableTypes());
     assertFalse(capabilities.availableQueueViews().isEmpty());
   }
@@ -365,7 +383,8 @@ class DocumentWorkflowFacadeImplTest {
     final var capabilities = facade.capabilities();
 
     assertEquals(
-        List.of(DocumentType.SALES_ORDER, DocumentType.DELIVERY_NOTE),
+        List.of(
+            DocumentType.SALES_ORDER, DocumentType.DELIVERY_NOTE, DocumentType.CUSTOMER_INVOICE),
         capabilities.creatableTypes());
   }
 
@@ -381,7 +400,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.DELIVERY_NOTE,
             DocumentType.TRANSFER_REQUEST,
             DocumentType.STOCK_COUNT,
-            DocumentType.RETURN),
+            DocumentType.RETURN,
+            DocumentType.SUPPLIER_BILL,
+            DocumentType.CUSTOMER_INVOICE,
+            DocumentType.FINANCIAL_CREDIT),
         facade.capabilities().creatableTypes());
   }
 

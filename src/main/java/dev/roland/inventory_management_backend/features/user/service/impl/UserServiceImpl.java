@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.user.service.impl;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,6 +36,11 @@ public class UserServiceImpl implements UserService {
   @Override
   public MessageKey getNotFoundMessageKey() {
     return NotFoundMessageKey.USER;
+  }
+
+  @Override
+  public List<User> findAllByCompanyId(final Long companyId) {
+    return userRepository.findAllByCompanyIdOrderByUsernameAsc(companyId);
   }
 
   /**

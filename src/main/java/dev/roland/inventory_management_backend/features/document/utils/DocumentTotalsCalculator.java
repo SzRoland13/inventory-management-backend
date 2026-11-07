@@ -20,7 +20,11 @@ public final class DocumentTotalsCalculator {
   public static LineAmounts line(final DocumentLine line) {
     final BigDecimal quantity = line.getQuantity() == null ? BigDecimal.ZERO : line.getQuantity();
     final BigDecimal price = line.getUnitPrice() == null ? BigDecimal.ZERO : line.getUnitPrice();
-    final BigDecimal net = price.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
+    final BigDecimal rawNet =
+        line.getCommercialNetAmountOverride() == null
+            ? price.multiply(quantity)
+            : line.getCommercialNetAmountOverride();
+    final BigDecimal net = rawNet.setScale(2, RoundingMode.HALF_UP);
     final BigDecimal rate =
         line.getVatRateSnapshot() == null ? BigDecimal.ZERO : line.getVatRateSnapshot();
     final BigDecimal tax = net.multiply(rate).divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);

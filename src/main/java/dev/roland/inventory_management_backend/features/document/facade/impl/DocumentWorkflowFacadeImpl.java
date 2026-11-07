@@ -16,6 +16,9 @@ import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
 import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -23,13 +26,17 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentQueueView;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 import dev.roland.inventory_management_backend.features.document.facade.DocumentWorkflowFacade;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.CommercialDocumentWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentDraftWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFileWorkflowService;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFulfillmentWorkflowService;
@@ -56,7 +63,10 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
           DocumentType.DELIVERY_NOTE,
           DocumentType.TRANSFER_REQUEST,
           DocumentType.STOCK_COUNT,
-          DocumentType.RETURN);
+          DocumentType.RETURN,
+          DocumentType.SUPPLIER_BILL,
+          DocumentType.CUSTOMER_INVOICE,
+          DocumentType.FINANCIAL_CREDIT);
   static final List<DocumentQueueView> VIEWS = List.of(DocumentQueueView.values());
   private final DocumentService documentService;
   private final CurrentCompanyProvider companyProvider;
@@ -67,6 +77,7 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   private final DocumentFulfillmentWorkflowService fulfillmentWorkflowService;
   private final DocumentFileWorkflowService fileWorkflowService;
   private final DocumentDraftWorkflowService draftWorkflowService;
+  private final CommercialDocumentWorkflowService commercialWorkflowService;
 
   @Override
   public Capabilities capabilities() {
@@ -132,6 +143,43 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   @Override
   public DocumentResponse updateDraft(final Long id, final DraftUpdate update) {
     return draftWorkflowService.updateDraft(id, update);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse createCommercialDraft(final CommercialDraft request) {
+    return commercialWorkflowService.createDraft(request);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse updateCommercialDraft(
+      final Long id, final CommercialDraftUpdate request) {
+    return commercialWorkflowService.updateDraft(id, request);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse decideCommercial(
+      final Long id, final CommercialDecision request, final boolean approve) {
+    return commercialWorkflowService.decide(id, request, approve);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse finalizeCommercial(final Long id, final String version) {
+    return commercialWorkflowService.finalizeDocument(id, version);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse assignSettlementOwner(final Long id, final SettlementAssignment request) {
+    return commercialWorkflowService.assignSettlementOwner(id, request);
+  }
+
+  @Override
+  public List<SettlementOwner> settlementOwners() {
+    return commercialWorkflowService.settlementOwners();
   }
 
   @Transactional
@@ -271,6 +319,12 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       case STOCK_COUNTS -> d.getType() == DocumentType.STOCK_COUNT
           || d.getType() == DocumentType.STOCK_ADJUSTMENT;
       case CORRECTIONS -> d.getType() == DocumentType.CORRECTION;
+      case SUPPLIER_BILLS -> d.getType() == DocumentType.SUPPLIER_BILL;
+      case CUSTOMER_INVOICES -> d.getType() == DocumentType.CUSTOMER_INVOICE;
+      case FINANCIAL_CREDITS -> d.getType() == DocumentType.FINANCIAL_CREDIT;
+      case NEEDS_APPROVAL -> d.isApprovalRequired()
+          && d.getApprovalStatus() == CommercialApprovalStatus.PENDING;
+      case FINANCIAL_SETTLEMENT -> d.isFinancialSettlementRequired();
     };
   }
 

@@ -26,6 +26,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowAccessService;
+import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivity;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
@@ -45,6 +46,7 @@ import dev.roland.inventory_management_backend.features.user.enumeration.UserRol
 @ExtendWith(MockitoExtension.class)
 class DocumentResponseMapperTest {
   @Mock private DocumentWorkflowAccessService accessService;
+  @Mock private DocumentService documentService;
   @Mock private DocumentLineAllocationService allocationService;
   @Mock private DocumentRelationService relationService;
   @Mock private DocumentActivityService activityService;
@@ -60,6 +62,7 @@ class DocumentResponseMapperTest {
     mapper =
         new DocumentResponseMapper(
             accessService,
+            documentService,
             allocationService,
             relationService,
             activityService,

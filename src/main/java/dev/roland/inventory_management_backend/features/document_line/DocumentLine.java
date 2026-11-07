@@ -135,6 +135,9 @@ public class DocumentLine implements IdInterface<Long> {
   @Column(name = "total_price", nullable = false, precision = 24, scale = 8)
   private BigDecimal totalPrice;
 
+  @Column(name = "commercial_net_amount_override", precision = 24, scale = 8)
+  private BigDecimal commercialNetAmountOverride;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "currency_id")
   private Currency currency;

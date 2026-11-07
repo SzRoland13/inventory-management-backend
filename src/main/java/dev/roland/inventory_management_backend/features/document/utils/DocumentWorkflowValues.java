@@ -21,7 +21,7 @@ public final class DocumentWorkflowValues {
   /**
    * Returns zero when the supplied quantity is null.
    *
-   * @param value the value value
+   * @param value the value
    * @return the resulting value
    */
   public static BigDecimal nz(final BigDecimal value) {
@@ -46,7 +46,9 @@ public final class DocumentWorkflowValues {
    * @return the resulting value
    */
   public static DocumentCategory category(final DocumentType type) {
-    return type == DocumentType.PURCHASE_ORDER || type == DocumentType.GOODS_RECEIPT
+    return type == DocumentType.PURCHASE_ORDER
+            || type == DocumentType.GOODS_RECEIPT
+            || type == DocumentType.SUPPLIER_BILL
         ? DocumentCategory.PROCUREMENT
         : DocumentCategory.SALES;
   }

@@ -12,6 +12,8 @@ public enum DocumentStatus {
   PARTIALLY_COMPLETED,
   /** Represents the completed value. */
   COMPLETED,
-  /** Represents the cancelled value. */
+  RECEIVED,
+  ISSUED,
+  /** Represents the canceled value. */
   CANCELLED
 }

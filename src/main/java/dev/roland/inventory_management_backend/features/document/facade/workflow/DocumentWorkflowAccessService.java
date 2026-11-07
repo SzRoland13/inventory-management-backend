@@ -97,7 +97,9 @@ public class DocumentWorkflowAccessService {
         && (user.getRole() == UserRole.ADMIN
             || user.getRole() == UserRole.MANAGER
             || (user.getRole() == UserRole.SALES
-                && (type == DocumentType.SALES_ORDER || type == DocumentType.DELIVERY_NOTE)));
+                && (type == DocumentType.SALES_ORDER
+                    || type == DocumentType.DELIVERY_NOTE
+                    || type == DocumentType.CUSTOMER_INVOICE)));
   }
 
   /**

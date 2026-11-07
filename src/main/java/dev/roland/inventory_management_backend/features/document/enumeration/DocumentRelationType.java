@@ -11,5 +11,6 @@ public enum DocumentRelationType {
   CORRECTS,
   RETURNS,
   REPLACES,
-  TRANSFER_STEP
+  TRANSFER_STEP,
+  FINANCIAL_CREDIT
 }

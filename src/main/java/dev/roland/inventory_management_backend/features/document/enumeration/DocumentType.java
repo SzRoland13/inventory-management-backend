@@ -23,8 +23,9 @@ public enum DocumentType {
   SALES_ORDER("SO"),
   /** Represents the delivery note value. */
   DELIVERY_NOTE("DN"),
-  /** Represents the invoice value. */
-  INVOICE("INV"),
+  SUPPLIER_BILL("BILL"),
+  CUSTOMER_INVOICE("CINV"),
+  FINANCIAL_CREDIT("FC"),
   /** Represents the transfer request value. */
   TRANSFER_REQUEST("TRQ"),
   /** Represents the transfer delivery value. */

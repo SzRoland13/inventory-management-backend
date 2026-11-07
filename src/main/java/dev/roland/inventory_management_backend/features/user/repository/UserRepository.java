@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,4 +27,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
    * @return matching user, if one exists
    */
   Optional<User> findByEmail(String email);
+
+  /**
+   * Finds company users ordered by username.
+   *
+   * @param companyId company identifier
+   * @return users in the company ordered by username
+   */
+  List<User> findAllByCompanyIdOrderByUsernameAsc(Long companyId);
 }

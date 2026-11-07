@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.user.service;
 
+import java.util.List;
+
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -8,6 +10,14 @@ import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
 /** Defines operations supported by the user account feature. */
 public interface UserService extends BaseService<User, Long> {
+
+  /**
+   * Lists users belonging to a company.
+   *
+   * @param companyId company identifier
+   * @return users in the company
+   */
+  List<User> findAllByCompanyId(Long companyId);
 
   /**
    * Retrieves a {@link User} entity from the database that matches the given email address.

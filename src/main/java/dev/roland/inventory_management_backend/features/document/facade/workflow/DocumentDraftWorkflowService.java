@@ -109,6 +109,7 @@ public class DocumentDraftWorkflowService {
     document.setStatus(DocumentStatus.DRAFT);
     document.setDocumentDate(draft.date() == null ? LocalDate.now() : draft.date());
     document.setNotes(draft.notes());
+    document.setPaymentTermsSnapshot(draft.paymentTerms());
     document.setLines(new ArrayList<>());
     document.setCreatedByUser(accessService.currentActor());
     setCurrencyAndRates(document, draft, company);
@@ -172,6 +173,7 @@ public class DocumentDraftWorkflowService {
     document.setCategory(DocumentWorkflowValues.category(draft.type()));
     document.setDocumentDate(draft.date() == null ? document.getDocumentDate() : draft.date());
     document.setNotes(draft.notes());
+    document.setPaymentTermsSnapshot(draft.paymentTerms());
     document.setPartner(null);
     document.setPartnerNameSnapshot(null);
     document.setPartnerTaxNumberSnapshot(null);

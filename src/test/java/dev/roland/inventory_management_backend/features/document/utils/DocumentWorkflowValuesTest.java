@@ -9,9 +9,13 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.unit.Unit;
+import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
 class DocumentWorkflowValuesTest {
   private static final BigDecimal TEN = new BigDecimal("10");
@@ -42,6 +46,7 @@ class DocumentWorkflowValuesTest {
         new BigDecimal("0.10000000"), DocumentWorkflowValues.entryQuantity(source, BigDecimal.ONE));
     assertEquals(TEN, DocumentWorkflowValues.operationFactor(source, box.getId()));
     assertEquals(BigDecimal.ONE, DocumentWorkflowValues.operationFactor(source, pair.getId()));
+    assertEquals(TEN, DocumentWorkflowValues.operationFactor(source, pallet.getId()));
     assertEquals(TEN, DocumentWorkflowValues.operationFactor(source, null));
     assertEquals(BigDecimal.ONE, DocumentWorkflowValues.operationFactor(null, box.getId()));
 
@@ -74,7 +79,35 @@ class DocumentWorkflowValuesTest {
     assertEquals(BigDecimal.ONE, DocumentWorkflowValues.operationFactor(null, null));
     assertEquals(BigDecimal.ONE, DocumentWorkflowValues.stockQuantity(source, BigDecimal.ONE));
     assertEquals(BigDecimal.ONE, DocumentWorkflowValues.expectedFactor(product, box));
+    assertEquals(
+        BigDecimal.ONE,
+        DocumentWorkflowValues.expectedFactor(Product.builder().unit(box).build(), box));
     assertNull(DocumentWorkflowValues.configuredUnit(new Product(), null));
+  }
+
+  @Test
+  void classifiesCommercialDocumentsAndFallsBackToReferenceNumbers() {
+    assertEquals(
+        DocumentCategory.PROCUREMENT, DocumentWorkflowValues.category(DocumentType.PURCHASE_ORDER));
+    assertEquals(
+        DocumentCategory.PROCUREMENT, DocumentWorkflowValues.category(DocumentType.GOODS_RECEIPT));
+    assertEquals(
+        DocumentCategory.PROCUREMENT, DocumentWorkflowValues.category(DocumentType.SUPPLIER_BILL));
+    assertEquals(
+        DocumentCategory.SALES, DocumentWorkflowValues.category(DocumentType.CUSTOMER_INVOICE));
+
+    Document document = new Document();
+    assertEquals("", DocumentWorkflowValues.number(document));
+    document.setReferenceNumber("REF-1");
+    assertEquals("REF-1", DocumentWorkflowValues.number(document));
+    document.setDocumentNumber("INV-1");
+    assertEquals("INV-1", DocumentWorkflowValues.number(document));
+    assertNull(DocumentWorkflowValues.idOf(null));
+    assertEquals(8L, DocumentWorkflowValues.idOf(Warehouse.builder().id(8L).build()));
+    assertEquals(BigDecimal.ZERO, DocumentWorkflowValues.nz(null));
+    assertEquals(TEN, DocumentWorkflowValues.nz(TEN));
+    assertEquals(0, DocumentWorkflowValues.safe(null).size());
+    assertEquals(1, DocumentWorkflowValues.safe(java.util.List.of("value")).size());
   }
 
   private DocumentLine line(final Product product, final Unit unit, final BigDecimal factor) {
