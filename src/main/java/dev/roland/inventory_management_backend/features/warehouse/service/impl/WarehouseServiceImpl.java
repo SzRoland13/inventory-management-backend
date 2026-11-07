@@ -18,6 +18,7 @@ import dev.roland.inventory_management_backend.features.warehouse.dto.WarehouseA
 import dev.roland.inventory_management_backend.features.warehouse.dto.WarehouseRequest;
 import dev.roland.inventory_management_backend.features.warehouse.dto.WarehouseResponse;
 import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseStatus;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 import dev.roland.inventory_management_backend.features.warehouse.message.WarehouseMessageKey;
 import dev.roland.inventory_management_backend.features.warehouse.repository.WarehouseRepository;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
@@ -57,6 +58,45 @@ public class WarehouseServiceImpl implements WarehouseService {
     return warehouseRepository
         .findByIdAndCompanyIdForUpdate(id, companyId)
         .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.WAREHOUSE));
+  }
+
+  @Transactional
+  @Override
+  public Warehouse ensureQuarantineWarehouse(final Company company) {
+    final Warehouse warehouse =
+        warehouseRepository
+            .findFirstByCompanyIdAndTypeOrderByIdAsc(company.getId(), WarehouseType.QUARANTINE)
+            .map(this::activateIfArchived)
+            .orElseGet(() -> createQuarantineWarehouse(company));
+    return warehouse;
+  }
+
+  private Warehouse activateIfArchived(final Warehouse warehouse) {
+    Warehouse active = warehouse;
+    if (warehouse.getStatus() == WarehouseStatus.ARCHIVED) {
+      warehouse.setStatus(WarehouseStatus.ACTIVE);
+      active = warehouseRepository.save(warehouse);
+    }
+    return active;
+  }
+
+  private Warehouse createQuarantineWarehouse(final Company company) {
+    String code = "QUARANTINE";
+    String name = "Quarantine";
+    if (warehouseRepository.existsByCompanyIdAndCode(company.getId(), code)) {
+      code = "QUARANTINE-" + company.getId();
+    }
+    if (warehouseRepository.existsByCompanyIdAndName(company.getId(), name)) {
+      name = "Quarantine " + company.getId();
+    }
+    return warehouseRepository.save(
+        Warehouse.builder()
+            .company(company)
+            .name(name)
+            .code(code)
+            .type(WarehouseType.QUARANTINE)
+            .status(WarehouseStatus.ACTIVE)
+            .build());
   }
 
   @Transactional

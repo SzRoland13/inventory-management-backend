@@ -37,6 +37,14 @@ public interface WarehouseService extends BaseService<Warehouse, Long> {
   Warehouse findEntityByIdAndCompanyIdForUpdate(Long id, Long companyId);
 
   /**
+   * Finds or creates the company's quarantine warehouse.
+   *
+   * @param company the company value
+   * @return the resulting value
+   */
+  Warehouse ensureQuarantineWarehouse(Company company);
+
+  /**
    * Creates a warehouse for the supplied company.
    *
    * @param company owning company

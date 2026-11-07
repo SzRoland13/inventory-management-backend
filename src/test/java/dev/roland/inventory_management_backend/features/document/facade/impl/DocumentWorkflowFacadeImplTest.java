@@ -13,12 +13,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,18 +46,32 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentLine;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentDraftWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFileWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentFulfillmentWorkflowService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowAccessService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowWriterService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationCommandService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationPreviewService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationRecordService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationSupportService;
+import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseTransferPreviewService;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentPostingService;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFile;
+import dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus;
 import dev.roland.inventory_management_backend.features.document_file.service.DocumentFileService;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
+import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
 import dev.roland.inventory_management_backend.features.document_sequence.service.DocumentSequenceService;
@@ -105,7 +122,7 @@ class DocumentWorkflowFacadeImplTest {
   @Mock private OutboxService outboxService;
   @Mock private StockMovementService stockMovementService;
 
-  @InjectMocks private DocumentWorkflowFacadeImpl facade;
+  private DocumentWorkflowFacadeImpl facade;
 
   private Company company;
   private User user;
@@ -113,6 +130,132 @@ class DocumentWorkflowFacadeImplTest {
 
   @BeforeEach
   void setUp() {
+    var documentWorkflowAccessService =
+        new DocumentWorkflowAccessService(
+            documentService, companyProvider, userService, allocationService, relationService);
+    var documentResponseMapper =
+        new DocumentResponseMapper(
+            documentWorkflowAccessService,
+            allocationService,
+            relationService,
+            activityService,
+            mediaUsageService,
+            fileService,
+            objectStorage);
+    var documentWorkflowWriterService =
+        new DocumentWorkflowWriterService(
+            activityService,
+            documentWorkflowAccessService,
+            documentService,
+            prefixService,
+            sequenceService,
+            relationService,
+            stockMovementService);
+    var documentDraftWorkflowService =
+        new DocumentDraftWorkflowService(
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentService,
+            lineService,
+            partnerService,
+            contactService,
+            warehouseService,
+            companyProvider,
+            currencyService,
+            productService,
+            unitService);
+    var warehouseOperationSupportService =
+        new WarehouseOperationSupportService(
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentDraftWorkflowService,
+            lineService,
+            warehouseService,
+            productService,
+            companyProvider);
+    var warehouseTransferPreviewService =
+        new WarehouseTransferPreviewService(balanceService, warehouseOperationSupportService);
+    var warehouseOperationPreviewService =
+        new WarehouseOperationPreviewService(
+            productService,
+            warehouseService,
+            companyProvider,
+            relationService,
+            allocationService,
+            balanceService,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseTransferPreviewService);
+    var warehouseOperationRecordService =
+        new WarehouseOperationRecordService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            relationService,
+            allocationService,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseOperationPreviewService);
+    var warehouseOperationCommandService =
+        new WarehouseOperationCommandService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            companyProvider,
+            stockMovementService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            warehouseOperationSupportService,
+            warehouseOperationPreviewService,
+            warehouseOperationRecordService);
+    var documentFulfillmentWorkflowService =
+        new DocumentFulfillmentWorkflowService(
+            documentService,
+            lineService,
+            productService,
+            warehouseService,
+            companyProvider,
+            postingService,
+            relationService,
+            allocationService,
+            balanceService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper,
+            documentDraftWorkflowService);
+    var documentFileWorkflowService =
+        new DocumentFileWorkflowService(
+            companyProvider,
+            fileService,
+            mediaAssetService,
+            mediaUsageService,
+            objectStorage,
+            outboxService,
+            documentWorkflowAccessService,
+            documentWorkflowWriterService,
+            documentResponseMapper);
+    var documentWorkflowFacadeImpl =
+        new DocumentWorkflowFacadeImpl(
+            documentService,
+            companyProvider,
+            documentWorkflowAccessService,
+            documentResponseMapper,
+            warehouseOperationCommandService,
+            warehouseOperationPreviewService,
+            documentFulfillmentWorkflowService,
+            documentFileWorkflowService,
+            documentDraftWorkflowService);
+    facade = documentWorkflowFacadeImpl;
     preferredCurrency = Currency.builder().id(1L).code("EUR").name("Euro").build();
     company =
         Company.builder()
@@ -207,7 +350,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.PURCHASE_ORDER,
             DocumentType.SALES_ORDER,
             DocumentType.GOODS_RECEIPT,
-            DocumentType.DELIVERY_NOTE),
+            DocumentType.DELIVERY_NOTE,
+            DocumentType.TRANSFER_REQUEST,
+            DocumentType.STOCK_COUNT,
+            DocumentType.RETURN),
         capabilities.creatableTypes());
     assertFalse(capabilities.availableQueueViews().isEmpty());
   }
@@ -232,7 +378,10 @@ class DocumentWorkflowFacadeImplTest {
             DocumentType.PURCHASE_ORDER,
             DocumentType.SALES_ORDER,
             DocumentType.GOODS_RECEIPT,
-            DocumentType.DELIVERY_NOTE),
+            DocumentType.DELIVERY_NOTE,
+            DocumentType.TRANSFER_REQUEST,
+            DocumentType.STOCK_COUNT,
+            DocumentType.RETURN),
         facade.capabilities().creatableTypes());
   }
 
@@ -348,7 +497,7 @@ class DocumentWorkflowFacadeImplTest {
 
     assertEquals("Main warehouse", response.routeName());
     assertEquals(1, response.lines().size());
-    assertEquals(new BigDecimal("3"), response.lines().getFirst().orderedQuantity());
+    assertEquals(0, new BigDecimal("3").compareTo(response.lines().getFirst().orderedQuantity()));
     assertEquals(new BigDecimal("2.50"), response.lines().getFirst().unitPrice());
     assertEquals(preferredCurrency.getId(), response.lines().getFirst().sourceCurrencyId());
   }
@@ -585,13 +734,10 @@ class DocumentWorkflowFacadeImplTest {
   void linkedFulfillmentDraftCannotBeEditedWithoutReallocatingItsLines() {
     final Document fulfillment = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
     fulfillment.setCreatedByUser(user);
-    final var relation =
-        new dev.roland.inventory_management_backend.features.document_relation.DocumentRelation();
+    final var relation = new DocumentRelation();
     relation.setSourceDocument(document(DocumentType.SALES_ORDER, DocumentStatus.CONFIRMED));
     relation.setTargetDocument(fulfillment);
-    relation.setRelationType(
-        dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType
-            .FULFILLS);
+    relation.setRelationType(DocumentRelationType.FULFILLS);
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(fulfillment));
     when(relationService.findAllBySourceDocumentIdOrTargetDocumentId(3L, 3L))
         .thenReturn(List.of(relation));
@@ -668,7 +814,7 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals("DRAFT", response.status());
     assertEquals("Northwind", response.partnerName());
     assertEquals(1, response.lines().size());
-    assertEquals(new BigDecimal("2"), response.lines().getFirst().orderedQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(response.lines().getFirst().orderedQuantity()));
   }
 
   @Test
@@ -822,7 +968,7 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals(
         DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey(),
         preview.lines().getFirst().errorMessageKey());
-    assertEquals(new BigDecimal("1"), preview.lines().getFirst().shortfall());
+    assertEquals(0, new BigDecimal("1").compareTo(preview.lines().getFirst().shortfall()));
   }
 
   @Test
@@ -878,8 +1024,7 @@ class DocumentWorkflowFacadeImplTest {
         dev.roland.inventory_management_backend.features.document_file.DocumentFileSource
             .GENERATED_PDF);
     previous.setLanguageTag("hu");
-    previous.setStatus(
-        dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus.FAILED);
+    previous.setStatus(DocumentFileStatus.FAILED);
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
     when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
         .thenReturn(false);
@@ -894,7 +1039,7 @@ class DocumentWorkflowFacadeImplTest {
               return file;
             });
 
-    facade.retryPdf(3L, null);
+    facade.retryPdf(3L, "retry-key");
 
     org.mockito.Mockito.verify(outboxService)
         .enqueue(
@@ -903,6 +1048,50 @@ class DocumentWorkflowFacadeImplTest {
             any(),
             org.mockito.ArgumentMatchers.eq(COMPANY_ID),
             org.mockito.ArgumentMatchers.eq(3L));
+  }
+
+  @Test
+  void retryPdfRejectsWhenTheLatestAttemptDidNotFail() {
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
+    document.setCreatedByUser(user);
+    final DocumentFile completedPdf = new DocumentFile();
+    completedPdf.setSource(
+        dev.roland.inventory_management_backend.features.document_file.DocumentFileSource
+            .GENERATED_PDF);
+    completedPdf.setStatus(DocumentFileStatus.COMPLETED);
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
+        .thenReturn(false);
+    when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(completedPdf));
+
+    assertThrows(ApiException.class, () -> facade.retryPdf(3L, "retry-key"));
+
+    org.mockito.Mockito.verify(outboxService, org.mockito.Mockito.never())
+        .enqueue(any(), any(), anyLong(), anyLong());
+  }
+
+  @Test
+  void retryPdfRequiresAnIdempotencyKey() {
+    final ApiException error = assertThrows(ApiException.class, () -> facade.retryPdf(3L, " "));
+
+    assertEquals(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED, error.getMessageKey());
+  }
+
+  @Test
+  void retryPdfIsIdempotentForARepeatedKey() {
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
+    document.setCreatedByUser(user);
+    final DocumentFile previousAttempt = new DocumentFile();
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.findByDocumentIdAndIdempotencyKey(3L, "retry-key"))
+        .thenReturn(Optional.of(previousAttempt));
+
+    facade.retryPdf(3L, "retry-key");
+
+    org.mockito.Mockito.verify(fileService, org.mockito.Mockito.never())
+        .save(any(DocumentFile.class));
+    org.mockito.Mockito.verify(outboxService, org.mockito.Mockito.never())
+        .enqueue(any(), any(), anyLong(), anyLong());
   }
 
   @Test
@@ -931,13 +1120,7 @@ class DocumentWorkflowFacadeImplTest {
 
     final ApiException missingReason =
         assertThrows(
-            ApiException.class,
-            () ->
-                facade.closeRemaining(
-                    3L,
-                    new dev.roland.inventory_management_backend.features.document.dto
-                        .CloseRemaining(" "),
-                    "0"));
+            ApiException.class, () -> facade.closeRemaining(3L, new CloseRemaining(" "), "0"));
     assertEquals(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED, missingReason.getMessageKey());
   }
 
@@ -965,6 +1148,50 @@ class DocumentWorkflowFacadeImplTest {
     var response = facade.post(3L, "key", "0");
 
     assertEquals("DRAFT", response.status());
+  }
+
+  @Test
+  void concurrentRetriesSerializeOnDocumentLockAndDoNotPostTwice() throws Exception {
+    final Document document = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
+    final Object documentLock = new Object();
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
+        .thenAnswer(
+            invocation -> {
+              synchronized (documentLock) {
+                return Optional.of(document);
+              }
+            });
+    when(documentService.postingKeyExists(3L, "same-key")).thenReturn(true);
+
+    final CountDownLatch ready = new CountDownLatch(2);
+    final CountDownLatch start = new CountDownLatch(1);
+    try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+      final Future<String> first =
+          executor.submit(
+              () -> {
+                ready.countDown();
+                start.await();
+                return facade.post(3L, "same-key", "0").status();
+              });
+      final Future<String> second =
+          executor.submit(
+              () -> {
+                ready.countDown();
+                start.await();
+                return facade.post(3L, "same-key", "0").status();
+              });
+
+      ready.await();
+      start.countDown();
+      assertEquals("DRAFT", first.get());
+      assertEquals("DRAFT", second.get());
+    }
+
+    org.mockito.Mockito.verify(documentService, org.mockito.Mockito.times(2))
+        .lockByIdAndCompanyId(3L, COMPANY_ID);
+    org.mockito.Mockito.verify(documentService, org.mockito.Mockito.times(2))
+        .postingKeyExists(3L, "same-key");
+    org.mockito.Mockito.verify(postingService, org.mockito.Mockito.never()).complete(any());
   }
 
   @Test
@@ -1035,7 +1262,7 @@ class DocumentWorkflowFacadeImplTest {
     when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
     when(balanceService.findByWarehouseAndProduct(receipt.getTargetWarehouse(), product))
         .thenReturn(Optional.empty());
-    when(postingService.complete(receipt)).thenReturn(receipt);
+    when(postingService.complete(receipt, null)).thenReturn(receipt);
     when(documentService.save(receipt)).thenReturn(receipt);
 
     final var response = facade.post(3L, "post-key", "0");

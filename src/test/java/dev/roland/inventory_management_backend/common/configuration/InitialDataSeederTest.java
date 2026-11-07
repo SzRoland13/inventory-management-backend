@@ -79,7 +79,7 @@ class InitialDataSeederTest {
   }
 
   @Test
-  void doesNotSeedWhenACompanyAlreadyExists() {
+  void backfillsPrefixesWithoutRecreatingAnExistingCompany() {
     when(companyService.findAll())
         .thenReturn(List.of(Company.builder().id(10L).name("Existing Company").build()));
 
@@ -87,7 +87,8 @@ class InitialDataSeederTest {
 
     verify(companyService, never()).save(any(Company.class));
     verify(userService, never()).save(any(User.class));
-    verify(documentPrefixService, never()).save(any(DocumentPrefix.class));
+    verify(documentPrefixService, org.mockito.Mockito.times(DocumentType.values().length))
+        .save(any(DocumentPrefix.class));
   }
 
   @Test

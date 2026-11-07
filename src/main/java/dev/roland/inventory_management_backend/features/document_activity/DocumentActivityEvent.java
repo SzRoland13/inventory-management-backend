@@ -7,6 +7,7 @@ public enum DocumentActivityEvent {
   POSTED,
   CONFIRMED,
   REMAINDER_CLOSED,
+  REMAINDER_REOPENED,
   FILE_UPLOADED,
   PDF_QUEUED
 }

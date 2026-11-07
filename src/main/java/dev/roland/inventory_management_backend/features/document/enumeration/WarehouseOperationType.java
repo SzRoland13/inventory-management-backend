@@ -1,0 +1,32 @@
+package dev.roland.inventory_management_backend.features.document.enumeration;
+
+/** Names of document operations accepted by the warehouse workflow API. */
+public enum WarehouseOperationType {
+  TRANSFER_DRAFT,
+  TRANSFER_PREVIEW,
+  TRANSFER_RESOLUTION,
+  TRANSFER_DISPATCH,
+  TRANSFER_RECEIPT,
+  TRANSFER_RESOLVE,
+  RETURN_CREATE,
+  QUARANTINE_RELEASE,
+  REPLACEMENT_DELIVERY,
+  STOCK_COUNT_CREATE,
+  STOCK_COUNT_RECONCILE,
+  STOCK_COUNT_POST,
+  CORRECTION,
+  DISPATCH,
+  RECEIPT,
+  LOSS,
+  DAMAGE,
+  REVERSAL,
+  REMAINDER_CLOSURE,
+  CUSTOMER_RETURN,
+  SUPPLIER_RETURN,
+  RESTOCK,
+  QUARANTINE,
+  DAMAGED,
+  CORRECT_RECORDING,
+  PHYSICAL_RETURN,
+  RETURN_SHIPMENT
+}

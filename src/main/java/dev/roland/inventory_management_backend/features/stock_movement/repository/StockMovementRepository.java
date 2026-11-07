@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.stock_movement.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +14,45 @@ import dev.roland.inventory_management_backend.features.stock_movement.dto.Stock
 
 /** Provides database queries for stock movement records. */
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
+  /**
+   * Finds movements through the supplied timestamp in chronological order.
+   *
+   * @param productId product identifier
+   * @param warehouseId warehouse identifier
+   * @param effectiveAt inclusive effective timestamp
+   * @return the resulting value
+   */
+  @Query(
+      "select m from StockMovement m where m.product.id = :productId "
+          + "and m.warehouse.id = :warehouseId and m.effectiveAt <= :effectiveAt "
+          + "order by m.effectiveAt asc, m.id asc")
+  List<StockMovement> findEffectiveThrough(
+      @Param("productId") Long productId,
+      @Param("warehouseId") Long warehouseId,
+      @Param("effectiveAt") LocalDateTime effectiveAt);
+
+  /**
+   * Finds movements after the supplied timestamp in chronological order.
+   *
+   * @param productId product identifier
+   * @param warehouseId warehouse identifier
+   * @param effectiveAt exclusive effective timestamp
+   * @return the resulting value
+   */
+  @Query(
+      "select m from StockMovement m where m.product.id = :productId "
+          + "and m.warehouse.id = :warehouseId and m.effectiveAt > :effectiveAt "
+          + "order by m.effectiveAt asc, m.id asc")
+  List<StockMovement> findEffectiveAfter(
+      @Param("productId") Long productId,
+      @Param("warehouseId") Long warehouseId,
+      @Param("effectiveAt") LocalDateTime effectiveAt);
+
   String MOVEMENT_SELECT =
       "select m.id as id, m.createdAt as date, p.id as productId, p.sku as productSku, "
           + "p.name as productName, w.id as warehouseId, w.name as warehouseName, "
           + "m.quantityChange as quantityChange, m.movementType as movementType, "
-          + "d.id as documentId, d.referenceNumber as documentNumber, line.id as documentLineId, "
+          + "d.id as documentId, d.documentNumber as documentNumber, line.id as documentLineId, "
           + "p.unit.id as mainUnitId, p.unit.code as mainUnitCode, "
           + "p.unit.name as mainUnitName, p.unit.symbol as mainUnitSymbol, "
           + "p.unit.system as mainUnitSystem, secondary.id as secondaryUnitId, "

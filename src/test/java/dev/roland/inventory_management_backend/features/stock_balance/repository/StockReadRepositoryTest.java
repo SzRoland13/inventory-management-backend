@@ -121,6 +121,7 @@ class StockReadRepositoryTest {
                 .product(product)
                 .warehouse(warehouse)
                 .quantityChange(new BigDecimal("-3.25"))
+                .effectiveAt(LocalDateTime.now())
                 .movementType(StockMovementType.SALE_OUTBOUND)
                 .build());
 

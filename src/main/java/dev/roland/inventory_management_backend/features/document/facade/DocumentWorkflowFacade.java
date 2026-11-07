@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document.facade;
 
+import java.time.LocalDateTime;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
@@ -11,6 +13,9 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 
 /** Coordinates document workflow operations. */
 public interface DocumentWorkflowFacade {
@@ -84,6 +89,18 @@ public interface DocumentWorkflowFacade {
   DocumentResponse post(Long id, String idempotencyKey, String expectedVersion);
 
   /**
+   * Posts a fulfillment document with an optional effective movement time.
+   *
+   * @param id document identifier
+   * @param idempotencyKey operation key
+   * @param expectedVersion expected document version
+   * @param effectiveAt optional effective movement time
+   * @return posted document response
+   */
+  DocumentResponse post(
+      Long id, String idempotencyKey, String expectedVersion, LocalDateTime effectiveAt);
+
+  /**
    * Confirms the requested document.
    *
    * @param expectedVersion expected version value
@@ -129,4 +146,32 @@ public interface DocumentWorkflowFacade {
    * @return the requested result
    */
   DocumentResponse retryPdf(Long id, String idempotencyKey);
+
+  /**
+   * Previews a warehouse operation for a document.
+   *
+   * @param id the id value
+   * @param operation the operation value
+   * @param request the request value
+   * @return the resulting value
+   */
+  WarehouseOperationPreview previewWarehouseOperation(
+      Long id, WarehouseOperationType operation, WarehouseOperationRequest request);
+
+  /**
+   * Applies a warehouse operation to a document.
+   *
+   * @param expectedVersion the expectedVersion value
+   * @param id the id value
+   * @param idempotencyKey the idempotencyKey value
+   * @param operation the operation value
+   * @param request the request value
+   * @return the resulting value
+   */
+  DocumentResponse applyWarehouseOperation(
+      Long id,
+      WarehouseOperationType operation,
+      WarehouseOperationRequest request,
+      String idempotencyKey,
+      String expectedVersion);
 }

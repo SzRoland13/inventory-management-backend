@@ -1,0 +1,741 @@
+package dev.roland.inventory_management_backend.features.document.facade.workflow;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
+
+import org.springframework.stereotype.Service;
+
+import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
+import dev.roland.inventory_management_backend.features.company.Company;
+import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
+import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
+import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentLineMapper;
+import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
+import dev.roland.inventory_management_backend.features.document.service.DocumentService;
+import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
+import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
+import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
+import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
+import dev.roland.inventory_management_backend.features.document_line_allocation.DocumentLineAllocation;
+import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
+import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
+import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
+import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.service.ProductService;
+import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
+import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.user.User;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
+import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
+import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
+import lombok.RequiredArgsConstructor;
+
+/** Creates linked records for warehouse operations. */
+@Service
+@RequiredArgsConstructor
+public class WarehouseOperationRecordService {
+  private final DocumentService documentService;
+  private final DocumentLineService lineService;
+  private final ProductService productService;
+  private final WarehouseService warehouseService;
+  private final DocumentRelationService relationService;
+  private final DocumentLineAllocationService allocationService;
+  private final StockMovementService stockMovementService;
+  private final DocumentWorkflowAccessService accessService;
+  private final DocumentWorkflowWriterService writer;
+  private final DocumentResponseMapper responseMapper;
+  private final WarehouseOperationSupportService warehouseOperationSupportService;
+  private final WarehouseOperationPreviewService previewService;
+
+  /**
+   * Performs the createReturn operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   */
+  DocumentResponse createReturn(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key) {
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    warehouseOperationSupportService.requireReason(request.reason());
+    warehouseOperationSupportService.requireKey(key);
+    final Document sourceDocument = accessService.lock(request.sourceDocumentId(), company.getId());
+    final DocumentResponse result;
+    if (documentService.postingKeyExists(sourceDocument.getId(), key)) {
+      result =
+          relationService
+              .findAllBySourceDocumentIdOrTargetDocumentId(
+                  sourceDocument.getId(), sourceDocument.getId())
+              .stream()
+              .map(DocumentRelation::getTargetDocument)
+              .filter(d -> d.getType() == DocumentType.RETURN)
+              .max(java.util.Comparator.comparing(Document::getCreatedAt))
+              .map(responseMapper::toResponse)
+              .orElseThrow(accessService::notFound);
+    } else {
+      result = createReturnRecord(request, company, user, key, sourceDocument);
+    }
+    return result;
+  }
+
+  private DocumentResponse createReturnRecord(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key,
+      final Document sourceDocument) {
+    final WarehouseOperationPreview preview =
+        previewService.preview(
+            sourceDocument.getId(), WarehouseOperationType.RETURN_CREATE, request);
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    if (request.direction() == ReturnDirection.CUSTOMER_RETURN
+            && sourceDocument.getType() != DocumentType.DELIVERY_NOTE
+        || request.direction() == ReturnDirection.SUPPLIER_RETURN
+            && sourceDocument.getType() != DocumentType.GOODS_RECEIPT) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    if (DocumentWorkflowValues.safe(request.lines()).stream()
+        .anyMatch(
+            line ->
+                (request.direction() == ReturnDirection.SUPPLIER_RETURN)
+                    != (line.disposition() == ReturnDisposition.SUPPLIER_RETURN))) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    final Document returned =
+        warehouseOperationSupportService.operationDocument(
+            sourceDocument, DocumentType.RETURN, request.reason());
+    returned.setWorkflowDirection(request.direction());
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      final DocumentLine source =
+          warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+      final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(source, item.unitId());
+      final BigDecimal sourceQuantity =
+          DocumentWorkflowValues.entryQuantity(source, quantity.multiply(operationFactor));
+      source.setReturnedQuantity(
+          DocumentWorkflowValues.nz(source.getReturnedQuantity()).add(sourceQuantity));
+      lineService.save(source);
+      final DocumentLine line =
+          warehouseOperationSupportService.cloneLine(returned, source, quantity);
+      DocumentWorkflowValues.applyOperationUnit(line, source, item.unitId());
+      line.setSourceLine(source);
+      line.setWorkflowDisposition(item.disposition());
+      returned.getLines().add(lineService.save(line));
+      final Warehouse originalWarehouse =
+          sourceDocument.getType() == DocumentType.GOODS_RECEIPT
+              ? sourceDocument.getTargetWarehouse()
+              : sourceDocument.getSourceWarehouse();
+      final Warehouse target =
+          request.warehouseId() == null
+              ? originalWarehouse
+              : warehouseService.findEntityByIdAndCompanyId(request.warehouseId(), company.getId());
+      final boolean quarantine =
+          item.disposition() == ReturnDisposition.QUARANTINE
+              || item.disposition() == ReturnDisposition.DAMAGED;
+      final boolean supplierReturn =
+          item.disposition() == ReturnDisposition.SUPPLIER_RETURN
+              || request.direction() == ReturnDirection.SUPPLIER_RETURN;
+      final Warehouse effectiveWarehouse =
+          quarantine
+              ? warehouseOperationSupportService.quarantineWarehouse(company.getId())
+              : target;
+      returned.setTargetWarehouse(effectiveWarehouse);
+      returned.setTargetWarehouseCodeSnapshot(effectiveWarehouse.getCode());
+      returned.setTargetWarehouseNameSnapshot(effectiveWarehouse.getName());
+      if (DocumentWorkflowValues.safe(request.lines()).stream()
+              .map(WarehouseOperationRequest.WarehouseOperationLine::disposition)
+              .distinct()
+              .count()
+          == 1) {
+        returned.setWorkflowDisposition(item.disposition());
+      }
+      writer.saveStockMovement(
+          stockMovementService.postMovement(
+              line,
+              effectiveWarehouse,
+              supplierReturn
+                  ? quantity.multiply(operationFactor).negate()
+                  : quantity.multiply(operationFactor),
+              supplierReturn ? StockMovementType.RETURN_OUT : StockMovementType.RETURN_IN,
+              user,
+              request.effectiveAt()),
+          item.reason() == null ? request.reason() : item.reason());
+    }
+    writer.complete(returned);
+    final Document saved = documentService.save(returned);
+    writer.relate(sourceDocument, saved, DocumentRelationType.RETURNS);
+    writer.consumeKey(sourceDocument, key, saved);
+    writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
+    return responseMapper.toResponse(saved);
+  }
+
+  /**
+   * Performs the createCorrection operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param original the original value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
+  DocumentResponse createCorrection(
+      final Document original,
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key) {
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    warehouseOperationSupportService.requireKey(key);
+    warehouseOperationSupportService.requireReason(request.reason());
+    lockAffectedOrderDocuments(original, request, company.getId());
+    final WarehouseOperationPreview preview =
+        previewService.preview(original.getId(), WarehouseOperationType.CORRECTION, request);
+
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+
+    final Document correction =
+        warehouseOperationSupportService.operationDocument(
+            original, DocumentType.CORRECTION, request.reason());
+    final List<ClosureReopenAudit> closureReopenAudits = new ArrayList<>();
+
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      for (var reopen : DocumentWorkflowValues.safe(item.closureReopens())) {
+        final DocumentLine orderLine =
+            warehouseOperationSupportService.line(reopen.sourceOrderLineId(), company.getId());
+        final BigDecimal closedBefore = DocumentWorkflowValues.nz(orderLine.getClosedQuantity());
+        final BigDecimal reopened = DocumentWorkflowValues.nz(reopen.quantity());
+        orderLine.setClosedQuantity(closedBefore.subtract(reopened));
+        lineService.save(orderLine);
+        closureReopenAudits.add(
+            new ClosureReopenAudit(
+                orderLine,
+                closedBefore,
+                reopened,
+                orderLine.getClosedQuantity(),
+                orderLine.getClosureReason(),
+                reopen.reason()));
+      }
+    }
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      final DocumentLine source =
+          warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+      final BigDecimal corrected = DocumentWorkflowValues.nz(item.correctedQuantity());
+      final BigDecimal oldQuantity = DocumentWorkflowValues.nz(source.getQuantity());
+      final boolean inbound =
+          original.getType() == DocumentType.GOODS_RECEIPT
+              || original.getType() == DocumentType.TRANSFER_RECEIPT;
+      final Warehouse primaryWarehouse =
+          warehouseOperationSupportService.defaultCorrectionWarehouse(original);
+      final Warehouse transferSecondary = original.getTransitWarehouse();
+      final Long correctedProductId =
+          item.correctedProductId() == null
+              ? source.getProduct().getId()
+              : item.correctedProductId();
+      final Product correctedProduct =
+          productService
+              .findByIdAndCompanyId(correctedProductId, company.getId())
+              .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final var correctedUnit =
+          DocumentWorkflowValues.configuredUnit(correctedProduct, item.unitId());
+      final BigDecimal correctedFactor =
+          DocumentWorkflowValues.expectedFactor(correctedProduct, correctedUnit);
+      final BigDecimal correctedSourceQuantity =
+          DocumentWorkflowValues.entryQuantity(source, corrected.multiply(correctedFactor));
+      final Warehouse correctedPrimary =
+          item.correctedWarehouseId() == null
+              ? primaryWarehouse
+              : warehouseService.findEntityByIdAndCompanyId(
+                  item.correctedWarehouseId(), company.getId());
+      final List<Warehouse> warehouses = new ArrayList<>();
+      final List<BigDecimal> reversalDeltas = new ArrayList<>();
+      final List<BigDecimal> correctedDeltas = new ArrayList<>();
+      warehouses.add(primaryWarehouse);
+      reversalDeltas.add(inbound ? oldQuantity.negate() : oldQuantity);
+      correctedDeltas.add(inbound ? corrected : corrected.negate());
+      if (original.getType() == DocumentType.TRANSFER_DELIVERY) {
+        warehouses.add(transferSecondary);
+        reversalDeltas.add(oldQuantity.negate());
+        correctedDeltas.add(corrected);
+      } else if (original.getType() == DocumentType.TRANSFER_RECEIPT) {
+        warehouses.add(transferSecondary);
+        reversalDeltas.add(oldQuantity);
+        correctedDeltas.add(corrected.negate());
+      }
+      for (int i = 0; i < warehouses.size(); i++) {
+        final BigDecimal reversalDelta = reversalDeltas.get(i);
+        final DocumentLine reversalLine =
+            warehouseOperationSupportService.cloneLine(correction, source, oldQuantity);
+        correction.getLines().add(lineService.save(reversalLine));
+        postCorrectionMovement(
+            reversalLine,
+            warehouses.get(i),
+            reversalDelta,
+            user,
+            request.reason(),
+            request.effectiveAt());
+        final BigDecimal correctedDelta = correctedDeltas.get(i);
+        final DocumentLine correctedLine =
+            DocumentLineMapper.buildLine(
+                correction,
+                correctedProduct,
+                correctedUnit,
+                corrected,
+                DocumentWorkflowValues.nz(source.getUnitPrice()));
+        correctedLine.setSourceLine(source);
+        correction.getLines().add(lineService.save(correctedLine));
+        if (i == 0 && oldQuantity.signum() > 0) {
+          final BigDecimal fulfillmentDelta = correctedSourceQuantity.subtract(oldQuantity);
+          for (DocumentLineAllocation allocation :
+              allocationService.findAllByFulfillmentLineId(source.getId())) {
+            final DocumentLineAllocation adjustment = new DocumentLineAllocation();
+            adjustment.setFulfillmentLine(correctedLine);
+            adjustment.setSourceOrderLine(allocation.getSourceOrderLine());
+            adjustment.setQuantity(
+                allocation
+                    .getQuantity()
+                    .multiply(fulfillmentDelta)
+                    .divide(oldQuantity, 8, RoundingMode.HALF_UP));
+            allocationService.save(adjustment);
+          }
+        }
+        postCorrectionMovement(
+            correctedLine,
+            i == 0 ? correctedPrimary : warehouses.get(i),
+            correctedDelta,
+            user,
+            request.reason(),
+            request.effectiveAt());
+      }
+    }
+    writer.complete(correction);
+    final Document saved = documentService.save(correction);
+    writer.relate(original, saved, DocumentRelationType.CORRECTS);
+    for (ClosureReopenAudit audit : closureReopenAudits) {
+      writer.addActivity(
+          audit.orderLine().getDocument(),
+          DocumentActivityEvent.REMAINDER_REOPENED,
+          closureReopenDetails(saved, audit));
+    }
+    writer.consumeKey(original, key, saved);
+    writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
+    return responseMapper.toResponse(saved);
+  }
+
+  private void lockAffectedOrderDocuments(
+      final Document original, final WarehouseOperationRequest request, final Long companyId) {
+    final TreeSet<Long> orderDocumentIds = new TreeSet<>();
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      if (item.sourceLineId() == null) {
+        continue;
+      }
+      final DocumentLine source =
+          warehouseOperationSupportService.line(item.sourceLineId(), companyId);
+      if (!source.getDocument().getId().equals(original.getId())) {
+        continue;
+      }
+      for (DocumentLineAllocation allocation :
+          allocationService.findAllByFulfillmentLineId(source.getId())) {
+        orderDocumentIds.add(allocation.getSourceOrderLine().getDocument().getId());
+      }
+    }
+    orderDocumentIds.forEach(id -> accessService.lock(id, companyId));
+  }
+
+  private String closureReopenDetails(final Document correction, final ClosureReopenAudit audit) {
+    return "{\"correctionId\":"
+        + correction.getId()
+        + ",\"orderLineId\":"
+        + audit.orderLine().getId()
+        + ",\"closedBefore\":"
+        + audit.closedBefore().toPlainString()
+        + ",\"reopened\":"
+        + audit.reopened().toPlainString()
+        + ",\"closedAfter\":"
+        + audit.closedAfter().toPlainString()
+        + ",\"previousReason\":\""
+        + jsonString(audit.previousReason())
+        + "\",\"reason\":\""
+        + jsonString(audit.reason())
+        + "\"}";
+  }
+
+  private String jsonString(final String value) {
+    final StringBuilder escaped = new StringBuilder();
+    for (char character : (value == null ? "" : value).toCharArray()) {
+      switch (character) {
+        case '"' -> escaped.append("\\\"");
+        case '\\' -> escaped.append("\\\\");
+        case '\b' -> escaped.append("\\b");
+        case '\f' -> escaped.append("\\f");
+        case '\n' -> escaped.append("\\n");
+        case '\r' -> escaped.append("\\r");
+        case '\t' -> escaped.append("\\t");
+        default -> {
+          if (character < 0x20) {
+            escaped.append(String.format("\\u%04x", (int) character));
+          } else {
+            escaped.append(character);
+          }
+        }
+      }
+    }
+    return escaped.toString();
+  }
+
+  private record ClosureReopenAudit(
+      DocumentLine orderLine,
+      BigDecimal closedBefore,
+      BigDecimal reopened,
+      BigDecimal closedAfter,
+      String previousReason,
+      String reason) {}
+
+  /**
+   * * * * * Performs the postCorrectionMovement operation.
+   *
+   * @param delta the delta value
+   * @param line the line value
+   * @param reason the reason value
+   * @param user the user value
+   * @param warehouse the warehouse value
+   * @param effectiveAt optional effective movement time
+   */
+  void postCorrectionMovement(
+      final DocumentLine line,
+      final Warehouse warehouse,
+      final BigDecimal delta,
+      final User user,
+      final String reason,
+      final java.time.LocalDateTime effectiveAt) {
+    if (warehouse == null || delta.signum() == 0) {
+      return;
+    }
+    writer.saveStockMovement(
+        stockMovementService.postMovement(
+            line,
+            warehouse,
+            DocumentWorkflowValues.stockQuantity(line, delta),
+            delta.signum() > 0
+                ? StockMovementType.ADJUSTMENT_INCREASE
+                : StockMovementType.ADJUSTMENT_DECREASE,
+            user,
+            effectiveAt),
+        reason);
+  }
+
+  /**
+   * Performs the releaseQuarantine operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param returned the returned value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
+  DocumentResponse releaseQuarantine(
+      final Document returned,
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key) {
+    warehouseOperationSupportService.requireKey(key);
+    warehouseOperationSupportService.requireReason(request.reason());
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    if (returned.getType() != DocumentType.RETURN || request.targetWarehouseId() == null) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    final Warehouse quarantine =
+        warehouseOperationSupportService.quarantineWarehouse(company.getId());
+    final Warehouse target =
+        warehouseService.findEntityByIdAndCompanyId(request.targetWarehouseId(), company.getId());
+    if (target.getType() == WarehouseType.QUARANTINE || target.getType() == WarehouseType.TRANSIT) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    final Document release =
+        warehouseOperationSupportService.operationDocument(
+            returned, DocumentType.STOCK_ADJUSTMENT, request.reason());
+    release.setSourceWarehouse(quarantine);
+    release.setTargetWarehouse(target);
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      final DocumentLine returnedLine =
+          warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+      if (!returnedLine.getDocument().getId().equals(returned.getId())
+          || !(returnedLine.getWorkflowDisposition() == ReturnDisposition.QUARANTINE
+              || returnedLine.getWorkflowDisposition() == ReturnDisposition.DAMAGED)) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(returnedLine, item.unitId());
+      final BigDecimal stockQuantity = quantity.multiply(operationFactor);
+      final BigDecimal remaining =
+          DocumentWorkflowValues.nz(returnedLine.getQuantity())
+              .subtract(DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity()));
+      if (quantity.signum() <= 0
+          || stockQuantity.compareTo(DocumentWorkflowValues.stockQuantity(returnedLine, remaining))
+              > 0) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final DocumentLine line =
+          warehouseOperationSupportService.cloneLine(release, returnedLine, quantity);
+      DocumentWorkflowValues.applyOperationUnit(line, returnedLine, item.unitId());
+      release.getLines().add(lineService.save(line));
+      writer.saveStockMovement(
+          stockMovementService.postMovement(
+              line,
+              quarantine,
+              stockQuantity.negate(),
+              StockMovementType.RETURN_OUT,
+              user,
+              request.effectiveAt()),
+          request.reason());
+      writer.saveStockMovement(
+          stockMovementService.postMovement(
+              line,
+              target,
+              stockQuantity,
+              StockMovementType.RETURN_IN,
+              user,
+              request.effectiveAt()),
+          request.reason());
+      returnedLine.setReleasedQuantity(
+          DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity())
+              .add(DocumentWorkflowValues.entryQuantity(returnedLine, stockQuantity)));
+      lineService.save(returnedLine);
+    }
+    writer.complete(release);
+    final Document saved = documentService.save(release);
+    writer.relate(returned, saved, DocumentRelationType.TRANSFER_STEP);
+    writer.consumeKey(returned, key, saved);
+    writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
+    return responseMapper.toResponse(saved);
+  }
+
+  /**
+   * Performs the createReplacement operation.
+   *
+   * @param company the company value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   */
+  DocumentResponse createReplacement(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key) {
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    warehouseOperationSupportService.requireKey(key);
+    final Document returned = accessService.lock(request.returnDocumentId(), company.getId());
+    final Document original = accessService.find(request.originalDeliveryId());
+    final DocumentResponse result;
+    if (documentService.postingKeyExists(returned.getId(), key)) {
+      result =
+          relationService
+              .findAllBySourceDocumentIdOrTargetDocumentId(returned.getId(), returned.getId())
+              .stream()
+              .map(DocumentRelation::getTargetDocument)
+              .filter(d -> d.getType() == DocumentType.DELIVERY_NOTE && d.isNonBillable())
+              .max(java.util.Comparator.comparing(Document::getCreatedAt))
+              .map(responseMapper::toResponse)
+              .orElseThrow(accessService::notFound);
+    } else {
+      result = createReplacementRecord(request, company, user, key, returned, original);
+    }
+    return result;
+  }
+
+  private DocumentResponse createReplacementRecord(
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key,
+      final Document returned,
+      final Document original) {
+    if (returned.getType() != DocumentType.RETURN
+        || original.getType() != DocumentType.DELIVERY_NOTE) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    final Warehouse warehouse =
+        warehouseService.findEntityByIdAndCompanyId(request.warehouseId(), company.getId());
+    final WarehouseOperationPreview preview =
+        previewService.preview(null, WarehouseOperationType.REPLACEMENT_DELIVERY, request);
+    if (!preview.valid()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    final Document delivery =
+        warehouseOperationSupportService.operationDocument(
+            original, DocumentType.DELIVERY_NOTE, "Replacement delivery");
+    delivery.setSourceWarehouse(warehouse);
+    delivery.setNonBillable(true);
+    delivery.setDocumentDate(request.date() == null ? LocalDate.now() : request.date());
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      final DocumentLine source =
+          warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+      final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final Product product =
+          item.productId() == null
+              ? source.getProduct()
+              : productService
+                  .findByIdAndCompanyId(item.productId(), company.getId())
+                  .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final var unit =
+          DocumentWorkflowValues.configuredUnit(
+              product,
+              item.unitId() == null && product.getId().equals(source.getProduct().getId())
+                  ? source.getUnitSnapshot() == null
+                      ? source.getProduct().getUnit().getId()
+                      : source.getUnitSnapshot().getId()
+                  : item.unitId());
+      final BigDecimal factor = DocumentWorkflowValues.expectedFactor(product, unit);
+      final BigDecimal stockQuantity = quantity.multiply(factor);
+      final DocumentLine line =
+          DocumentLineMapper.buildLine(delivery, product, unit, quantity, BigDecimal.ZERO);
+      line.setSourceLine(source);
+      delivery.getLines().add(lineService.save(line));
+      source.setReplacedQuantity(
+          DocumentWorkflowValues.nz(source.getReplacedQuantity())
+              .add(DocumentWorkflowValues.entryQuantity(source, stockQuantity)));
+      lineService.save(source);
+      writer.saveStockMovement(
+          stockMovementService.postMovement(
+              line,
+              warehouse,
+              stockQuantity.negate(),
+              StockMovementType.SALE_OUTBOUND,
+              user,
+              request.effectiveAt()),
+          "replacement delivery");
+    }
+    writer.complete(delivery);
+    final Document saved = documentService.save(delivery);
+    writer.relate(returned, saved, DocumentRelationType.REPLACES);
+    writer.relate(original, saved, DocumentRelationType.REPLACES);
+    writer.consumeKey(returned, key, saved);
+    writer.addActivity(saved, DocumentActivityEvent.POSTED, "non-billable replacement");
+    return responseMapper.toResponse(saved);
+  }
+
+  /**
+   * Performs the postCount operation.
+   *
+   * @param company the company value
+   * @param count the count value
+   * @param key the key value
+   * @param request the request value
+   * @param user the user value
+   * @return the resulting value
+   * @throws ApiException when the operation cannot be completed
+   */
+  DocumentResponse postCount(
+      final Document count,
+      final WarehouseOperationRequest request,
+      final Company company,
+      final User user,
+      final String key) {
+    warehouseOperationSupportService.requireKey(key);
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    warehouseService.findEntityByIdAndCompanyIdForUpdate(
+        count.getSourceWarehouse().getId(), company.getId());
+    if (!Boolean.TRUE.equals(request.confirmed())) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    final WarehouseOperationPreview preview =
+        previewService.preview(
+            count.getId(), WarehouseOperationType.STOCK_COUNT_RECONCILE, request);
+    if (!preview.valid()
+        || request.calculationVersion() == null
+        || !request.calculationVersion().equals(preview.calculationVersion())) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    final Document adjustment =
+        warehouseOperationSupportService.operationDocument(
+            count, DocumentType.STOCK_ADJUSTMENT, request.reason());
+    for (int i = 0; i < request.lines().size(); i++) {
+      final var item = request.lines().get(i);
+      final DocumentLine countLine =
+          warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+      final var result = preview.lines().get(i);
+      final BigDecimal countFactor =
+          DocumentWorkflowValues.operationFactor(countLine, item.unitId());
+      if (item.unitId() != null) {
+        final var countUnit =
+            DocumentWorkflowValues.configuredUnit(countLine.getProduct(), item.unitId());
+        countLine.setUnitSnapshot(countUnit);
+        countLine.setUnitCodeSnapshot(countUnit.getCode());
+        countLine.setUnitNameSnapshot(countUnit.getName());
+        countLine.setConversionFactorSnapshot(countFactor);
+      }
+      countLine.setExpectedQuantity(result.expectedAtCount());
+      countLine.setCountedQuantity(result.countedQuantity());
+      countLine.setVariance(result.variance());
+      countLine.setVarianceReason(item.varianceReason());
+      lineService.save(countLine);
+      final BigDecimal delta = result.adjustmentQuantity();
+      if (delta.signum() != 0) {
+        final DocumentLine line =
+            warehouseOperationSupportService.cloneLine(adjustment, countLine, delta.abs());
+        final var stockUnit =
+            countLine.getProduct().getSecondaryUnit() == null
+                ? countLine.getProduct().getUnit()
+                : countLine.getProduct().getSecondaryUnit();
+        line.setUnitSnapshot(stockUnit);
+        line.setUnitCodeSnapshot(stockUnit.getCode());
+        line.setUnitNameSnapshot(stockUnit.getName());
+        line.setConversionFactorSnapshot(BigDecimal.ONE);
+        line.setSourceLine(countLine);
+        adjustment.getLines().add(lineService.save(line));
+        writer.saveStockMovement(
+            stockMovementService.postMovement(
+                line,
+                count.getSourceWarehouse(),
+                delta,
+                delta.signum() > 0
+                    ? StockMovementType.ADJUSTMENT_INCREASE
+                    : StockMovementType.ADJUSTMENT_DECREASE,
+                user),
+            item.varianceReason());
+      }
+    }
+    count.setCalculationVersion(preview.calculationVersion());
+    writer.complete(count);
+    writer.complete(adjustment);
+    final Document saved = documentService.save(count);
+    final Document adjustmentSaved = documentService.save(adjustment);
+    writer.relate(saved, adjustmentSaved, DocumentRelationType.FULFILLS);
+    writer.consumeKey(saved, key);
+    writer.addActivity(saved, DocumentActivityEvent.POSTED, "stock count reconciled");
+
+    return responseMapper.toResponse(saved);
+  }
+}

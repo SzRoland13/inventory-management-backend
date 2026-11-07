@@ -36,11 +36,18 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
   @Transactional
   @Override
   public Document complete(final Document document) {
+    return complete(document, null);
+  }
+
+  /** {@inheritDoc} */
+  @Transactional
+  @Override
+  public Document complete(final Document document, final LocalDateTime effectiveAt) {
     Document result = document;
     if (document.getStatus() != DocumentStatus.COMPLETED) {
       if (document.getLines() != null) {
         for (DocumentLine line : document.getLines()) {
-          postLine(document, line);
+          postLine(document, line, effectiveAt);
         }
       }
 
@@ -51,26 +58,39 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
     return result;
   }
 
-  private void postLine(final Document document, final DocumentLine line) {
+  private void postLine(
+      final Document document, final DocumentLine line, final LocalDateTime effectiveAt) {
     final DocumentType type = document.getType();
     final BigDecimal stockQuantity =
         line.getQuantity().multiply(line.getConversionFactorSnapshot());
     if (type == DocumentType.GOODS_RECEIPT) {
-      post(line, document.getTargetWarehouse(), stockQuantity, StockMovementType.PURCHASE_INBOUND);
+      post(
+          line,
+          document.getTargetWarehouse(),
+          stockQuantity,
+          StockMovementType.PURCHASE_INBOUND,
+          effectiveAt);
     } else if (type == DocumentType.DELIVERY_NOTE) {
       post(
           line,
           document.getSourceWarehouse(),
           stockQuantity.negate(),
-          StockMovementType.SALE_OUTBOUND);
+          StockMovementType.SALE_OUTBOUND,
+          effectiveAt);
     } else if (type == DocumentType.TRANSFER_DELIVERY) {
       post(
           line,
           document.getSourceWarehouse(),
           stockQuantity.negate(),
-          StockMovementType.TRANSFER_OUT);
+          StockMovementType.TRANSFER_OUT,
+          effectiveAt);
     } else if (type == DocumentType.TRANSFER_RECEIPT) {
-      post(line, document.getTargetWarehouse(), stockQuantity, StockMovementType.TRANSFER_IN);
+      post(
+          line,
+          document.getTargetWarehouse(),
+          stockQuantity,
+          StockMovementType.TRANSFER_IN,
+          effectiveAt);
     } else if (type == DocumentType.STOCK_ADJUSTMENT) {
       final StockMovementType movementType =
           stockQuantity.signum() >= 0
@@ -80,7 +100,7 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
           document.getTargetWarehouse() != null
               ? document.getTargetWarehouse()
               : document.getSourceWarehouse();
-      post(line, warehouse, stockQuantity, movementType);
+      post(line, warehouse, stockQuantity, movementType, effectiveAt);
     }
   }
 
@@ -88,12 +108,23 @@ public class DocumentPostingServiceImpl implements DocumentPostingService {
       final DocumentLine line,
       final Warehouse warehouse,
       final BigDecimal quantityChange,
-      final StockMovementType movementType) {
+      final StockMovementType movementType,
+      final LocalDateTime effectiveAt) {
     if (warehouse == null) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_WAREHOUSE_REQUIRED);
     }
 
-    stockMovementService.postMovement(
-        line, warehouse, quantityChange, movementType, line.getDocument().getCreatedByUser());
+    if (effectiveAt == null) {
+      stockMovementService.postMovement(
+          line, warehouse, quantityChange, movementType, line.getDocument().getCreatedByUser());
+    } else {
+      stockMovementService.postMovement(
+          line,
+          warehouse,
+          quantityChange,
+          movementType,
+          line.getDocument().getCreatedByUser(),
+          effectiveAt);
+    }
   }
 }

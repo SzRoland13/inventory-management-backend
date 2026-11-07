@@ -30,6 +30,8 @@ import dev.roland.inventory_management_backend.features.currency.Currency;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
+import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
+import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
@@ -114,11 +116,21 @@ public class Document implements IdInterface<Long> {
   @JoinColumn(name = "target_warehouse_id")
   private Warehouse targetWarehouse;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "transit_warehouse_id")
+  private Warehouse transitWarehouse;
+
   @Column(name = "target_warehouse_code_snapshot", length = 50)
   private String targetWarehouseCodeSnapshot;
 
   @Column(name = "target_warehouse_name_snapshot", length = 255)
   private String targetWarehouseNameSnapshot;
+
+  @Column(name = "transit_warehouse_code_snapshot", length = 50)
+  private String transitWarehouseCodeSnapshot;
+
+  @Column(name = "transit_warehouse_name_snapshot", length = 255)
+  private String transitWarehouseNameSnapshot;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "created_by_user_id")
@@ -143,6 +155,26 @@ public class Document implements IdInterface<Long> {
 
   @Column(name = "internal_notes")
   private String internalNotes;
+
+  @Column(name = "workflow_reason", columnDefinition = "TEXT")
+  private String workflowReason;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "workflow_direction", length = 40)
+  private ReturnDirection workflowDirection;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "workflow_disposition", length = 40)
+  private ReturnDisposition workflowDisposition;
+
+  @Column(name = "counted_at")
+  private LocalDateTime countedAt;
+
+  @Column(name = "calculation_version", length = 100)
+  private String calculationVersion;
+
+  @Column(name = "non_billable", nullable = false)
+  private boolean nonBillable;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
@@ -178,6 +210,12 @@ public class Document implements IdInterface<Long> {
     }
     if (targetWarehouse != null && targetWarehouseNameSnapshot == null) {
       targetWarehouseNameSnapshot = targetWarehouse.getName();
+    }
+    if (transitWarehouse != null && transitWarehouseCodeSnapshot == null) {
+      transitWarehouseCodeSnapshot = transitWarehouse.getCode();
+    }
+    if (transitWarehouse != null && transitWarehouseNameSnapshot == null) {
+      transitWarehouseNameSnapshot = transitWarehouse.getName();
     }
   }
 }

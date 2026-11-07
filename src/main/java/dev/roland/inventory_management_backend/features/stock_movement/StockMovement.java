@@ -70,6 +70,12 @@ public class StockMovement implements IdInterface<Long> {
   @Column(name = "quantity_change", nullable = false, precision = 24, scale = 8)
   private BigDecimal quantityChange;
 
+  @Column(name = "effective_at", nullable = false)
+  private LocalDateTime effectiveAt;
+
+  @Column(name = "reason", columnDefinition = "TEXT")
+  private String reason;
+
   @Column(name = "movement_type", nullable = false, length = 50)
   @Enumerated(EnumType.STRING)
   private StockMovementType movementType;

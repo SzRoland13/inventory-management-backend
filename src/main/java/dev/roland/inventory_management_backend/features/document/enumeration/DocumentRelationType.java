@@ -7,5 +7,9 @@ public enum DocumentRelationType {
   /** Represents the fulfills value. */
   FULFILLS,
   /** Represents the cancels value. */
-  CANCELS
+  CANCELS,
+  CORRECTS,
+  RETURNS,
+  REPLACES,
+  TRANSFER_STEP
 }

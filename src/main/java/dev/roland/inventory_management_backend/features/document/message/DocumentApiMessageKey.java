@@ -31,7 +31,15 @@ public enum DocumentApiMessageKey implements MessageKey {
   DOCUMENT_PDF_PAYLOAD_INVALID("document.error.pdf_payload_invalid"),
   DOCUMENT_PDF_RENDER_FAILED("document.error.pdf_render_failed"),
   DOCUMENT_PDF_EMPTY_RESULT("document.error.pdf_empty_result"),
-  DOCUMENT_INVALID_QUEUE_VIEW("document.error.invalid_queue_view");
+  DOCUMENT_INVALID_QUEUE_VIEW("document.error.invalid_queue_view"),
+  DOCUMENT_RETURN_QUANTITY_EXCEEDED("document.error.return_quantity_exceeded"),
+  DOCUMENT_CORRECTION_BLOCKED("document.error.correction_blocked"),
+  DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT(
+      "document.error.correction_closed_quantity_conflict"),
+  DOCUMENT_CLOSURE_REOPEN_INVALID("document.error.closure_reopen_invalid"),
+  DOCUMENT_CLOSURE_REOPEN_REASON_REQUIRED("document.error.closure_reopen_reason_required"),
+  DOCUMENT_CORRECTION_NEGATIVE_STOCK("document.error.correction_negative_stock"),
+  DOCUMENT_CORRECTION_WORKFLOW_REQUIRED("document.error.correction_workflow_required");
 
   private final String key;
 }

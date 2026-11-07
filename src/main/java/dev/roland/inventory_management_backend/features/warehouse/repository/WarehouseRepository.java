@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 
 /** Persists and queries warehouses within a company. */
 public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
@@ -21,6 +22,15 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
    * @return warehouses ordered by name
    */
   List<Warehouse> findAllByCompanyIdOrderByNameAsc(Long companyId);
+
+  /**
+   * Finds the first warehouse of a type belonging to a company.
+   *
+   * @param companyId the companyId value
+   * @param type the type value
+   * @return the resulting value
+   */
+  Optional<Warehouse> findFirstByCompanyIdAndTypeOrderByIdAsc(Long companyId, WarehouseType type);
 
   /**
    * Finds a warehouse only when it belongs to the company.

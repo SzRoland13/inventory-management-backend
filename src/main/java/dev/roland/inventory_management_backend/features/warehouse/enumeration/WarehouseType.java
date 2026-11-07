@@ -4,5 +4,6 @@ package dev.roland.inventory_management_backend.features.warehouse.enumeration;
 public enum WarehouseType {
   STANDARD,
   VIRTUAL,
-  TRANSIT
+  TRANSIT,
+  QUARANTINE
 }

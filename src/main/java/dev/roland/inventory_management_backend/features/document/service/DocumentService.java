@@ -48,6 +48,15 @@ public interface DocumentService extends BaseService<Document, Long> {
   boolean postingKeyExists(Long documentId, String key);
 
   /**
+   * Finds a consumed posting key and its resulting document.
+   *
+   * @param documentId document identifier
+   * @param key posting idempotency key
+   * @return the key, if found
+   */
+  Optional<DocumentPostingKey> findPostingKey(Long documentId, String key);
+
+  /**
    * Persists a posting idempotency key for the document.
    *
    * @param key posting key to persist
