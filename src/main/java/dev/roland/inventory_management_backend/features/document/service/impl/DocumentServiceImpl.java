@@ -64,6 +64,11 @@ public class DocumentServiceImpl implements DocumentService {
   }
 
   @Override
+  public Optional<DocumentPostingKey> findPostingKey(final Long documentId, final String key) {
+    return postingKeyRepository.findByDocumentIdAndIdempotencyKey(documentId, key);
+  }
+
+  @Override
   public DocumentPostingKey savePostingKey(final DocumentPostingKey key) {
     return postingKeyRepository.save(key);
   }

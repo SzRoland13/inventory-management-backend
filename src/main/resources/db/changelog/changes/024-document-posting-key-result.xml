@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+  <changeSet id="024-document-posting-key-result" author="roland">
+    <addColumn tableName="document_posting_keys">
+      <column name="result_document_id" type="BIGINT"/>
+    </addColumn>
+    <addForeignKeyConstraint baseTableName="document_posting_keys" baseColumnNames="result_document_id"
+        constraintName="fk_doc_post_key_result" referencedTableName="documents" referencedColumnNames="id"/>
+  </changeSet>
+</databaseChangeLog>

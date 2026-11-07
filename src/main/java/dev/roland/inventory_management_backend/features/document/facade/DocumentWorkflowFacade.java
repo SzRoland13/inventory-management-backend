@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document.facade;
 
+import java.time.LocalDateTime;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
@@ -85,6 +87,18 @@ public interface DocumentWorkflowFacade {
    * @return the requested result
    */
   DocumentResponse post(Long id, String idempotencyKey, String expectedVersion);
+
+  /**
+   * Posts a fulfillment document with an optional effective movement time.
+   *
+   * @param id document identifier
+   * @param idempotencyKey operation key
+   * @param expectedVersion expected document version
+   * @param effectiveAt optional effective movement time
+   * @return posted document response
+   */
+  DocumentResponse post(
+      Long id, String idempotencyKey, String expectedVersion, LocalDateTime effectiveAt);
 
   /**
    * Confirms the requested document.

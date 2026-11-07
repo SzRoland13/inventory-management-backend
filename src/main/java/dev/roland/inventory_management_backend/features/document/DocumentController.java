@@ -23,6 +23,7 @@ import dev.roland.inventory_management_backend.features.document.dto.DocumentRes
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentDraft;
+import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPost;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
@@ -165,14 +166,17 @@ public class DocumentController {
    * @param id id value
    * @param idempotencyKey idempotency key value
    * @param version version value
+   * @param request optional movement-time override
    * @return the requested result
    */
   @PostMapping(POST_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> post(
       @PathVariable final Long id,
+      @RequestBody(required = false) final FulfillmentPost request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String idempotencyKey,
       @RequestHeader(value = "If-Match", required = false) final String version) {
-    return success(facade.post(id, idempotencyKey, version));
+    return success(
+        facade.post(id, idempotencyKey, version, request == null ? null : request.effectiveAt()));
   }
 
   /**

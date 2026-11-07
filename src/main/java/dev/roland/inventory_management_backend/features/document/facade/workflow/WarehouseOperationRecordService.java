@@ -172,13 +172,14 @@ public class WarehouseOperationRecordService {
               effectiveWarehouse,
               supplierReturn ? quantity.negate() : quantity,
               supplierReturn ? StockMovementType.RETURN_OUT : StockMovementType.RETURN_IN,
-              user),
+              user,
+              request.effectiveAt()),
           item.reason() == null ? request.reason() : item.reason());
     }
     writer.complete(returned);
     final Document saved = documentService.save(returned);
     writer.relate(sourceDocument, saved, DocumentRelationType.RETURNS);
-    writer.consumeKey(sourceDocument, key);
+    writer.consumeKey(sourceDocument, key, saved);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
     return responseMapper.toResponse(saved);
   }
@@ -279,7 +280,12 @@ public class WarehouseOperationRecordService {
             warehouseOperationSupportService.cloneLine(correction, source, oldQuantity);
         correction.getLines().add(lineService.save(reversalLine));
         postCorrectionMovement(
-            reversalLine, warehouses.get(i), reversalDelta, user, request.reason());
+            reversalLine,
+            warehouses.get(i),
+            reversalDelta,
+            user,
+            request.reason(),
+            request.effectiveAt());
         final BigDecimal correctedDelta = correctedDeltas.get(i);
         final DocumentLine correctedLine =
             DocumentLineMapper.buildLine(
@@ -310,7 +316,8 @@ public class WarehouseOperationRecordService {
             i == 0 ? correctedPrimary : warehouses.get(i),
             correctedDelta,
             user,
-            request.reason());
+            request.reason(),
+            request.effectiveAt());
       }
     }
     writer.complete(correction);
@@ -322,7 +329,7 @@ public class WarehouseOperationRecordService {
           DocumentActivityEvent.REMAINDER_REOPENED,
           closureReopenDetails(saved, audit));
     }
-    writer.consumeKey(original, key);
+    writer.consumeKey(original, key, saved);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
     return responseMapper.toResponse(saved);
   }
@@ -404,13 +411,15 @@ public class WarehouseOperationRecordService {
    * @param reason the reason value
    * @param user the user value
    * @param warehouse the warehouse value
+   * @param effectiveAt optional effective movement time
    */
   void postCorrectionMovement(
       final DocumentLine line,
       final Warehouse warehouse,
       final BigDecimal delta,
       final User user,
-      final String reason) {
+      final String reason,
+      final java.time.LocalDateTime effectiveAt) {
     if (warehouse == null || delta.signum() == 0) {
       return;
     }
@@ -422,7 +431,8 @@ public class WarehouseOperationRecordService {
             delta.signum() > 0
                 ? StockMovementType.ADJUSTMENT_INCREASE
                 : StockMovementType.ADJUSTMENT_DECREASE,
-            user),
+            user,
+            effectiveAt),
         reason);
   }
 
@@ -486,11 +496,16 @@ public class WarehouseOperationRecordService {
       release.getLines().add(lineService.save(line));
       writer.saveStockMovement(
           stockMovementService.postMovement(
-              line, quarantine, quantity.negate(), StockMovementType.RETURN_OUT, user),
+              line,
+              quarantine,
+              quantity.negate(),
+              StockMovementType.RETURN_OUT,
+              user,
+              request.effectiveAt()),
           request.reason());
       writer.saveStockMovement(
           stockMovementService.postMovement(
-              line, target, quantity, StockMovementType.RETURN_IN, user),
+              line, target, quantity, StockMovementType.RETURN_IN, user, request.effectiveAt()),
           request.reason());
       returnedLine.setReleasedQuantity(
           DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity()).add(quantity));
@@ -499,7 +514,7 @@ public class WarehouseOperationRecordService {
     writer.complete(release);
     final Document saved = documentService.save(release);
     writer.relate(returned, saved, DocumentRelationType.TRANSFER_STEP);
-    writer.consumeKey(returned, key);
+    writer.consumeKey(returned, key, saved);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
     return responseMapper.toResponse(saved);
   }
@@ -583,14 +598,19 @@ public class WarehouseOperationRecordService {
       lineService.save(source);
       writer.saveStockMovement(
           stockMovementService.postMovement(
-              line, warehouse, quantity.negate(), StockMovementType.SALE_OUTBOUND, user),
+              line,
+              warehouse,
+              quantity.negate(),
+              StockMovementType.SALE_OUTBOUND,
+              user,
+              request.effectiveAt()),
           "replacement delivery");
     }
     writer.complete(delivery);
     final Document saved = documentService.save(delivery);
     writer.relate(returned, saved, DocumentRelationType.REPLACES);
     writer.relate(original, saved, DocumentRelationType.REPLACES);
-    writer.consumeKey(returned, key);
+    writer.consumeKey(returned, key, saved);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, "non-billable replacement");
     return responseMapper.toResponse(saved);
   }
@@ -614,6 +634,8 @@ public class WarehouseOperationRecordService {
       final String key) {
     warehouseOperationSupportService.requireKey(key);
     warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    warehouseService.findEntityByIdAndCompanyIdForUpdate(
+        count.getSourceWarehouse().getId(), company.getId());
     if (!Boolean.TRUE.equals(request.confirmed())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }

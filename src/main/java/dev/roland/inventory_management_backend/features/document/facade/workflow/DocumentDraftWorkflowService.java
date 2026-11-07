@@ -50,6 +50,8 @@ import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.unit.service.UnitService;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseStatus;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 
@@ -418,6 +420,7 @@ public class DocumentDraftWorkflowService {
    * @param document the document value
    * @param type the type value
    * @param warehouseId the warehouseId value
+   * @throws ApiException when the warehouse is not available for fulfillment
    */
   public void setWarehouse(
       final Document document,
@@ -425,6 +428,12 @@ public class DocumentDraftWorkflowService {
       final Long warehouseId,
       final Long companyId) {
     final Warehouse warehouse = warehouseService.findEntityByIdAndCompanyId(warehouseId, companyId);
+
+    if (warehouse.getStatus() != WarehouseStatus.ACTIVE
+        || warehouse.getType() != WarehouseType.STANDARD) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+
     if (type == DocumentType.GOODS_RECEIPT || type == DocumentType.PURCHASE_ORDER) {
       document.setTargetWarehouse(warehouse);
       document.setTargetWarehouseCodeSnapshot(warehouse.getCode());

@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document.service;
 
+import java.time.LocalDateTime;
+
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 
@@ -13,4 +15,13 @@ public interface DocumentPostingService {
    * @throws ApiException when a stock-affecting document does not define the required warehouse
    */
   Document complete(Document document);
+
+  /**
+   * Completes a document and applies its stock movements at the supplied effective time.
+   *
+   * @param document document to complete
+   * @param effectiveAt optional effective movement time
+   * @return completed document
+   */
+  Document complete(Document document, LocalDateTime effectiveAt);
 }

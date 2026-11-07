@@ -96,6 +96,19 @@ public class StockMovementServiceImpl implements StockMovementService {
       final BigDecimal quantityChange,
       final StockMovementType movementType,
       final User createdByUser) {
+    return postMovement(documentLine, warehouse, quantityChange, movementType, createdByUser, null);
+  }
+
+  /** {@inheritDoc} */
+  @Transactional
+  @Override
+  public StockMovement postMovement(
+      final DocumentLine documentLine,
+      final Warehouse warehouse,
+      final BigDecimal quantityChange,
+      final StockMovementType movementType,
+      final User createdByUser,
+      final LocalDateTime effectiveAt) {
     final Warehouse lockedWarehouse =
         warehouseRepository
             .findByIdForUpdate(warehouse.getId())
@@ -134,7 +147,7 @@ public class StockMovementServiceImpl implements StockMovementService {
             .product(documentLine.getProduct())
             .quantityChange(quantityChange)
             .movementType(movementType)
-            .effectiveAt(LocalDateTime.now())
+            .effectiveAt(effectiveAt == null ? LocalDateTime.now() : effectiveAt)
             .createdByUser(createdByUser)
             .build();
 

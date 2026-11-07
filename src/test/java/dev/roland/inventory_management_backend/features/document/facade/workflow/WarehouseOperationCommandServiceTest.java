@@ -305,7 +305,13 @@ class WarehouseOperationCommandServiceTest {
     when(supportService.line(90L, COMPANY_ID)).thenReturn(sourceLine);
     when(supportService.cloneLine(child, sourceLine, new BigDecimal("2")))
         .thenReturn(new DocumentLine());
-    when(stockMovementService.postMovement(any(), any(), any(), any(), any()))
+    when(stockMovementService.postMovement(
+            any(),
+            any(),
+            any(),
+            any(),
+            any(),
+            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
         .thenReturn(
             new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
   }

@@ -333,6 +333,7 @@ public class WarehouseOperationSupportService {
         request.version(),
         request.idempotencyKey(),
         request.calculationVersion(),
+        request.effectiveAt(),
         operation,
         request.direction(),
         request.reason(),

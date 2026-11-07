@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey
 import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
+import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
@@ -88,7 +89,12 @@ public class WarehouseOperationCommandService {
     Document root = id == null ? null : accessService.lock(id, company.getId());
     DocumentResponse result = null;
     if (root != null && key != null && documentService.postingKeyExists(root.getId(), key)) {
-      result = responseMapper.toResponse(root);
+      final Document resultDocument =
+          documentService
+              .findPostingKey(root.getId(), key)
+              .map(DocumentPostingKey::getResultDocument)
+              .orElse(null);
+      result = responseMapper.toResponse(resultDocument == null ? root : resultDocument);
     }
     if (result == null) {
       if (root != null
@@ -284,7 +290,8 @@ public class WarehouseOperationCommandService {
                     root.getSourceWarehouse(),
                     quantity.negate(),
                     StockMovementType.TRANSFER_OUT,
-                    user),
+                    user,
+                    request.effectiveAt()),
                 "dispatch");
             final Warehouse transit =
                 root.getTransitWarehouse() == null
@@ -292,7 +299,12 @@ public class WarehouseOperationCommandService {
                     : root.getTransitWarehouse();
             writer.saveStockMovement(
                 stockMovementService.postMovement(
-                    childLine, transit, quantity, StockMovementType.TRANSFER_IN, user),
+                    childLine,
+                    transit,
+                    quantity,
+                    StockMovementType.TRANSFER_IN,
+                    user,
+                    request.effectiveAt()),
                 "dispatch");
             source.setFulfilledQuantity(
                 DocumentWorkflowValues.nz(source.getFulfilledQuantity()).add(quantity));
@@ -308,7 +320,12 @@ public class WarehouseOperationCommandService {
             if (root.getTransitWarehouse() != null) {
               writer.saveStockMovement(
                   stockMovementService.postMovement(
-                      childLine, transit, quantity.negate(), StockMovementType.TRANSFER_OUT, user),
+                      childLine,
+                      transit,
+                      quantity.negate(),
+                      StockMovementType.TRANSFER_OUT,
+                      user,
+                      request.effectiveAt()),
                   "receipt");
             }
             writer.saveStockMovement(
@@ -317,7 +334,8 @@ public class WarehouseOperationCommandService {
                     root.getTargetWarehouse(),
                     quantity,
                     StockMovementType.TRANSFER_IN,
-                    user),
+                    user,
+                    request.effectiveAt()),
                 "receipt");
             source.setInTransitQuantity(
                 DocumentWorkflowValues.nz(source.getInTransitQuantity()).subtract(quantity));
@@ -327,7 +345,12 @@ public class WarehouseOperationCommandService {
                 request.operation() == null ? WarehouseOperationType.LOSS : request.operation();
             writer.saveStockMovement(
                 stockMovementService.postMovement(
-                    childLine, transit, quantity.negate(), StockMovementType.TRANSFER_OUT, user),
+                    childLine,
+                    transit,
+                    quantity.negate(),
+                    StockMovementType.TRANSFER_OUT,
+                    user,
+                    request.effectiveAt()),
                 request.reason());
             if (resolution == WarehouseOperationType.REVERSAL) {
               writer.saveStockMovement(
@@ -336,7 +359,8 @@ public class WarehouseOperationCommandService {
                       root.getSourceWarehouse(),
                       quantity,
                       StockMovementType.TRANSFER_IN,
-                      user),
+                      user,
+                      request.effectiveAt()),
                   request.reason());
             }
             if (resolution == WarehouseOperationType.DAMAGE) {
@@ -346,7 +370,8 @@ public class WarehouseOperationCommandService {
                       warehouseOperationSupportService.quarantineWarehouse(company.getId()),
                       quantity,
                       StockMovementType.RETURN_IN,
-                      user),
+                      user,
+                      request.effectiveAt()),
                   request.reason());
             }
             source.setInTransitQuantity(
@@ -387,6 +412,7 @@ public class WarehouseOperationCommandService {
         result = recordService.createCorrection(root, request, company, user, key);
       }
       if (operation == WarehouseOperationType.STOCK_COUNT_POST) {
+        assert root != null;
         result = recordService.postCount(root, request, company, user, key);
       }
       if (result == null) {

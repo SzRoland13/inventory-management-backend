@@ -18,6 +18,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.War
  * @param date the date value
  * @param destinationWarehouseId the destinationWarehouseId value
  * @param direction the direction value
+ * @param effectiveAt when the stock movement takes effect, or null to use posting time
  * @param documentId the documentId value
  * @param idempotencyKey the idempotencyKey value
  * @param lines the lines value
@@ -48,12 +49,59 @@ public record WarehouseOperationRequest(
     String version,
     String idempotencyKey,
     String calculationVersion,
+    LocalDateTime effectiveAt,
     WarehouseOperationType operation,
     ReturnDirection direction,
     String reason,
     Boolean confirmed,
     Boolean nonBillable,
     List<WarehouseOperationLine> lines) {
+  /** Keeps the existing request constructor source-compatible. */
+  public WarehouseOperationRequest(
+      final Long documentId,
+      final Long sourceDocumentId,
+      final Long sourceWarehouseId,
+      final Long destinationWarehouseId,
+      final Long transitWarehouseId,
+      final Long warehouseId,
+      final Long targetWarehouseId,
+      final Long returnDocumentId,
+      final Long originalDeliveryId,
+      final LocalDate date,
+      final LocalDateTime countedAt,
+      final String version,
+      final String idempotencyKey,
+      final String calculationVersion,
+      final WarehouseOperationType operation,
+      final ReturnDirection direction,
+      final String reason,
+      final Boolean confirmed,
+      final Boolean nonBillable,
+      final List<WarehouseOperationLine> lines) {
+    this(
+        documentId,
+        sourceDocumentId,
+        sourceWarehouseId,
+        destinationWarehouseId,
+        transitWarehouseId,
+        warehouseId,
+        targetWarehouseId,
+        returnDocumentId,
+        originalDeliveryId,
+        date,
+        countedAt,
+        version,
+        idempotencyKey,
+        calculationVersion,
+        null,
+        operation,
+        direction,
+        reason,
+        confirmed,
+        nonBillable,
+        lines);
+  }
+
   /** Creates a request with an immutable copy of its line list. */
   public WarehouseOperationRequest {
     lines = immutableCopy(lines);

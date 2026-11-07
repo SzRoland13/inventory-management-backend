@@ -82,4 +82,23 @@ public interface StockMovementService extends BaseService<StockMovement, Long> {
       BigDecimal quantityChange,
       StockMovementType movementType,
       User createdByUser);
+
+  /**
+   * Creates a stock movement with an optional business-effective timestamp.
+   *
+   * @param documentLine source document line
+   * @param warehouse affected warehouse
+   * @param quantityChange signed quantity delta
+   * @param movementType movement type
+   * @param createdByUser user responsible for the movement
+   * @param effectiveAt when the movement takes effect, or null for posting time
+   * @return persisted stock movement
+   */
+  StockMovement postMovement(
+      DocumentLine documentLine,
+      Warehouse warehouse,
+      BigDecimal quantityChange,
+      StockMovementType movementType,
+      User createdByUser,
+      LocalDateTime effectiveAt);
 }

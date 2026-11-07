@@ -2,6 +2,7 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,8 @@ import dev.roland.inventory_management_backend.features.product.service.ProductS
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseStatus;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -223,6 +226,7 @@ public class DocumentFulfillmentWorkflowService {
    *
    * @param request the request value
    * @return the fulfillment preview
+   * @throws ApiException when the selected warehouse is not available for fulfillment
    */
   @Transactional
   public PreviewResponse preview(final FulfillmentPreview request) {
@@ -252,6 +256,12 @@ public class DocumentFulfillmentWorkflowService {
     if (warehouseId != null) {
       final Warehouse warehouse =
           warehouseService.findEntityByIdAndCompanyId(warehouseId, company.getId());
+
+      if (warehouse.getStatus() != WarehouseStatus.ACTIVE
+          || warehouse.getType() != WarehouseType.STANDARD) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+
       for (FulfillmentLine input : DocumentWorkflowValues.safe(request.lines())) {
         final DocumentLine line =
             source == null
@@ -388,6 +398,25 @@ public class DocumentFulfillmentWorkflowService {
   @Transactional
   public DocumentResponse post(
       final Long id, final String idempotencyKey, final String expectedVersion) {
+    return post(id, idempotencyKey, expectedVersion, null);
+  }
+
+  /**
+   * Posts a fulfillment document at an optional effective movement time.
+   *
+   * @param id document identifier
+   * @param idempotencyKey operation key
+   * @param expectedVersion expected document version
+   * @param effectiveAt optional effective movement time
+   * @return posted document response
+   * @throws ApiException when the operation cannot be completed
+   */
+  @Transactional
+  public DocumentResponse post(
+      final Long id,
+      final String idempotencyKey,
+      final String expectedVersion,
+      final LocalDateTime effectiveAt) {
     if (idempotencyKey == null || idempotencyKey.isBlank()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED);
     }
@@ -449,7 +478,7 @@ public class DocumentFulfillmentWorkflowService {
         }
       }
       document.setStatus(DocumentStatus.CONFIRMED);
-      final Document posted = postingService.complete(document);
+      final Document posted = postingService.complete(document, effectiveAt);
       for (DocumentRelation relation :
           relationService.findAllBySourceDocumentIdOrTargetDocumentId(id, id)) {
         final Document source = relation.getSourceDocument();

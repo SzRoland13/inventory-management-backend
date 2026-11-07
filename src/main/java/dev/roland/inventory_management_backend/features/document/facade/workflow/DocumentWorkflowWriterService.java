@@ -128,7 +128,20 @@ public class DocumentWorkflowWriterService {
    * @param key the key value
    */
   public void consumeKey(final Document document, final String key) {
-    documentService.savePostingKey(postingKey(document, key));
+    consumeKey(document, key, document);
+  }
+
+  /**
+   * Persists an idempotency key and the document returned by the operation.
+   *
+   * @param document document that owns the idempotency key
+   * @param key idempotency key
+   * @param resultDocument document returned by the operation
+   */
+  public void consumeKey(final Document document, final String key, final Document resultDocument) {
+    final DocumentPostingKey postingKey = postingKey(document, key);
+    postingKey.setResultDocument(resultDocument);
+    documentService.savePostingKey(postingKey);
   }
 
   /**

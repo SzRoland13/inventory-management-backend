@@ -1,5 +1,6 @@
 package dev.roland.inventory_management_backend.features.document.facade.impl;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,7 +150,17 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   @Override
   public DocumentResponse post(
       final Long id, final String idempotencyKey, final String expectedVersion) {
-    return fulfillmentWorkflowService.post(id, idempotencyKey, expectedVersion);
+    return fulfillmentWorkflowService.post(id, idempotencyKey, expectedVersion, null);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse post(
+      final Long id,
+      final String idempotencyKey,
+      final String expectedVersion,
+      final LocalDateTime effectiveAt) {
+    return fulfillmentWorkflowService.post(id, idempotencyKey, expectedVersion, effectiveAt);
   }
 
   @Transactional

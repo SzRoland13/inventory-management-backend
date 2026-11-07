@@ -36,6 +36,10 @@ public class DocumentPostingKey {
   @JoinColumn(name = "document_id", nullable = false)
   private Document document;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "result_document_id")
+  private Document resultDocument;
+
   @Column(name = "idempotency_key", nullable = false, length = 200)
   private String idempotencyKey;
 

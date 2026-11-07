@@ -1268,7 +1268,7 @@ class DocumentWorkflowFacadeImplTest {
     when(productService.findByIdAndCompanyId(24L, COMPANY_ID)).thenReturn(Optional.of(product));
     when(balanceService.findByWarehouseAndProduct(receipt.getTargetWarehouse(), product))
         .thenReturn(Optional.empty());
-    when(postingService.complete(receipt)).thenReturn(receipt);
+    when(postingService.complete(receipt, null)).thenReturn(receipt);
     when(documentService.save(receipt)).thenReturn(receipt);
 
     final var response = facade.post(3L, "post-key", "0");

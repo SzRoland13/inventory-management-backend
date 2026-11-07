@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -71,6 +72,28 @@ class StockMovementServiceImplTest {
 
     assertSame(movement, result);
     assertEquals(new BigDecimal("5"), result.getQuantityChange());
+  }
+
+  @Test
+  void preservesSuppliedEffectiveTimestampOnMovement() {
+    final DocumentLine line =
+        DocumentLine.builder()
+            .document(Document.builder().type(DocumentType.GOODS_RECEIPT).build())
+            .product(product)
+            .build();
+    final LocalDateTime effectiveAt = LocalDateTime.of(2026, 10, 12, 9, 30);
+    when(balanceRepository.findByWarehouseAndProduct(warehouse, product))
+        .thenReturn(Optional.empty());
+    when(balanceRepository.save(any(StockBalance.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(movementRepository.save(any(StockMovement.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    final StockMovement movement =
+        service.postMovement(
+            line, warehouse, BigDecimal.ONE, StockMovementType.PURCHASE_INBOUND, null, effectiveAt);
+
+    assertEquals(effectiveAt, movement.getEffectiveAt());
   }
 
   @Test
