@@ -28,6 +28,7 @@ import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
@@ -158,11 +159,29 @@ class WarehouseOperationRecordServiceTest {
   }
 
   @Test
-  void createsCorrectionAndUsesInboundStockDeltas() {
+  void correctionRefreshesCommercialDraftApprovalAndFlagsFinalizedInvoiceForSettlement() {
     stubRecordPersistence();
     final Document original = document(11L, DocumentType.GOODS_RECEIPT);
     final Document correction = operationDocument(DocumentType.CORRECTION);
     final DocumentLine source = sourceLine(original, 22L, new BigDecimal("3"));
+    final Document draftBill = document(90L, DocumentType.SUPPLIER_BILL);
+    draftBill.setStatus(DocumentStatus.DRAFT);
+    draftBill.setApprovalRequired(true);
+    draftBill.setApprovalStatus(CommercialApprovalStatus.APPROVED);
+    draftBill.setApprovedByUser(actor);
+    draftBill.setApprovedAt(java.time.LocalDateTime.now());
+    final DocumentLine draftLine = new DocumentLine();
+    draftLine.setSourceLine(source);
+    draftLine.setQuantity(new BigDecimal("5"));
+    draftLine.setUnitPrice(new BigDecimal("7"));
+    draftLine.setTotalPrice(new BigDecimal("35"));
+    draftBill.setLines(new ArrayList<>(List.of(draftLine)));
+    final Document issuedInvoice = document(91L, DocumentType.CUSTOMER_INVOICE);
+    issuedInvoice.setStatus(DocumentStatus.ISSUED);
+    final DocumentLine issuedLine = new DocumentLine();
+    issuedLine.setSourceLine(source);
+    issuedLine.setQuantity(new BigDecimal("2"));
+    issuedInvoice.setLines(List.of(issuedLine));
     final Warehouse warehouse = warehouse(31L);
     final Product product = Product.builder().id(40L).unit(Unit.builder().id(1L).build()).build();
     final WarehouseOperationRequest request = correctionRequest(22L, new BigDecimal("4"));
@@ -174,6 +193,8 @@ class WarehouseOperationRecordServiceTest {
     when(support.defaultCorrectionWarehouse(original)).thenReturn(warehouse);
     when(productService.findByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(Optional.of(product));
     when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(source);
+    when(documentService.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID))
+        .thenReturn(List.of(draftBill, issuedInvoice));
     when(stockMovementService.postMovement(
             any(),
             any(),
@@ -191,6 +212,24 @@ class WarehouseOperationRecordServiceTest {
             correction,
             dev.roland.inventory_management_backend.features.document.enumeration
                 .DocumentRelationType.CORRECTS);
+    assertEquals(new BigDecimal("4"), draftLine.getQuantity());
+    assertEquals(CommercialApprovalStatus.PENDING, draftBill.getApprovalStatus());
+    assertEquals(null, draftBill.getApprovedByUser());
+    assertEquals(null, draftBill.getApprovedAt());
+    assertEquals(true, issuedInvoice.isFinancialSettlementRequired());
+    assertEquals(DocumentStatus.ISSUED, issuedInvoice.getStatus());
+    verify(documentService).save(draftBill);
+    verify(documentService).save(issuedInvoice);
+    verify(writer)
+        .addActivity(
+            eq(draftBill),
+            eq(DocumentActivityEvent.EDITED),
+            eq("Source correction changed billing eligibility; matching and approval refreshed"));
+    verify(writer)
+        .addActivity(
+            eq(issuedInvoice),
+            eq(DocumentActivityEvent.EDITED),
+            eq("Source correction requires financial settlement; finalized document preserved"));
   }
 
   @Test

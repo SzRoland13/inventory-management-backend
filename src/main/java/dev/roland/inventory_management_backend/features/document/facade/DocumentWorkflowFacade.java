@@ -1,11 +1,17 @@
 package dev.roland.inventory_management_backend.features.document.facade;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
 import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -13,6 +19,8 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
@@ -61,6 +69,66 @@ public interface DocumentWorkflowFacade {
    * @return the requested result
    */
   DocumentResponse updateDraft(Long id, DraftUpdate update);
+
+  /**
+   * Creates a commercial document draft.
+   *
+   * @param request commercial draft data
+   * @return created document
+   */
+  DocumentResponse createCommercialDraft(CommercialDraft request);
+
+  /**
+   * Previews commercial source balances and totals without persisting a document.
+   *
+   * @param request proposed commercial draft
+   * @return preview totals and source balances
+   */
+  CommercialPreviewResponse previewCommercialDraft(CommercialPreviewRequest request);
+
+  /**
+   * Updates a commercial document draft.
+   *
+   * @param id document identifier
+   * @param request updated draft data
+   * @return updated document
+   */
+  DocumentResponse updateCommercialDraft(Long id, CommercialDraftUpdate request);
+
+  /**
+   * Approves or rejects a commercial document discrepancy.
+   *
+   * @param id document identifier
+   * @param request decision data
+   * @param approve whether the decision approves
+   * @return updated document
+   */
+  DocumentResponse decideCommercial(Long id, CommercialDecision request, boolean approve);
+
+  /**
+   * Finalizes a commercial document.
+   *
+   * @param id document identifier
+   * @param version expected document version
+   * @return finalized document
+   */
+  DocumentResponse finalizeCommercial(Long id, String version);
+
+  /**
+   * Assigns a settlement owner.
+   *
+   * @param id document identifier
+   * @param request owner assignment data
+   * @return updated document
+   */
+  DocumentResponse assignSettlementOwner(Long id, SettlementAssignment request);
+
+  /**
+   * Lists active settlement owners for the current company.
+   *
+   * @return active settlement owners
+   */
+  List<SettlementOwner> settlementOwners();
 
   /**
    * Creates a fulfillment draft from a source document.

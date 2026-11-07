@@ -27,6 +27,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import dev.roland.inventory_management_backend.common.persistance.IdInterface;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.currency.Currency;
+import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
@@ -175,6 +176,33 @@ public class Document implements IdInterface<Long> {
 
   @Column(name = "non_billable", nullable = false)
   private boolean nonBillable;
+
+  @Column(name = "payment_terms_snapshot", length = 500)
+  private String paymentTermsSnapshot;
+
+  @Column(name = "approval_required", nullable = false)
+  private boolean approvalRequired;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "approval_status", length = 30)
+  private CommercialApprovalStatus approvalStatus;
+
+  @Column(name = "approval_comment", columnDefinition = "TEXT")
+  private String approvalComment;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "approved_by_user_id")
+  private User approvedByUser;
+
+  @Column(name = "approved_at")
+  private LocalDateTime approvedAt;
+
+  @Column(name = "financial_settlement_required", nullable = false)
+  private boolean financialSettlementRequired;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "financial_settlement_owner_id")
+  private User financialSettlementOwner;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)

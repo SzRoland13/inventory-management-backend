@@ -3,8 +3,10 @@ package dev.roland.inventory_management_backend.features.document.dto;
 import static dev.roland.inventory_management_backend.features.document.dto.DocumentApiDtoCollections.immutableList;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentAction;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 
@@ -41,6 +43,16 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param reason the reason value
  * @param sourceWarehouseId the sourceWarehouseId value
  * @param transitWarehouseId the transitWarehouseId value
+ * @param paymentTerms payment terms snapshot
+ * @param approvalRequired whether price or VAT approval is required
+ * @param approvalStatus commercial approval state
+ * @param approvalComment approval or rejection comment
+ * @param approvedBy approving user name
+ * @param approvedAt approval timestamp
+ * @param financialSettlementRequired whether settlement follow-up is required
+ * @param financialSettlementOwnerId settlement owner identifier
+ * @param financialSettlementOwnerName settlement owner name
+ * @param referenceNumber external reference number
  */
 public record DocumentResponse(
     Long id,
@@ -55,7 +67,7 @@ public record DocumentResponse(
     Long sourceWarehouseId,
     Long destinationWarehouseId,
     Long transitWarehouseId,
-    java.time.LocalDateTime countedAt,
+    LocalDateTime countedAt,
     String reason,
     String disposition,
     String direction,
@@ -72,7 +84,92 @@ public record DocumentResponse(
     List<DocumentAction> allowedActions,
     List<RelatedDocument> relatedDocuments,
     List<Activity> activity,
-    List<FileEntry> files) {
+    List<FileEntry> files,
+    String paymentTerms,
+    boolean approvalRequired,
+    CommercialApprovalStatus approvalStatus,
+    String approvalComment,
+    String approvedBy,
+    LocalDateTime approvedAt,
+    boolean financialSettlementRequired,
+    Long financialSettlementOwnerId,
+    String financialSettlementOwnerName,
+    String referenceNumber) {
+  /** Keeps existing document workflow callers source-compatible. */
+  public DocumentResponse(
+      final Long id,
+      final DocumentType type,
+      final String number,
+      final LocalDate date,
+      final String ownerName,
+      final String partnerName,
+      final String routeName,
+      final Long partnerId,
+      final Long warehouseId,
+      final Long sourceWarehouseId,
+      final Long destinationWarehouseId,
+      final Long transitWarehouseId,
+      final LocalDateTime countedAt,
+      final String reason,
+      final String disposition,
+      final String direction,
+      final String calculationVersion,
+      final Boolean nonBillable,
+      final String notes,
+      final String currencyCode,
+      final Long currencyId,
+      final List<ExchangeRateResponse> exchangeRates,
+      final DocumentTotals totals,
+      final String status,
+      final String version,
+      final List<LineResponse> lines,
+      final List<DocumentAction> allowedActions,
+      final List<RelatedDocument> relatedDocuments,
+      final List<Activity> activity,
+      final List<FileEntry> files) {
+    this(
+        id,
+        type,
+        number,
+        date,
+        ownerName,
+        partnerName,
+        routeName,
+        partnerId,
+        warehouseId,
+        sourceWarehouseId,
+        destinationWarehouseId,
+        transitWarehouseId,
+        countedAt,
+        reason,
+        disposition,
+        direction,
+        calculationVersion,
+        nonBillable,
+        notes,
+        currencyCode,
+        currencyId,
+        exchangeRates,
+        totals,
+        status,
+        version,
+        lines,
+        allowedActions,
+        relatedDocuments,
+        activity,
+        files,
+        null,
+        false,
+        null,
+        null,
+        null,
+        null,
+        false,
+        null,
+        null,
+        null);
+  }
+
   /**
    * Copies response collections to prevent external mutation.
    *

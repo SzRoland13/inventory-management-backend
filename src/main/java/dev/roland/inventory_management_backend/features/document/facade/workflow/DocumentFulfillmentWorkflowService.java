@@ -112,6 +112,7 @@ public class DocumentFulfillmentWorkflowService {
     if (source != null) {
       operation.setPartner(source.getPartner());
       operation.setPartnerNameSnapshot(source.getPartnerNameSnapshot());
+      operation.setPaymentTermsSnapshot(source.getPaymentTermsSnapshot());
       operation.setPartnerTaxNumberSnapshot(source.getPartnerTaxNumberSnapshot());
       operation.setPartnerAddressSnapshot(source.getPartnerAddressSnapshot());
       operation.setCurrency(source.getCurrency());

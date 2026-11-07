@@ -19,6 +19,11 @@ import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 import dev.roland.inventory_management_backend.features.document.dto.Capabilities;
 import dev.roland.inventory_management_backend.features.document.dto.CloseRemaining;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -27,6 +32,8 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.PageResponse;
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
+import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
@@ -70,7 +77,116 @@ public class DocumentController {
   public static final String STOCK_COUNT_POST = "/stock-counts/{id}/post";
   public static final String CORRECTION_PREVIEW = ID_PARAM + "/corrections/preview";
   public static final String CORRECTION = ID_PARAM + "/corrections";
+  public static final String COMMERCIAL_PREVIEW = "/commercial/preview";
+  public static final String COMMERCIAL_DRAFTS = "/commercial/drafts";
+  public static final String COMMERCIAL_DRAFT = ID_PARAM + "/commercial/draft";
+  public static final String COMMERCIAL_APPROVE = ID_PARAM + "/commercial/approve";
+  public static final String COMMERCIAL_REJECT = ID_PARAM + "/commercial/reject";
+  public static final String COMMERCIAL_FINALIZE = ID_PARAM + "/commercial/finalize";
+  public static final String COMMERCIAL_SETTLEMENT_OWNER =
+      ID_PARAM + "/commercial/settlement-owner";
+  public static final String COMMERCIAL_SETTLEMENT_OWNERS = "/commercial/settlement-owners";
   private final DocumentWorkflowFacade facade;
+
+  /**
+   * Lists active settlement owners for the current company.
+   *
+   * @return active settlement owners
+   */
+  @GetMapping(COMMERCIAL_SETTLEMENT_OWNERS)
+  public ResponseEntity<ApiResponse<java.util.List<SettlementOwner>>> settlementOwners() {
+    return success(facade.settlementOwners());
+  }
+
+  /**
+   * Previews commercial source balances and totals without persisting a document.
+   *
+   * @param request commercial draft data
+   * @return balances and totals for the proposed draft
+   */
+  @PostMapping(COMMERCIAL_PREVIEW)
+  public ResponseEntity<ApiResponse<CommercialPreviewResponse>> previewCommercialDraft(
+      @Valid @RequestBody final CommercialPreviewRequest request) {
+    return success(facade.previewCommercialDraft(request));
+  }
+
+  /**
+   * Creates a commercial document draft from eligible source documents.
+   *
+   * @param request commercial draft data
+   * @return created draft
+   */
+  @PostMapping(COMMERCIAL_DRAFTS)
+  public ResponseEntity<ApiResponse<DocumentResponse>> createCommercialDraft(
+      @Valid @RequestBody final CommercialDraft request) {
+    return success(facade.createCommercialDraft(request));
+  }
+
+  /**
+   * Updates a commercial document draft.
+   *
+   * @param id document identifier
+   * @param request updated draft data
+   * @return updated draft
+   */
+  @PutMapping(COMMERCIAL_DRAFT)
+  public ResponseEntity<ApiResponse<DocumentResponse>> updateCommercialDraft(
+      @PathVariable final Long id, @Valid @RequestBody final CommercialDraftUpdate request) {
+    return success(facade.updateCommercialDraft(id, request));
+  }
+
+  /**
+   * Approves a commercial document discrepancy.
+   *
+   * @param id document identifier
+   * @param request decision data
+   * @return updated document
+   */
+  @PostMapping(COMMERCIAL_APPROVE)
+  public ResponseEntity<ApiResponse<DocumentResponse>> approveCommercial(
+      @PathVariable final Long id, @Valid @RequestBody final CommercialDecision request) {
+    return success(facade.decideCommercial(id, request, true));
+  }
+
+  /**
+   * Rejects a commercial document discrepancy.
+   *
+   * @param id document identifier
+   * @param request decision data
+   * @return updated document
+   */
+  @PostMapping(COMMERCIAL_REJECT)
+  public ResponseEntity<ApiResponse<DocumentResponse>> rejectCommercial(
+      @PathVariable final Long id, @Valid @RequestBody final CommercialDecision request) {
+    return success(facade.decideCommercial(id, request, false));
+  }
+
+  /**
+   * Finalizes a commercial document.
+   *
+   * @param id document identifier
+   * @param version expected document version
+   * @return finalized document
+   */
+  @PostMapping(COMMERCIAL_FINALIZE)
+  public ResponseEntity<ApiResponse<DocumentResponse>> finalizeCommercial(
+      @PathVariable final Long id,
+      @RequestHeader(value = "If-Match", required = false) final String version) {
+    return success(facade.finalizeCommercial(id, version));
+  }
+
+  /**
+   * Assigns a settlement owner to a corrected commercial document.
+   *
+   * @param id document identifier
+   * @param request assignment data
+   * @return updated document
+   */
+  @PostMapping(COMMERCIAL_SETTLEMENT_OWNER)
+  public ResponseEntity<ApiResponse<DocumentResponse>> assignSettlementOwner(
+      @PathVariable final Long id, @Valid @RequestBody final SettlementAssignment request) {
+    return success(facade.assignSettlementOwner(id, request));
+  }
 
   /**
    * Returns the document operations available to the current user.

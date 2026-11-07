@@ -16,12 +16,14 @@ import dev.roland.inventory_management_backend.features.document.dto.ExchangeRat
 import dev.roland.inventory_management_backend.features.document.dto.FileEntry;
 import dev.roland.inventory_management_backend.features.document.dto.LineResponse;
 import dev.roland.inventory_management_backend.features.document.dto.RelatedDocument;
+import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentAction;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentWorkflowAccessService;
+import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentTotalsCalculator;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
@@ -48,6 +50,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DocumentResponseMapper {
   private final DocumentWorkflowAccessService accessService;
+  private final DocumentService documentService;
   private final DocumentLineAllocationService allocationService;
   private final DocumentRelationService relationService;
   private final DocumentActivityService activityService;
@@ -109,7 +112,21 @@ public class DocumentResponseMapper {
         allowedActions(doc),
         related,
         activity,
-        files);
+        files,
+        doc.getPaymentTermsSnapshot(),
+        doc.isApprovalRequired(),
+        doc.getApprovalStatus(),
+        doc.getApprovalComment(),
+        doc.getApprovedByUser() == null ? null : doc.getApprovedByUser().getUsername(),
+        doc.getApprovedAt(),
+        doc.isFinancialSettlementRequired(),
+        doc.getFinancialSettlementOwner() == null
+            ? null
+            : doc.getFinancialSettlementOwner().getId(),
+        doc.getFinancialSettlementOwner() == null
+            ? null
+            : doc.getFinancialSettlementOwner().getUsername(),
+        doc.getReferenceNumber());
   }
 
   private List<LineResponse> mapLines(final Document doc) {
@@ -194,9 +211,56 @@ public class DocumentResponseMapper {
                           line.getProduct().getSecondaryUnit().getName(),
                           line.getProduct().getSecondaryUnit().getSymbol(),
                           line.getProduct().getSecondaryUnit().isSystem()),
-                  line.getProduct().getSecondaryUnitsPerMainUnit());
+                  line.getProduct().getSecondaryUnitsPerMainUnit(),
+                  billedQuantity(line, doc),
+                  line.getVatRateSnapshot(),
+                  line.getCommercialNetAmountOverride() == null
+                      ? line.getTotalPrice()
+                      : line.getCommercialNetAmountOverride());
             })
         .toList();
+  }
+
+  private BigDecimal billedQuantity(final DocumentLine line, final Document document) {
+    BigDecimal billedTotal = BigDecimal.ZERO;
+    if (documentService != null && document.getCompany() != null) {
+      if (line.getSourceLine() != null
+          && (document.getType() == DocumentType.SUPPLIER_BILL
+              || document.getType() == DocumentType.CUSTOMER_INVOICE)) {
+        billedTotal = DocumentWorkflowValues.nz(line.getQuantity());
+      } else {
+        for (Document billingDocument :
+            documentService.findAllByCompanyIdOrderByUpdatedAtDesc(document.getCompany().getId())) {
+          if (billingDocument.getType() != DocumentType.SUPPLIER_BILL
+              && billingDocument.getType() != DocumentType.CUSTOMER_INVOICE) {
+            continue;
+          }
+          for (DocumentLine billedLine : DocumentWorkflowValues.safe(billingDocument.getLines())) {
+            final DocumentLine sourceLine = billedLine.getSourceLine();
+            if (sourceLine == null) {
+              continue;
+            }
+            boolean matches = sourceLine.getId().equals(line.getId());
+            if (!matches) {
+              matches =
+                  allocationService.findAllByFulfillmentLineId(sourceLine.getId()).stream()
+                      .anyMatch(
+                          allocation ->
+                              allocation.getSourceOrderLine().getId().equals(line.getId()));
+            }
+            if (matches) {
+              billedTotal =
+                  billedTotal.add(
+                      DocumentWorkflowValues.entryQuantity(
+                          line,
+                          DocumentWorkflowValues.stockQuantity(
+                              sourceLine, DocumentWorkflowValues.nz(billedLine.getQuantity()))));
+            }
+          }
+        }
+      }
+    }
+    return billedTotal;
   }
 
   private BigDecimal convertQuantity(
@@ -302,6 +366,35 @@ public class DocumentResponseMapper {
         && isSupportedDraftType(doc.getType())
         && !accessService.hasFulfillmentSource(doc)) {
       actions.add(DocumentAction.EDIT);
+    }
+    if (doc.getStatus() == DocumentStatus.DRAFT
+        && accessService.canManageDocument(doc, user)
+        && (doc.getType() == DocumentType.SUPPLIER_BILL
+            || doc.getType() == DocumentType.CUSTOMER_INVOICE
+            || doc.getType() == DocumentType.FINANCIAL_CREDIT)) {
+      actions.add(DocumentAction.EDIT);
+    }
+    if ((doc.getType() == DocumentType.SUPPLIER_BILL
+            || doc.getType() == DocumentType.CUSTOMER_INVOICE
+            || doc.getType() == DocumentType.FINANCIAL_CREDIT)
+        && doc.getStatus() == DocumentStatus.DRAFT
+        && accessService.canManageDocument(doc, user)) {
+      if (doc.isApprovalRequired()
+          && doc.getApprovalStatus() == CommercialApprovalStatus.PENDING
+          && user != null
+          && (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER)) {
+        actions.add(DocumentAction.APPROVE);
+        actions.add(DocumentAction.REJECT);
+      }
+      if (!doc.isApprovalRequired()
+          || doc.getApprovalStatus() == CommercialApprovalStatus.APPROVED) {
+        actions.add(DocumentAction.FINALIZE);
+      }
+    }
+    if (doc.isFinancialSettlementRequired()
+        && user != null
+        && (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER)) {
+      actions.add(DocumentAction.ASSIGN_SETTLEMENT);
     }
     if (doc.getStatus() == DocumentStatus.DRAFT
         && accessService.canManageDocument(doc, user)

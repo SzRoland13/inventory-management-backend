@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.document_file;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.context.IContext;
 
@@ -160,6 +163,57 @@ class DocumentPdfFactoryTest {
     assertEquals("5.40", row.get("tax"));
     assertEquals("25.40", row.get("gross"));
     assertEquals("data:image/webp;base64,AA==", row.get("thumbnail"));
+  }
+
+  @Test
+  void rendersCommercialTypesAndFinalStatusesForEnglishAndHungarian() {
+    final ResourceBundleMessageSource messages = new ResourceBundleMessageSource();
+    messages.setBasenames("document-messages");
+    messages.setDefaultEncoding("UTF-8");
+    final DocumentPdfFactory localizedFactory = new DocumentPdfFactory(templateEngine, messages);
+    final List<IContext> contexts = new ArrayList<>();
+    when(templateEngine.process(eq("documents/document"), any(IContext.class)))
+        .thenAnswer(
+            invocation -> {
+              contexts.add(invocation.getArgument(1));
+              return "rendered";
+            });
+
+    for (String language : List.of("en", "hu")) {
+      renderCommercialDocument(
+          localizedFactory, DocumentType.SUPPLIER_BILL, DocumentStatus.RECEIVED, language);
+      renderCommercialDocument(
+          localizedFactory, DocumentType.CUSTOMER_INVOICE, DocumentStatus.ISSUED, language);
+      renderCommercialDocument(
+          localizedFactory, DocumentType.FINANCIAL_CREDIT, DocumentStatus.COMPLETED, language);
+    }
+
+    assertEquals(6, contexts.size());
+    for (IContext context : contexts) {
+      final String type = (String) context.getVariable("documentType");
+      final String status = (String) context.getVariable("documentStatus");
+      assertNotNull(type);
+      assertNotNull(status);
+      assertEquals(false, type.isBlank());
+      assertEquals(false, status.isBlank());
+      assertEquals(false, type.startsWith("pdf.document.type."));
+      assertEquals(false, status.startsWith("pdf.document.status."));
+    }
+  }
+
+  private void renderCommercialDocument(
+      final DocumentPdfFactory target,
+      final DocumentType type,
+      final DocumentStatus status,
+      final String language) {
+    final Document document = document(List.of());
+    when(document.getType()).thenReturn(type);
+    when(document.getStatus()).thenReturn(status);
+    when(document.getDocumentNumber()).thenReturn("COMM-1");
+    when(document.getPartnerNameSnapshot()).thenReturn("Partner");
+    when(document.getNotes()).thenReturn("");
+    when(document.getCurrency()).thenReturn(null);
+    target.createHtml(document, language);
   }
 
   private IContext capturedContext() {

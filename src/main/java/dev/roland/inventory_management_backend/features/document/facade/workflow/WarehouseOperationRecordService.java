@@ -18,6 +18,7 @@ import dev.roland.inventory_management_backend.features.document.dto.DocumentRes
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
@@ -337,6 +338,7 @@ public class WarehouseOperationRecordService {
     writer.complete(correction);
     final Document saved = documentService.save(correction);
     writer.relate(original, saved, DocumentRelationType.CORRECTS);
+    applyCommercialCorrectionImpact(original, request, company);
     for (ClosureReopenAudit audit : closureReopenAudits) {
       writer.addActivity(
           audit.orderLine().getDocument(),
@@ -346,6 +348,73 @@ public class WarehouseOperationRecordService {
     writer.consumeKey(original, key, saved);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
     return responseMapper.toResponse(saved);
+  }
+
+  private void applyCommercialCorrectionImpact(
+      final Document original, final WarehouseOperationRequest request, final Company company) {
+    if (original.getType() != DocumentType.GOODS_RECEIPT
+        && original.getType() != DocumentType.DELIVERY_NOTE) {
+      return;
+    }
+    final java.util.Map<Long, BigDecimal> correctedQuantities = new java.util.HashMap<>();
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      correctedQuantities.put(
+          item.sourceLineId(), DocumentWorkflowValues.nz(item.correctedQuantity()));
+    }
+    for (Document commercial :
+        documentService.findAllByCompanyIdOrderByUpdatedAtDesc(company.getId())) {
+      if (commercial.getType() != DocumentType.SUPPLIER_BILL
+          && commercial.getType() != DocumentType.CUSTOMER_INVOICE) {
+        continue;
+      }
+      final boolean affected =
+          DocumentWorkflowValues.safe(commercial.getLines()).stream()
+              .anyMatch(
+                  line ->
+                      line.getSourceLine() != null
+                          && correctedQuantities.containsKey(line.getSourceLine().getId()));
+      if (!affected) {
+        continue;
+      }
+      if (commercial.getStatus() == DocumentStatus.DRAFT) {
+        for (DocumentLine commercialLine : DocumentWorkflowValues.safe(commercial.getLines())) {
+          if (commercialLine.getSourceLine() == null
+              || !correctedQuantities.containsKey(commercialLine.getSourceLine().getId())) {
+            continue;
+          }
+          final BigDecimal corrected =
+              correctedQuantities.get(commercialLine.getSourceLine().getId());
+          if (commercialLine.getQuantity().compareTo(corrected) > 0) {
+            commercialLine.setQuantity(corrected);
+            commercialLine.setTotalPrice(commercialLine.getUnitPrice().multiply(corrected));
+            lineService.save(commercialLine);
+          }
+        }
+        commercial.setApprovalStatus(
+            commercial.isApprovalRequired()
+                ? dev.roland.inventory_management_backend.features.document.enumeration
+                    .CommercialApprovalStatus.PENDING
+                : dev.roland.inventory_management_backend.features.document.enumeration
+                    .CommercialApprovalStatus.NOT_REQUIRED);
+        commercial.setApprovalComment(null);
+        commercial.setApprovedByUser(null);
+        commercial.setApprovedAt(null);
+        documentService.save(commercial);
+        writer.addActivity(
+            commercial,
+            DocumentActivityEvent.EDITED,
+            "Source correction changed billing eligibility; matching and approval refreshed");
+      } else if (commercial.getStatus() == DocumentStatus.ISSUED
+          || commercial.getStatus() == DocumentStatus.RECEIVED) {
+        commercial.setFinancialSettlementRequired(true);
+        commercial.setFinancialSettlementOwner(null);
+        documentService.save(commercial);
+        writer.addActivity(
+            commercial,
+            DocumentActivityEvent.EDITED,
+            "Source correction requires financial settlement; finalized document preserved");
+      }
+    }
   }
 
   private void lockAffectedOrderDocuments(

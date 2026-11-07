@@ -2,12 +2,12 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 
 import java.time.LocalDateTime;
 
-import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
@@ -152,10 +152,7 @@ public class DocumentWorkflowWriterService {
    * @param source the source value
    */
   public void relate(
-      final Document source,
-      final Document target,
-      final DocumentRelationType
-          type) {
+      final Document source, final Document target, final DocumentRelationType type) {
     final DocumentRelation relation = new DocumentRelation();
     relation.setSourceDocument(source);
     relation.setTargetDocument(target);

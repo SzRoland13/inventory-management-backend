@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
@@ -18,7 +19,6 @@ import dev.roland.inventory_management_backend.features.auth.message.AuthMessage
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 
 class GlobalExceptionHandlerTest {
-
   private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
   @Test
@@ -60,5 +60,14 @@ class GlobalExceptionHandlerTest {
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertEquals(
         AsyncJobMessageKey.OUTBOX_PAYLOAD_INVALID.getKey(), response.getBody().getMessageKey());
+  }
+
+  @Test
+  void mapsBindingFailuresAndValidationFailuresToFieldMessages() {
+    final BindException exception = new BindException(new Object(), "target");
+    exception.addError(new FieldError("target", "quantity", "bad", true, null, null, "ignored"));
+    exception.addError(new FieldError("target", "name", "bad", false, null, null, "must be valid"));
+
+    assertEquals(HttpStatus.BAD_REQUEST, handler.handleBindingErrors(exception).getStatusCode());
   }
 }

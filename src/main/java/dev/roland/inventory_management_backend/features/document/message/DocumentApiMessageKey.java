@@ -39,7 +39,11 @@ public enum DocumentApiMessageKey implements MessageKey {
   DOCUMENT_CLOSURE_REOPEN_INVALID("document.error.closure_reopen_invalid"),
   DOCUMENT_CLOSURE_REOPEN_REASON_REQUIRED("document.error.closure_reopen_reason_required"),
   DOCUMENT_CORRECTION_NEGATIVE_STOCK("document.error.correction_negative_stock"),
-  DOCUMENT_CORRECTION_WORKFLOW_REQUIRED("document.error.correction_workflow_required");
+  DOCUMENT_CORRECTION_WORKFLOW_REQUIRED("document.error.correction_workflow_required"),
+  COMMERCIAL_APPROVAL_REQUIRED("document.error.commercial_approval_required"),
+  COMMERCIAL_SOURCE_INELIGIBLE("document.error.commercial_source_ineligible"),
+  COMMERCIAL_OVERBILLING("document.error.commercial_overbilling"),
+  COMMERCIAL_CREDIT_LIMIT("document.error.commercial_credit_limit");
 
   private final String key;
 }
