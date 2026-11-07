@@ -181,13 +181,11 @@ public class WarehouseOperationCommandService {
               productService
                   .findByIdAndCompanyId(item.productId(), company.getId())
                   .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+          final var unit = DocumentWorkflowValues.configuredUnit(product, item.unitId());
           final DocumentLine line =
               DocumentLineMapper.buildLine(
-                  root,
-                  product,
-                  product.getUnit(),
-                  DocumentWorkflowValues.nz(item.quantity()),
-                  BigDecimal.ZERO);
+                  root, product, unit, DocumentWorkflowValues.nz(item.quantity()), BigDecimal.ZERO);
+          line.setConversionFactorSnapshot(DocumentWorkflowValues.expectedFactor(product, unit));
           root.getLines().add(lineService.save(line));
         }
         writer.addActivity(root, DocumentActivityEvent.CREATED, "transfer draft");
@@ -228,9 +226,12 @@ public class WarehouseOperationCommandService {
               productService
                   .findByIdAndCompanyId(item.productId(), company.getId())
                   .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+          final var stockUnit =
+              product.getSecondaryUnit() == null ? product.getUnit() : product.getSecondaryUnit();
           final DocumentLine line =
               DocumentLineMapper.buildLine(
-                  root, product, product.getUnit(), BigDecimal.ZERO, BigDecimal.ZERO);
+                  root, product, stockUnit, BigDecimal.ZERO, BigDecimal.ZERO);
+          line.setConversionFactorSnapshot(BigDecimal.ONE);
           line.setCountedQuantity(DocumentWorkflowValues.nz(item.countedQuantity()));
           line.setExpectedQuantity(
               stockMovementService
@@ -279,8 +280,13 @@ public class WarehouseOperationCommandService {
           final DocumentLine source =
               warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
           final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+          final BigDecimal stockQuantity =
+              quantity.multiply(DocumentWorkflowValues.operationFactor(source, item.unitId()));
+          final BigDecimal sourceQuantity =
+              DocumentWorkflowValues.entryQuantity(source, stockQuantity);
           final DocumentLine childLine =
               warehouseOperationSupportService.cloneLine(child, source, quantity);
+          DocumentWorkflowValues.applyOperationUnit(childLine, source, item.unitId());
           childLine.setSourceLine(source);
           child.getLines().add(lineService.save(childLine));
           if (operation == WarehouseOperationType.TRANSFER_DISPATCH) {
@@ -288,7 +294,7 @@ public class WarehouseOperationCommandService {
                 stockMovementService.postMovement(
                     childLine,
                     root.getSourceWarehouse(),
-                    quantity.negate(),
+                    stockQuantity.negate(),
                     StockMovementType.TRANSFER_OUT,
                     user,
                     request.effectiveAt()),
@@ -301,16 +307,16 @@ public class WarehouseOperationCommandService {
                 stockMovementService.postMovement(
                     childLine,
                     transit,
-                    quantity,
+                    stockQuantity,
                     StockMovementType.TRANSFER_IN,
                     user,
                     request.effectiveAt()),
                 "dispatch");
             source.setFulfilledQuantity(
-                DocumentWorkflowValues.nz(source.getFulfilledQuantity()).add(quantity));
+                DocumentWorkflowValues.nz(source.getFulfilledQuantity()).add(sourceQuantity));
             if (root.getTransitWarehouse() != null) {
               source.setInTransitQuantity(
-                  DocumentWorkflowValues.nz(source.getInTransitQuantity()).add(quantity));
+                  DocumentWorkflowValues.nz(source.getInTransitQuantity()).add(sourceQuantity));
             }
           } else if (operation == WarehouseOperationType.TRANSFER_RECEIPT) {
             final Warehouse transit =
@@ -322,7 +328,7 @@ public class WarehouseOperationCommandService {
                   stockMovementService.postMovement(
                       childLine,
                       transit,
-                      quantity.negate(),
+                      stockQuantity.negate(),
                       StockMovementType.TRANSFER_OUT,
                       user,
                       request.effectiveAt()),
@@ -332,13 +338,13 @@ public class WarehouseOperationCommandService {
                 stockMovementService.postMovement(
                     childLine,
                     root.getTargetWarehouse(),
-                    quantity,
+                    stockQuantity,
                     StockMovementType.TRANSFER_IN,
                     user,
                     request.effectiveAt()),
                 "receipt");
             source.setInTransitQuantity(
-                DocumentWorkflowValues.nz(source.getInTransitQuantity()).subtract(quantity));
+                DocumentWorkflowValues.nz(source.getInTransitQuantity()).subtract(sourceQuantity));
           } else {
             final Warehouse transit = root.getTransitWarehouse();
             final WarehouseOperationType resolution =
@@ -347,7 +353,7 @@ public class WarehouseOperationCommandService {
                 stockMovementService.postMovement(
                     childLine,
                     transit,
-                    quantity.negate(),
+                    stockQuantity.negate(),
                     StockMovementType.TRANSFER_OUT,
                     user,
                     request.effectiveAt()),
@@ -357,7 +363,7 @@ public class WarehouseOperationCommandService {
                   stockMovementService.postMovement(
                       childLine,
                       root.getSourceWarehouse(),
-                      quantity,
+                      stockQuantity,
                       StockMovementType.TRANSFER_IN,
                       user,
                       request.effectiveAt()),
@@ -368,14 +374,14 @@ public class WarehouseOperationCommandService {
                   stockMovementService.postMovement(
                       childLine,
                       warehouseOperationSupportService.quarantineWarehouse(company.getId()),
-                      quantity,
+                      stockQuantity,
                       StockMovementType.RETURN_IN,
                       user,
                       request.effectiveAt()),
                   request.reason());
             }
             source.setInTransitQuantity(
-                DocumentWorkflowValues.nz(source.getInTransitQuantity()).subtract(quantity));
+                DocumentWorkflowValues.nz(source.getInTransitQuantity()).subtract(sourceQuantity));
           }
           lineService.save(source);
         }

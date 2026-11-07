@@ -44,6 +44,7 @@ import dev.roland.inventory_management_backend.features.product.service.ProductS
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.service.StockBalanceService;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
+import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
@@ -90,7 +91,12 @@ class WarehouseOperationPreviewServiceTest {
             supportService,
             transferPreviewService);
     company = Company.builder().id(COMPANY_ID).build();
-    product = Product.builder().id(7L).name("Widget").build();
+    product =
+        Product.builder()
+            .id(7L)
+            .name("Widget")
+            .unit(Unit.builder().id(70L).code("EA").name("Each").build())
+            .build();
     warehouse =
         Warehouse.builder()
             .id(40L)
@@ -174,7 +180,8 @@ class WarehouseOperationPreviewServiceTest {
                 null));
 
     assertTrue(customer.valid());
-    assertEquals(new BigDecimal("4"), customer.lines().getFirst().returnableQuantity());
+    assertEquals(
+        0, new BigDecimal("4").compareTo(customer.lines().getFirst().returnableQuantity()));
     final WarehouseOperationPreview rejected =
         service.preview(
             null,
@@ -215,6 +222,59 @@ class WarehouseOperationPreviewServiceTest {
                 null));
     assertTrue(supplier.valid());
     assertEquals(new BigDecimal("-1"), supplier.lines().getFirst().quantityDelta());
+  }
+
+  @Test
+  void convertsReturnQuantityFromMainUnitIntoStockUnit() {
+    final Unit box = Unit.builder().id(11L).code("BOX").name("Box").build();
+    final Unit pair = Unit.builder().id(12L).code("PAIR").name("Pair").build();
+    product.setUnit(box);
+    product.setSecondaryUnit(pair);
+    product.setSecondaryUnitsPerMainUnit(new BigDecimal("10"));
+    final Document delivery = document(DocumentType.DELIVERY_NOTE, DocumentStatus.COMPLETED);
+    delivery.setSourceWarehouse(warehouse);
+    final DocumentLine delivered = documentLine(delivery, new BigDecimal("2"));
+    delivered.setUnitSnapshot(box);
+    delivered.setConversionFactorSnapshot(new BigDecimal("10"));
+    when(accessService.find(DOCUMENT_ID)).thenReturn(delivery);
+    when(supportService.line(LINE_ID, COMPANY_ID)).thenReturn(delivered);
+    when(warehouseService.findEntityByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(warehouse);
+    when(balanceService.findByWarehouseAndProduct(warehouse, product))
+        .thenReturn(Optional.of(StockBalance.builder().quantity(new BigDecimal("50")).build()));
+
+    final var operationLine =
+        new WarehouseOperationRequest.WarehouseOperationLine(
+            LINE_ID,
+            null,
+            new BigDecimal("1"),
+            null,
+            null,
+            null,
+            BigDecimal.ONE,
+            null,
+            ReturnDisposition.RESTOCK,
+            null,
+            List.of(),
+            box.getId());
+    final WarehouseOperationPreview preview =
+        service.preview(
+            null,
+            WarehouseOperationType.RETURN_CREATE,
+            request(
+                DOCUMENT_ID,
+                null,
+                40L,
+                null,
+                null,
+                null,
+                ReturnDirection.CUSTOMER_RETURN,
+                "customer return",
+                List.of(operationLine),
+                null));
+
+    assertTrue(preview.valid());
+    assertEquals(new BigDecimal("10"), preview.lines().getFirst().quantityDelta());
+    assertEquals(0, new BigDecimal("2").compareTo(preview.lines().getFirst().returnableQuantity()));
   }
 
   @Test
@@ -388,7 +448,7 @@ class WarehouseOperationPreviewServiceTest {
 
     assertFalse(preview.valid());
     assertEquals(1, preview.lines().size());
-    assertEquals(BigDecimal.ZERO, preview.lines().getFirst().returnableQuantity());
+    assertEquals(0, BigDecimal.ZERO.compareTo(preview.lines().getFirst().returnableQuantity()));
   }
 
   @Test

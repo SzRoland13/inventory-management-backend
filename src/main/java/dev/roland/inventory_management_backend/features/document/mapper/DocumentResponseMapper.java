@@ -38,6 +38,7 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import dev.roland.inventory_management_backend.features.product.dto.UnitResponse;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -125,9 +126,26 @@ public class DocumentResponseMapper {
               final DocumentLine totalsLine = sourceLine == null ? line : sourceLine;
               final DocumentLine quantitySourceLine =
                   line.getSourceLine() == null ? line : line.getSourceLine();
-              final BigDecimal ordered = DocumentWorkflowValues.nz(totalsLine.getQuantity());
-              final BigDecimal fulfilled = accessService.fulfilledFor(totalsLine);
-              final BigDecimal closed = DocumentWorkflowValues.nz(totalsLine.getClosedQuantity());
+              final BigDecimal ordered =
+                  convertQuantity(
+                      totalsLine, line, DocumentWorkflowValues.nz(totalsLine.getQuantity()));
+              final BigDecimal fulfilled =
+                  convertQuantity(totalsLine, line, accessService.fulfilledFor(totalsLine));
+              final BigDecimal closed =
+                  convertQuantity(
+                      totalsLine, line, DocumentWorkflowValues.nz(totalsLine.getClosedQuantity()));
+              final BigDecimal returned =
+                  convertQuantity(
+                      quantitySourceLine,
+                      line,
+                      DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity()));
+              final BigDecimal returnable =
+                  convertQuantity(
+                      quantitySourceLine,
+                      line,
+                      DocumentWorkflowValues.nz(quantitySourceLine.getQuantity())
+                          .subtract(
+                              DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity())));
               return new LineResponse(
                   line.getId(),
                   line.getProduct().getId(),
@@ -148,16 +166,43 @@ public class DocumentResponseMapper {
                   line.getSourceLine() != null
                       ? line.getSourceLine().getId()
                       : sourceLine == null ? null : sourceLine.getId(),
-                  DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity()),
-                  DocumentWorkflowValues.nz(quantitySourceLine.getQuantity())
-                      .subtract(
-                          DocumentWorkflowValues.nz(quantitySourceLine.getReturnedQuantity())),
+                  returned,
+                  returnable,
                   DocumentWorkflowValues.nz(quantitySourceLine.getInTransitQuantity()),
                   line.getExpectedQuantity(),
                   line.getCountedQuantity(),
-                  line.getVariance());
+                  line.getVariance(),
+                  line.getUnitSnapshot() == null
+                      ? line.getProduct().getUnit() == null
+                          ? null
+                          : line.getProduct().getUnit().getId()
+                      : line.getUnitSnapshot().getId(),
+                  line.getConversionFactorSnapshot(),
+                  line.getProduct().getUnit() == null
+                      ? null
+                      : new UnitResponse(
+                          line.getProduct().getUnit().getId(),
+                          line.getProduct().getUnit().getCode(),
+                          line.getProduct().getUnit().getName(),
+                          line.getProduct().getUnit().getSymbol(),
+                          line.getProduct().getUnit().isSystem()),
+                  line.getProduct().getSecondaryUnit() == null
+                      ? null
+                      : new UnitResponse(
+                          line.getProduct().getSecondaryUnit().getId(),
+                          line.getProduct().getSecondaryUnit().getCode(),
+                          line.getProduct().getSecondaryUnit().getName(),
+                          line.getProduct().getSecondaryUnit().getSymbol(),
+                          line.getProduct().getSecondaryUnit().isSystem()),
+                  line.getProduct().getSecondaryUnitsPerMainUnit());
             })
         .toList();
+  }
+
+  private BigDecimal convertQuantity(
+      final DocumentLine source, final DocumentLine target, final BigDecimal quantity) {
+    return DocumentWorkflowValues.entryQuantity(
+        target, DocumentWorkflowValues.stockQuantity(source, quantity));
   }
 
   private List<RelatedDocument> mapRelatedDocuments(final Document doc) {

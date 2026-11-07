@@ -130,6 +130,7 @@ public record WarehouseOperationRequest(
    * @param closureReopens explicit reasoned reopenings of source order lines
    * @param sourceLineId the sourceLineId value
    * @param varianceReason the varianceReason value
+   * @param unitId unit selected for the entered quantity
    */
   public record WarehouseOperationLine(
       Long sourceLineId,
@@ -142,7 +143,8 @@ public record WarehouseOperationRequest(
       String varianceReason,
       ReturnDisposition disposition,
       String reason,
-      List<ClosureReopen> closureReopens) {
+      List<ClosureReopen> closureReopens,
+      Long unitId) {
     /** Keeps the pre-reopen request shape source-compatible for other warehouse operations. */
     public WarehouseOperationLine(
         final Long sourceLineId,
@@ -166,7 +168,36 @@ public record WarehouseOperationRequest(
           varianceReason,
           disposition,
           reason,
-          List.of());
+          List.of(),
+          null);
+    }
+
+    /** Keeps the closure-reopen request constructor source-compatible. */
+    public WarehouseOperationLine(
+        final Long sourceLineId,
+        final Long productId,
+        final BigDecimal quantity,
+        final BigDecimal correctedQuantity,
+        final Long correctedProductId,
+        final Long correctedWarehouseId,
+        final BigDecimal countedQuantity,
+        final String varianceReason,
+        final ReturnDisposition disposition,
+        final String reason,
+        final List<ClosureReopen> closureReopens) {
+      this(
+          sourceLineId,
+          productId,
+          quantity,
+          correctedQuantity,
+          correctedProductId,
+          correctedWarehouseId,
+          countedQuantity,
+          varianceReason,
+          disposition,
+          reason,
+          closureReopens,
+          null);
     }
 
     /** Creates a defensive copy of closure adjustments. */

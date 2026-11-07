@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
@@ -212,8 +213,7 @@ public class DocumentWorkflowAccessService {
       final String suppliedVersion,
       final Supplier<DocumentResponse> latestResponse) {
     if (suppliedVersion == null || suppliedVersion.isBlank()) {
-      throw new dev.roland.inventory_management_backend.common.exception.ApiException(
-          DocumentApiMessageKey.DOCUMENT_VERSION_REQUIRED);
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_VERSION_REQUIRED);
     }
     String version = suppliedVersion.trim();
     if (version.startsWith("W/")) {

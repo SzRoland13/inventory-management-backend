@@ -8,5 +8,11 @@ import java.math.BigDecimal;
  * @param productId product identifier value
  * @param quantity quantity value
  * @param sourceLineId source line identifier value
+ * @param unitId unit selected for the entered quantity
  */
-public record FulfillmentLine(Long sourceLineId, Long productId, BigDecimal quantity) {}
+public record FulfillmentLine(Long sourceLineId, Long productId, BigDecimal quantity, Long unitId) {
+  /** Keeps the existing fulfillment request constructor source-compatible. */
+  public FulfillmentLine(final Long sourceLineId, final Long productId, final BigDecimal quantity) {
+    this(sourceLineId, productId, quantity, null);
+  }
+}

@@ -46,6 +46,7 @@ import dev.roland.inventory_management_backend.features.document.dto.Fulfillment
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentLine;
 import dev.roland.inventory_management_backend.features.document.dto.FulfillmentPreview;
 import dev.roland.inventory_management_backend.features.document.dto.LineDraft;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.DocumentDraftWorkflowService;
@@ -70,6 +71,7 @@ import dev.roland.inventory_management_backend.features.document_line.service.Do
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import dev.roland.inventory_management_backend.features.document_prefix.service.DocumentPrefixService;
+import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.document_sequence.DocumentSequence;
 import dev.roland.inventory_management_backend.features.document_sequence.service.DocumentSequenceService;
@@ -171,6 +173,7 @@ class DocumentWorkflowFacadeImplTest {
             documentDraftWorkflowService,
             lineService,
             warehouseService,
+            productService,
             companyProvider);
     var warehouseTransferPreviewService =
         new WarehouseTransferPreviewService(balanceService, warehouseOperationSupportService);
@@ -494,7 +497,7 @@ class DocumentWorkflowFacadeImplTest {
 
     assertEquals("Main warehouse", response.routeName());
     assertEquals(1, response.lines().size());
-    assertEquals(new BigDecimal("3"), response.lines().getFirst().orderedQuantity());
+    assertEquals(0, new BigDecimal("3").compareTo(response.lines().getFirst().orderedQuantity()));
     assertEquals(new BigDecimal("2.50"), response.lines().getFirst().unitPrice());
     assertEquals(preferredCurrency.getId(), response.lines().getFirst().sourceCurrencyId());
   }
@@ -731,13 +734,10 @@ class DocumentWorkflowFacadeImplTest {
   void linkedFulfillmentDraftCannotBeEditedWithoutReallocatingItsLines() {
     final Document fulfillment = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
     fulfillment.setCreatedByUser(user);
-    final var relation =
-        new dev.roland.inventory_management_backend.features.document_relation.DocumentRelation();
+    final var relation = new DocumentRelation();
     relation.setSourceDocument(document(DocumentType.SALES_ORDER, DocumentStatus.CONFIRMED));
     relation.setTargetDocument(fulfillment);
-    relation.setRelationType(
-        dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType
-            .FULFILLS);
+    relation.setRelationType(DocumentRelationType.FULFILLS);
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(fulfillment));
     when(relationService.findAllBySourceDocumentIdOrTargetDocumentId(3L, 3L))
         .thenReturn(List.of(relation));
@@ -814,7 +814,7 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals("DRAFT", response.status());
     assertEquals("Northwind", response.partnerName());
     assertEquals(1, response.lines().size());
-    assertEquals(new BigDecimal("2"), response.lines().getFirst().orderedQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(response.lines().getFirst().orderedQuantity()));
   }
 
   @Test
@@ -968,7 +968,7 @@ class DocumentWorkflowFacadeImplTest {
     assertEquals(
         DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey(),
         preview.lines().getFirst().errorMessageKey());
-    assertEquals(new BigDecimal("1"), preview.lines().getFirst().shortfall());
+    assertEquals(0, new BigDecimal("1").compareTo(preview.lines().getFirst().shortfall()));
   }
 
   @Test
@@ -1120,13 +1120,7 @@ class DocumentWorkflowFacadeImplTest {
 
     final ApiException missingReason =
         assertThrows(
-            ApiException.class,
-            () ->
-                facade.closeRemaining(
-                    3L,
-                    new dev.roland.inventory_management_backend.features.document.dto
-                        .CloseRemaining(" "),
-                    "0"));
+            ApiException.class, () -> facade.closeRemaining(3L, new CloseRemaining(" "), "0"));
     assertEquals(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED, missingReason.getMessageKey());
   }
 

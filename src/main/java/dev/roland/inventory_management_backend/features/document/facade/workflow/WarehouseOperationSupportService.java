@@ -17,6 +17,8 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
+import dev.roland.inventory_management_backend.common.message.NotFoundMessageKey;
 import dev.roland.inventory_management_backend.common.service.CurrentCompanyProvider;
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
@@ -30,6 +32,8 @@ import dev.roland.inventory_management_backend.features.document.message.Documen
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
+import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.service.ProductService;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
@@ -47,6 +51,7 @@ public class WarehouseOperationSupportService {
   private final DocumentDraftWorkflowService draftWorkflowService;
   private final DocumentLineService lineService;
   private final WarehouseService warehouseService;
+  private final ProductService productService;
   private final CurrentCompanyProvider companyProvider;
 
   /**
@@ -234,8 +239,19 @@ public class WarehouseOperationSupportService {
     final Long oldProductId = source.getProduct().getId();
     final Long newProductId =
         requestLine.correctedProductId() == null ? oldProductId : requestLine.correctedProductId();
-    final BigDecimal oldQuantity = DocumentWorkflowValues.nz(source.getQuantity());
+    final BigDecimal oldQuantity =
+        DocumentWorkflowValues.stockQuantity(
+            source, DocumentWorkflowValues.nz(source.getQuantity()));
     final BigDecimal newQuantity = DocumentWorkflowValues.nz(requestLine.correctedQuantity());
+    final Product correctedProduct =
+        productService
+            .findByIdAndCompanyId(newProductId, companyId)
+            .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+    final BigDecimal newStockQuantity =
+        newQuantity.multiply(
+            DocumentWorkflowValues.expectedFactor(
+                correctedProduct,
+                DocumentWorkflowValues.configuredUnit(correctedProduct, requestLine.unitId())));
     final Warehouse transit = document.getTransitWarehouse();
     final Warehouse oldPrimary = defaultCorrectionWarehouse(document);
     final Warehouse newPrimary =
@@ -257,15 +273,16 @@ public class WarehouseOperationSupportService {
       default -> {}
     }
     switch (document.getType()) {
-      case GOODS_RECEIPT -> addEffect(newEffects, newPrimary, newProductId, newQuantity);
-      case DELIVERY_NOTE -> addEffect(newEffects, newPrimary, newProductId, newQuantity.negate());
+      case GOODS_RECEIPT -> addEffect(newEffects, newPrimary, newProductId, newStockQuantity);
+      case DELIVERY_NOTE -> addEffect(
+          newEffects, newPrimary, newProductId, newStockQuantity.negate());
       case TRANSFER_DELIVERY -> {
-        addEffect(newEffects, newPrimary, newProductId, newQuantity.negate());
-        addEffect(newEffects, transit, newProductId, newQuantity);
+        addEffect(newEffects, newPrimary, newProductId, newStockQuantity.negate());
+        addEffect(newEffects, transit, newProductId, newStockQuantity);
       }
       case TRANSFER_RECEIPT -> {
-        addEffect(newEffects, transit, newProductId, newQuantity.negate());
-        addEffect(newEffects, newPrimary, newProductId, newQuantity);
+        addEffect(newEffects, transit, newProductId, newStockQuantity.negate());
+        addEffect(newEffects, newPrimary, newProductId, newStockQuantity);
       }
       default -> {}
     }

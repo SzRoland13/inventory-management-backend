@@ -2,6 +2,8 @@ package dev.roland.inventory_management_backend.features.document.dto;
 
 import java.math.BigDecimal;
 
+import dev.roland.inventory_management_backend.features.product.dto.UnitResponse;
+
 /**
  * Defines the line response document API contract.
  *
@@ -26,6 +28,11 @@ import java.math.BigDecimal;
  * @param returnableQuantity the returnableQuantity value
  * @param returnedQuantity the returnedQuantity value
  * @param variance the variance value
+ * @param unitId selected unit identifier
+ * @param conversionFactorSnapshot factor converting this line to stock units
+ * @param mainUnit configured main unit
+ * @param secondaryUnit configured secondary unit, if present
+ * @param secondaryUnitsPerMainUnit configured conversion ratio
  */
 public record LineResponse(
     Long id,
@@ -48,4 +55,9 @@ public record LineResponse(
     BigDecimal inTransitQuantity,
     BigDecimal expectedQuantity,
     BigDecimal countedQuantity,
-    BigDecimal variance) {}
+    BigDecimal variance,
+    Long unitId,
+    BigDecimal conversionFactorSnapshot,
+    UnitResponse mainUnit,
+    UnitResponse secondaryUnit,
+    BigDecimal secondaryUnitsPerMainUnit) {}

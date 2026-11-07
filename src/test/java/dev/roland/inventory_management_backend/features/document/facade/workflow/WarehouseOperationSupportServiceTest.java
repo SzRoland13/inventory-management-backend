@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import dev.roland.inventory_management_backend.common.service.CurrentCompanyProv
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.facade.workflow.WarehouseOperationSupportService.StockKey;
@@ -34,6 +36,8 @@ import dev.roland.inventory_management_backend.features.document.message.Documen
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.service.ProductService;
+import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
@@ -49,6 +53,7 @@ class WarehouseOperationSupportServiceTest {
   @Mock private DocumentDraftWorkflowService draftWorkflowService;
   @Mock private DocumentLineService lineService;
   @Mock private WarehouseService warehouseService;
+  @Mock private ProductService productService;
   @Mock private CurrentCompanyProvider companyProvider;
 
   private WarehouseOperationSupportService service;
@@ -64,6 +69,7 @@ class WarehouseOperationSupportServiceTest {
             draftWorkflowService,
             lineService,
             warehouseService,
+            productService,
             companyProvider);
     company = Company.builder().id(COMPANY_ID).build();
   }
@@ -122,14 +128,9 @@ class WarehouseOperationSupportServiceTest {
   void delegatesRelationsStockMovementsKeysAndVersionChecks() {
     final Document document = new Document();
     final DocumentLine line = new DocumentLine();
-    final var movement =
-        new dev.roland.inventory_management_backend.features.stock_movement.StockMovement();
+    final var movement = new StockMovement();
 
-    service.relate(
-        document,
-        document,
-        dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType
-            .RETURNS);
+    service.relate(document, document, DocumentRelationType.RETURNS);
     service.stock(movement, "reason");
     service.consumeKey(document, "key");
     service.requireVersion(document, "version");
@@ -178,6 +179,7 @@ class WarehouseOperationSupportServiceTest {
     receipt.setType(DocumentType.GOODS_RECEIPT);
     receipt.setTargetWarehouse(target);
     final Product product = Product.builder().id(5L).build();
+    when(productService.findByIdAndCompanyId(5L, COMPANY_ID)).thenReturn(Optional.of(product));
     final DocumentLine source = new DocumentLine();
     source.setProduct(product);
     source.setQuantity(new BigDecimal("3"));
@@ -230,6 +232,9 @@ class WarehouseOperationSupportServiceTest {
     document.setType(DocumentType.GOODS_RECEIPT);
     document.setTargetWarehouse(original);
     final Product oldProduct = Product.builder().id(5L).build();
+    final Product correctedProduct = Product.builder().id(11L).build();
+    when(productService.findByIdAndCompanyId(11L, COMPANY_ID))
+        .thenReturn(Optional.of(correctedProduct));
     final DocumentLine source = new DocumentLine();
     source.setProduct(oldProduct);
     source.setQuantity(new BigDecimal("3"));

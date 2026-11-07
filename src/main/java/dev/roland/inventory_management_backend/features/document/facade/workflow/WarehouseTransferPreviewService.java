@@ -47,6 +47,8 @@ public class WarehouseTransferPreviewService {
               ? null
               : warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
       final BigDecimal requested = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal stockRequested =
+          requested.multiply(DocumentWorkflowValues.operationFactor(source, item.unitId()));
       final BigDecimal transit =
           source == null
               ? BigDecimal.ZERO
@@ -59,7 +61,10 @@ public class WarehouseTransferPreviewService {
       final BigDecimal remainingToDispatch =
           source == null
               ? BigDecimal.ZERO
-              : DocumentWorkflowValues.nz(source.getQuantity()).subtract(dispatched);
+              : DocumentWorkflowValues.stockQuantity(
+                  source, DocumentWorkflowValues.nz(source.getQuantity()).subtract(dispatched));
+      final BigDecimal transitStock =
+          source == null ? BigDecimal.ZERO : DocumentWorkflowValues.stockQuantity(source, transit);
       final BigDecimal available =
           source == null || document == null
               ? BigDecimal.ZERO
@@ -73,11 +78,11 @@ public class WarehouseTransferPreviewService {
               && source.getDocument().getId().equals(document.getId())
               && requested.signum() > 0
               && (operation == WarehouseOperationType.TRANSFER_RESOLUTION
-                  ? requested.compareTo(transit) <= 0
+                  ? stockRequested.compareTo(transitStock) <= 0
                   : receipt
-                      ? requested.compareTo(transit) <= 0
-                      : requested.compareTo(remainingToDispatch) <= 0
-                          && requested.compareTo(available) <= 0);
+                      ? stockRequested.compareTo(transitStock) <= 0
+                      : stockRequested.compareTo(remainingToDispatch) <= 0
+                          && stockRequested.compareTo(available) <= 0);
       if (!valid) {
         blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
       }
@@ -86,10 +91,12 @@ public class WarehouseTransferPreviewService {
               .sourceLineId(source == null ? item.sourceLineId() : source.getId())
               .productId(source == null ? item.productId() : source.getProduct().getId())
               .sourceQuantity(available)
-              .transitQuantity(transit)
-              .quantityDelta(requested.negate())
+              .transitQuantity(transitStock)
+              .quantityDelta(stockRequested.negate())
               .resultingQuantity(
-                  receipt ? transit.subtract(requested) : available.subtract(requested))
+                  receipt
+                      ? transitStock.subtract(stockRequested)
+                      : available.subtract(stockRequested))
               .errorMessageKey(valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey())
               .build());
     }

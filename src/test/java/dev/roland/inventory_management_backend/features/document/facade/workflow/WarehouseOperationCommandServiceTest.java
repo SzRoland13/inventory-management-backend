@@ -25,6 +25,7 @@ import dev.roland.inventory_management_backend.common.service.CurrentCompanyProv
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
@@ -36,6 +37,7 @@ import dev.roland.inventory_management_backend.features.document_line.DocumentLi
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
+import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -169,8 +171,7 @@ class WarehouseOperationCommandServiceTest {
     when(documentService.postingKeyExists(50L, "key")).thenReturn(false);
     when(previewService.preview(anyLong(), any(), any()))
         .thenReturn(
-            new dev.roland.inventory_management_backend.features.document.dto
-                .WarehouseOperationPreview(
+            new WarehouseOperationPreview(
                 false, null, List.of(), List.of("invalid"), List.of(), List.of()));
 
     final ApiException invalid =
@@ -200,7 +201,7 @@ class WarehouseOperationCommandServiceTest {
         response,
         service.apply(50L, WarehouseOperationType.TRANSFER_DISPATCH, request, "key", "0"));
 
-    assertEquals(new BigDecimal("2"), sourceLine.getFulfilledQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(sourceLine.getFulfilledQuantity()));
     verify(writer).complete(child);
     verify(writer).complete(root);
   }
@@ -224,7 +225,7 @@ class WarehouseOperationCommandServiceTest {
         response, service.apply(50L, WarehouseOperationType.TRANSFER_RESOLVE, request, "key", "0"));
 
     assertEquals(DocumentStatus.PARTIALLY_COMPLETED, root.getStatus());
-    assertEquals(BigDecimal.ZERO, sourceLine.getInTransitQuantity());
+    assertEquals(0, BigDecimal.ZERO.compareTo(sourceLine.getInTransitQuantity()));
     verify(writer).consumeKey(root, "key");
   }
 
@@ -242,7 +243,7 @@ class WarehouseOperationCommandServiceTest {
     assertSame(
         response, service.apply(50L, WarehouseOperationType.TRANSFER_RECEIPT, request, "key", "0"));
 
-    assertEquals(BigDecimal.ZERO, sourceLine.getInTransitQuantity());
+    assertEquals(0, BigDecimal.ZERO.compareTo(sourceLine.getInTransitQuantity()));
     verify(writer).complete(child);
     verify(writer).complete(root);
   }
@@ -297,8 +298,7 @@ class WarehouseOperationCommandServiceTest {
         .thenReturn(request);
     when(previewService.preview(50L, previewType, request))
         .thenReturn(
-            new dev.roland.inventory_management_backend.features.document.dto
-                .WarehouseOperationPreview(
+            new WarehouseOperationPreview(
                 true, "version", List.of(), List.of(), List.of(), List.of()));
     when(supportService.operationDocument(org.mockito.ArgumentMatchers.eq(root), any(), any()))
         .thenReturn(child);
@@ -312,8 +312,7 @@ class WarehouseOperationCommandServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
   }
 
   private Document transferRoot(final Long id, final Warehouse transit) {

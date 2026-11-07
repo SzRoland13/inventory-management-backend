@@ -134,6 +134,11 @@ public class WarehouseOperationPreviewService {
               : DocumentWorkflowValues.nz(source.getQuantity())
                   .subtract(DocumentWorkflowValues.nz(source.getReturnedQuantity()));
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(source, item.unitId());
+      final BigDecimal stockQuantity = quantity.multiply(operationFactor);
+      final BigDecimal maxStockQuantity =
+          source == null ? BigDecimal.ZERO : DocumentWorkflowValues.stockQuantity(source, max);
       final boolean supplierReturn = request.direction() == ReturnDirection.SUPPLIER_RETURN;
       final boolean quarantine =
           item.disposition() == ReturnDisposition.QUARANTINE
@@ -155,7 +160,7 @@ public class WarehouseOperationPreviewService {
                           ? originalWarehouse
                           : warehouseService.findEntityByIdAndCompanyId(
                               request.warehouseId(), company.getId());
-      final BigDecimal quantityDelta = supplierReturn ? quantity.negate() : quantity;
+      final BigDecimal quantityDelta = supplierReturn ? stockQuantity.negate() : stockQuantity;
       final BigDecimal currentQuantity =
           source == null || targetWarehouse == null
               ? BigDecimal.ZERO
@@ -175,7 +180,7 @@ public class WarehouseOperationPreviewService {
                       && sourceDocument.getType() == DocumentType.GOODS_RECEIPT
                       && item.disposition() == ReturnDisposition.SUPPLIER_RETURN)
               && quantity.signum() > 0
-              && quantity.compareTo(max) <= 0;
+              && stockQuantity.compareTo(maxStockQuantity) <= 0;
       if (!valid) {
         blockers.add(DocumentApiMessageKey.DOCUMENT_RETURN_QUANTITY_EXCEEDED.getKey());
       }
@@ -196,7 +201,10 @@ public class WarehouseOperationPreviewService {
                   DocumentWorkflowValues.nz(source == null ? null : source.getQuantity()))
               .returnedQuantity(
                   DocumentWorkflowValues.nz(source == null ? null : source.getReturnedQuantity()))
-              .returnableQuantity(max)
+              .returnableQuantity(
+                  operationFactor.signum() == 0
+                      ? BigDecimal.ZERO
+                      : maxStockQuantity.divide(operationFactor, 8, RoundingMode.HALF_UP))
               .quantityDelta(quantityDelta)
               .resultingQuantity(currentQuantity.add(quantityDelta))
               .targetWarehouseId(targetWarehouse == null ? null : targetWarehouse.getId())
@@ -273,6 +281,21 @@ public class WarehouseOperationPreviewService {
 
       final BigDecimal corrected = DocumentWorkflowValues.nz(item.correctedQuantity());
       final BigDecimal original = DocumentWorkflowValues.nz(source.getQuantity());
+      final Product correctedProduct =
+          productService
+              .findByIdAndCompanyId(
+                  item.correctedProductId() == null
+                      ? source.getProduct().getId()
+                      : item.correctedProductId(),
+                  company.getId())
+              .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final BigDecimal correctedStock =
+          corrected.multiply(
+              DocumentWorkflowValues.expectedFactor(
+                  correctedProduct,
+                  DocumentWorkflowValues.configuredUnit(correctedProduct, item.unitId())));
+      final BigDecimal correctedInSourceUnit =
+          DocumentWorkflowValues.entryQuantity(source, correctedStock);
       final Set<Long> allocatedOrderLineIds = new HashSet<>();
 
       for (DocumentLineAllocation allocation :
@@ -283,7 +306,7 @@ public class WarehouseOperationPreviewService {
                 ? BigDecimal.ZERO
                 : allocation
                     .getQuantity()
-                    .multiply(corrected.subtract(original))
+                    .multiply(correctedInSourceUnit.subtract(original))
                     .divide(original, 8, RoundingMode.HALF_UP);
         fulfillmentDeltas.merge(orderLine.getId(), allocationDelta, BigDecimal::add);
         affectedOrderLines.put(orderLine.getId(), orderLine);
@@ -348,14 +371,34 @@ public class WarehouseOperationPreviewService {
       final BigDecimal corrected = DocumentWorkflowValues.nz(item.correctedQuantity());
       final BigDecimal old =
           DocumentWorkflowValues.nz(source == null ? null : source.getQuantity());
-      final BigDecimal delta = corrected.subtract(old);
+      final Product correctedProduct =
+          source == null
+              ? null
+              : productService
+                  .findByIdAndCompanyId(
+                      item.correctedProductId() == null
+                          ? source.getProduct().getId()
+                          : item.correctedProductId(),
+                      company.getId())
+                  .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final BigDecimal correctedStock =
+          source == null
+              ? BigDecimal.ZERO
+              : corrected.multiply(
+                  DocumentWorkflowValues.expectedFactor(
+                      correctedProduct,
+                      DocumentWorkflowValues.configuredUnit(correctedProduct, item.unitId())));
+      final BigDecimal oldStock =
+          source == null ? BigDecimal.ZERO : DocumentWorkflowValues.stockQuantity(source, old);
+      final BigDecimal delta = correctedStock.subtract(oldStock);
       final BigDecimal returned =
           DocumentWorkflowValues.nz(source == null ? null : source.getReturnedQuantity());
       final boolean valid =
           source != null
               && source.getDocument().getId().equals(document == null ? null : document.getId())
               && corrected.signum() >= 0
-              && corrected.compareTo(returned) >= 0;
+              && correctedStock.compareTo(DocumentWorkflowValues.stockQuantity(source, returned))
+                  >= 0;
 
       if (!valid) {
         blockers.add(DocumentApiMessageKey.DOCUMENT_CORRECTION_BLOCKED.getKey());
@@ -497,6 +540,11 @@ public class WarehouseOperationPreviewService {
               : DocumentWorkflowValues.nz(line.getQuantity())
                   .subtract(DocumentWorkflowValues.nz(line.getReleasedQuantity()));
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(line, item.unitId());
+      final BigDecimal stockQuantity = quantity.multiply(operationFactor);
+      final BigDecimal remainingStock =
+          line == null ? BigDecimal.ZERO : DocumentWorkflowValues.stockQuantity(line, remaining);
       final Warehouse quarantine = warehouseService.ensureQuarantineWarehouse(company);
       final Warehouse target =
           request.targetWarehouseId() == null
@@ -525,8 +573,8 @@ public class WarehouseOperationPreviewService {
               && (line.getWorkflowDisposition() == ReturnDisposition.QUARANTINE
                   || line.getWorkflowDisposition() == ReturnDisposition.DAMAGED)
               && quantity.signum() > 0
-              && quantity.compareTo(remaining) <= 0
-              && quantity.compareTo(quarantineQuantity) <= 0
+              && stockQuantity.compareTo(remainingStock) <= 0
+              && stockQuantity.compareTo(quarantineQuantity) <= 0
               && target != null
               && target.getStatus()
                   == dev.roland.inventory_management_backend.features.warehouse.enumeration
@@ -545,10 +593,10 @@ public class WarehouseOperationPreviewService {
               .sourceLineId(item.sourceLineId())
               .productId(line == null ? item.productId() : line.getProduct().getId())
               .sourceQuantity(quarantineQuantity)
-              .destinationQuantity(targetQuantity.add(quantity))
-              .returnableQuantity(remaining)
-              .quantityDelta(quantity)
-              .resultingQuantity(targetQuantity.add(quantity))
+              .destinationQuantity(targetQuantity.add(stockQuantity))
+              .returnableQuantity(remainingStock.divide(operationFactor, 8, RoundingMode.HALF_UP))
+              .quantityDelta(stockQuantity)
+              .resultingQuantity(targetQuantity.add(stockQuantity))
               .targetWarehouseId(request.targetWarehouseId())
               .errorMessageKey(valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey())
               .build());
@@ -581,6 +629,11 @@ public class WarehouseOperationPreviewService {
               : DocumentWorkflowValues.nz(line.getQuantity())
                   .subtract(DocumentWorkflowValues.nz(line.getReplacedQuantity()));
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(line, item.unitId());
+      final BigDecimal stockQuantity = quantity.multiply(operationFactor);
+      final BigDecimal remainingStock =
+          line == null ? BigDecimal.ZERO : DocumentWorkflowValues.stockQuantity(line, remaining);
       final Warehouse warehouse =
           request.warehouseId() == null
               ? null
@@ -609,8 +662,8 @@ public class WarehouseOperationPreviewService {
               && line.getSourceLine().getDocument().getId().equals(original.getId())
               && returned.getWorkflowDirection() == ReturnDirection.CUSTOMER_RETURN
               && quantity.signum() > 0
-              && quantity.compareTo(remaining) <= 0
-              && quantity.compareTo(available) <= 0
+              && stockQuantity.compareTo(remainingStock) <= 0
+              && stockQuantity.compareTo(available) <= 0
               && warehouse != null
               && warehouse.getStatus()
                   == dev.roland.inventory_management_backend.features.warehouse.enumeration
@@ -623,9 +676,9 @@ public class WarehouseOperationPreviewService {
               .sourceLineId(item.sourceLineId())
               .productId(line == null ? item.productId() : line.getProduct().getId())
               .sourceQuantity(available)
-              .returnableQuantity(remaining)
-              .quantityDelta(quantity.negate())
-              .resultingQuantity(available.subtract(quantity))
+              .returnableQuantity(remainingStock.divide(operationFactor, 8, RoundingMode.HALF_UP))
+              .quantityDelta(stockQuantity.negate())
+              .resultingQuantity(available.subtract(stockQuantity))
               .targetWarehouseId(request.warehouseId())
               .errorMessageKey(valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey())
               .build());
@@ -687,27 +740,32 @@ public class WarehouseOperationPreviewService {
               .map(StockMovement::getQuantityChange)
               .reduce(BigDecimal.ZERO, BigDecimal::add);
       final BigDecimal counted = DocumentWorkflowValues.nz(lineRequest.countedQuantity());
+      final BigDecimal countFactor =
+          DocumentWorkflowValues.operationFactor(countLine, lineRequest.unitId());
+      final BigDecimal expectedInCountUnit = expected.divide(countFactor, 8, RoundingMode.HALF_UP);
+      final BigDecimal countedStockQuantity = counted.multiply(countFactor);
       if (lineRequest.countedQuantity() == null) {
         blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey());
       }
-      versionParts.add(countLine.getId() + ":" + countedAt + ":" + counted);
+      versionParts.add(
+          countLine.getId() + ":" + countedAt + ":" + lineRequest.unitId() + ":" + counted);
       final BigDecimal later =
           after.stream()
               .map(StockMovement::getQuantityChange)
               .reduce(BigDecimal.ZERO, BigDecimal::add);
-      final BigDecimal target = counted.add(later);
+      final BigDecimal target = countedStockQuantity.add(later);
       final BigDecimal current =
           balanceService
               .findByWarehouseAndProduct(document.getSourceWarehouse(), countLine.getProduct())
               .map(b -> DocumentWorkflowValues.nz(b.getQuantity()))
               .orElse(BigDecimal.ZERO);
       final BigDecimal adjustment = target.subtract(current);
-      final BigDecimal variance = counted.subtract(expected);
+      final BigDecimal variance = counted.subtract(expectedInCountUnit);
       previewLines.add(
           WarehouseOperationPreview.Line.builder()
               .sourceLineId(countLine.getId())
               .productId(productId)
-              .expectedAtCount(expected)
+              .expectedAtCount(expectedInCountUnit)
               .countedQuantity(counted)
               .variance(variance)
               .rebasedTargetQuantity(target)

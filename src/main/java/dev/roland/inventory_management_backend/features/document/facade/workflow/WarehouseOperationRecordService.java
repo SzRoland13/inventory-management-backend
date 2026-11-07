@@ -41,6 +41,7 @@ import dev.roland.inventory_management_backend.features.stock_movement.service.S
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 
@@ -130,11 +131,16 @@ public class WarehouseOperationRecordService {
       final DocumentLine source =
           warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(source, item.unitId());
+      final BigDecimal sourceQuantity =
+          DocumentWorkflowValues.entryQuantity(source, quantity.multiply(operationFactor));
       source.setReturnedQuantity(
-          DocumentWorkflowValues.nz(source.getReturnedQuantity()).add(quantity));
+          DocumentWorkflowValues.nz(source.getReturnedQuantity()).add(sourceQuantity));
       lineService.save(source);
       final DocumentLine line =
           warehouseOperationSupportService.cloneLine(returned, source, quantity);
+      DocumentWorkflowValues.applyOperationUnit(line, source, item.unitId());
       line.setSourceLine(source);
       line.setWorkflowDisposition(item.disposition());
       returned.getLines().add(lineService.save(line));
@@ -170,7 +176,9 @@ public class WarehouseOperationRecordService {
           stockMovementService.postMovement(
               line,
               effectiveWarehouse,
-              supplierReturn ? quantity.negate() : quantity,
+              supplierReturn
+                  ? quantity.multiply(operationFactor).negate()
+                  : quantity.multiply(operationFactor),
               supplierReturn ? StockMovementType.RETURN_OUT : StockMovementType.RETURN_IN,
               user,
               request.effectiveAt()),
@@ -254,6 +262,12 @@ public class WarehouseOperationRecordService {
           productService
               .findByIdAndCompanyId(correctedProductId, company.getId())
               .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final var correctedUnit =
+          DocumentWorkflowValues.configuredUnit(correctedProduct, item.unitId());
+      final BigDecimal correctedFactor =
+          DocumentWorkflowValues.expectedFactor(correctedProduct, correctedUnit);
+      final BigDecimal correctedSourceQuantity =
+          DocumentWorkflowValues.entryQuantity(source, corrected.multiply(correctedFactor));
       final Warehouse correctedPrimary =
           item.correctedWarehouseId() == null
               ? primaryWarehouse
@@ -291,13 +305,13 @@ public class WarehouseOperationRecordService {
             DocumentLineMapper.buildLine(
                 correction,
                 correctedProduct,
-                correctedProduct.getUnit(),
+                correctedUnit,
                 corrected,
                 DocumentWorkflowValues.nz(source.getUnitPrice()));
         correctedLine.setSourceLine(source);
         correction.getLines().add(lineService.save(correctedLine));
         if (i == 0 && oldQuantity.signum() > 0) {
-          final BigDecimal fulfillmentDelta = corrected.subtract(oldQuantity);
+          final BigDecimal fulfillmentDelta = correctedSourceQuantity.subtract(oldQuantity);
           for (DocumentLineAllocation allocation :
               allocationService.findAllByFulfillmentLineId(source.getId())) {
             final DocumentLineAllocation adjustment = new DocumentLineAllocation();
@@ -427,7 +441,7 @@ public class WarehouseOperationRecordService {
         stockMovementService.postMovement(
             line,
             warehouse,
-            delta,
+            DocumentWorkflowValues.stockQuantity(line, delta),
             delta.signum() > 0
                 ? StockMovementType.ADJUSTMENT_INCREASE
                 : StockMovementType.ADJUSTMENT_DECREASE,
@@ -463,12 +477,7 @@ public class WarehouseOperationRecordService {
         warehouseOperationSupportService.quarantineWarehouse(company.getId());
     final Warehouse target =
         warehouseService.findEntityByIdAndCompanyId(request.targetWarehouseId(), company.getId());
-    if (target.getType()
-            == dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType
-                .QUARANTINE
-        || target.getType()
-            == dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType
-                .TRANSIT) {
+    if (target.getType() == WarehouseType.QUARANTINE || target.getType() == WarehouseType.TRANSIT) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
     }
     final Document release =
@@ -485,30 +494,42 @@ public class WarehouseOperationRecordService {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
       }
       final BigDecimal quantity = DocumentWorkflowValues.nz(item.quantity());
+      final BigDecimal operationFactor =
+          DocumentWorkflowValues.operationFactor(returnedLine, item.unitId());
+      final BigDecimal stockQuantity = quantity.multiply(operationFactor);
       final BigDecimal remaining =
           DocumentWorkflowValues.nz(returnedLine.getQuantity())
               .subtract(DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity()));
-      if (quantity.signum() <= 0 || quantity.compareTo(remaining) > 0) {
+      if (quantity.signum() <= 0
+          || stockQuantity.compareTo(DocumentWorkflowValues.stockQuantity(returnedLine, remaining))
+              > 0) {
         throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
       }
       final DocumentLine line =
           warehouseOperationSupportService.cloneLine(release, returnedLine, quantity);
+      DocumentWorkflowValues.applyOperationUnit(line, returnedLine, item.unitId());
       release.getLines().add(lineService.save(line));
       writer.saveStockMovement(
           stockMovementService.postMovement(
               line,
               quarantine,
-              quantity.negate(),
+              stockQuantity.negate(),
               StockMovementType.RETURN_OUT,
               user,
               request.effectiveAt()),
           request.reason());
       writer.saveStockMovement(
           stockMovementService.postMovement(
-              line, target, quantity, StockMovementType.RETURN_IN, user, request.effectiveAt()),
+              line,
+              target,
+              stockQuantity,
+              StockMovementType.RETURN_IN,
+              user,
+              request.effectiveAt()),
           request.reason());
       returnedLine.setReleasedQuantity(
-          DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity()).add(quantity));
+          DocumentWorkflowValues.nz(returnedLine.getReleasedQuantity())
+              .add(DocumentWorkflowValues.entryQuantity(returnedLine, stockQuantity)));
       lineService.save(returnedLine);
     }
     writer.complete(release);
@@ -588,19 +609,29 @@ public class WarehouseOperationRecordService {
               : productService
                   .findByIdAndCompanyId(item.productId(), company.getId())
                   .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      final var unit =
+          DocumentWorkflowValues.configuredUnit(
+              product,
+              item.unitId() == null && product.getId().equals(source.getProduct().getId())
+                  ? source.getUnitSnapshot() == null
+                      ? source.getProduct().getUnit().getId()
+                      : source.getUnitSnapshot().getId()
+                  : item.unitId());
+      final BigDecimal factor = DocumentWorkflowValues.expectedFactor(product, unit);
+      final BigDecimal stockQuantity = quantity.multiply(factor);
       final DocumentLine line =
-          DocumentLineMapper.buildLine(
-              delivery, product, product.getUnit(), quantity, BigDecimal.ZERO);
+          DocumentLineMapper.buildLine(delivery, product, unit, quantity, BigDecimal.ZERO);
       line.setSourceLine(source);
       delivery.getLines().add(lineService.save(line));
       source.setReplacedQuantity(
-          DocumentWorkflowValues.nz(source.getReplacedQuantity()).add(quantity));
+          DocumentWorkflowValues.nz(source.getReplacedQuantity())
+              .add(DocumentWorkflowValues.entryQuantity(source, stockQuantity)));
       lineService.save(source);
       writer.saveStockMovement(
           stockMovementService.postMovement(
               line,
               warehouse,
-              quantity.negate(),
+              stockQuantity.negate(),
               StockMovementType.SALE_OUTBOUND,
               user,
               request.effectiveAt()),
@@ -655,6 +686,16 @@ public class WarehouseOperationRecordService {
       final DocumentLine countLine =
           warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
       final var result = preview.lines().get(i);
+      final BigDecimal countFactor =
+          DocumentWorkflowValues.operationFactor(countLine, item.unitId());
+      if (item.unitId() != null) {
+        final var countUnit =
+            DocumentWorkflowValues.configuredUnit(countLine.getProduct(), item.unitId());
+        countLine.setUnitSnapshot(countUnit);
+        countLine.setUnitCodeSnapshot(countUnit.getCode());
+        countLine.setUnitNameSnapshot(countUnit.getName());
+        countLine.setConversionFactorSnapshot(countFactor);
+      }
       countLine.setExpectedQuantity(result.expectedAtCount());
       countLine.setCountedQuantity(result.countedQuantity());
       countLine.setVariance(result.variance());
@@ -664,6 +705,14 @@ public class WarehouseOperationRecordService {
       if (delta.signum() != 0) {
         final DocumentLine line =
             warehouseOperationSupportService.cloneLine(adjustment, countLine, delta.abs());
+        final var stockUnit =
+            countLine.getProduct().getSecondaryUnit() == null
+                ? countLine.getProduct().getUnit()
+                : countLine.getProduct().getSecondaryUnit();
+        line.setUnitSnapshot(stockUnit);
+        line.setUnitCodeSnapshot(stockUnit.getCode());
+        line.setUnitNameSnapshot(stockUnit.getName());
+        line.setConversionFactorSnapshot(BigDecimal.ONE);
         line.setSourceLine(countLine);
         adjustment.getLines().add(lineService.save(line));
         writer.saveStockMovement(
@@ -686,6 +735,7 @@ public class WarehouseOperationRecordService {
     writer.relate(saved, adjustmentSaved, DocumentRelationType.FULFILLS);
     writer.consumeKey(saved, key);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, "stock count reconciled");
+
     return responseMapper.toResponse(saved);
   }
 }

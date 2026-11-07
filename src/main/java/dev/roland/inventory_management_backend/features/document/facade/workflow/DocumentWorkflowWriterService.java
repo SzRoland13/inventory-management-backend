@@ -2,11 +2,14 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 
 import java.time.LocalDateTime;
 
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivity;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
@@ -78,10 +81,7 @@ public class DocumentWorkflowWriterService {
         sequenceService
             .lockByScope(companyId, prefix.getId(), year)
             .orElseThrow(
-                () ->
-                    new dev.roland.inventory_management_backend.common.exception.ApiException(
-                        dev.roland.inventory_management_backend.features.document.message
-                            .DocumentApiMessageKey.DOCUMENT_SEQUENCE_UNAVAILABLE));
+                () -> new ApiException(DocumentApiMessageKey.DOCUMENT_SEQUENCE_UNAVAILABLE));
     sequence.setCounter(sequence.getCounter() + 1);
     document.setDocumentSequence(sequence);
     document.setDocumentNumber(
@@ -154,8 +154,7 @@ public class DocumentWorkflowWriterService {
   public void relate(
       final Document source,
       final Document target,
-      final dev.roland.inventory_management_backend.features.document.enumeration
-              .DocumentRelationType
+      final DocumentRelationType
           type) {
     final DocumentRelation relation = new DocumentRelation();
     relation.setSourceDocument(source);

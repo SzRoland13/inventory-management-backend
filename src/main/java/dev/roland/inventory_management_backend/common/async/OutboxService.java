@@ -17,6 +17,7 @@ import dev.roland.inventory_management_backend.common.enumeration.MailType;
 import dev.roland.inventory_management_backend.common.mail.MailAttachment;
 import dev.roland.inventory_management_backend.common.mail.Mailable;
 import dev.roland.inventory_management_backend.common.message.AsyncJobMessageKey;
+import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
 import lombok.RequiredArgsConstructor;
 
 /** Creates durable asynchronous jobs within their caller's database transaction. */
@@ -132,8 +133,7 @@ public class OutboxService {
      */
     Mailable toMailable() {
       return switch (type) {
-        case ONE_TIME_CODE -> new dev.roland.inventory_management_backend.features.one_time_code
-            .mail.OneTimeCodeMailable(
+        case ONE_TIME_CODE -> new OneTimeCodeMailable(
             recipient,
             templateVariables.get("username"),
             templateVariables.get("oneTimeCode"),

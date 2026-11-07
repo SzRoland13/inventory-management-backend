@@ -159,7 +159,7 @@ public class DocumentFulfillmentWorkflowService {
             productService
                 .findByIdAndCompanyId(input.productId(), company.getId())
                 .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
-        final Unit unit = product.getUnit();
+        final Unit unit = DocumentWorkflowValues.configuredUnit(product, input.unitId());
         draftWorkflowService.addLine(saved, product, unit, input.quantity(), BigDecimal.ZERO);
       } else {
         if (input.sourceLineId() == null) {
@@ -173,10 +173,16 @@ public class DocumentFulfillmentWorkflowService {
                     () -> new ApiException(DocumentApiMessageKey.DOCUMENT_CROSS_COMPANY_REFERENCE));
         final DocumentLine line =
             draftWorkflowService.copyOperationLine(saved, sourceLine, input.quantity());
+        DocumentWorkflowValues.applyOperationUnit(line, sourceLine, input.unitId());
         final DocumentLineAllocation allocation = new DocumentLineAllocation();
         allocation.setFulfillmentLine(line);
         allocation.setSourceOrderLine(sourceLine);
-        allocation.setQuantity(input.quantity());
+        allocation.setQuantity(
+            DocumentWorkflowValues.entryQuantity(
+                sourceLine,
+                input
+                    .quantity()
+                    .multiply(DocumentWorkflowValues.operationFactor(sourceLine, input.unitId()))));
         allocationService.save(allocation);
       }
     }
@@ -299,8 +305,9 @@ public class DocumentFulfillmentWorkflowService {
                 : DocumentWorkflowValues.nz(input.quantity());
         final BigDecimal conversionFactor =
             line == null
-                ? DocumentWorkflowValues.expectedFactor(product, product.getUnit())
-                : DocumentWorkflowValues.nz(line.getConversionFactorSnapshot());
+                ? DocumentWorkflowValues.expectedFactor(
+                    product, DocumentWorkflowValues.configuredUnit(product, input.unitId()))
+                : DocumentWorkflowValues.operationFactor(line, input.unitId());
         final BigDecimal stockQty = operationQty.multiply(conversionFactor);
         final BigDecimal delta = type == DocumentType.DELIVERY_NOTE ? stockQty.negate() : stockQty;
         final BigDecimal available =
@@ -329,8 +336,13 @@ public class DocumentFulfillmentWorkflowService {
               DocumentWorkflowValues.nz(orderLine.getQuantity())
                   .subtract(accessService.fulfilledFor(orderLine))
                   .subtract(DocumentWorkflowValues.nz(orderLine.getClosedQuantity()));
-          if (operationQty.compareTo(remaining) > 0) {
-            shortfall = operationQty.subtract(remaining);
+          final BigDecimal operationStockQty = operationQty.multiply(conversionFactor);
+          final BigDecimal remainingStockQty =
+              DocumentWorkflowValues.stockQuantity(orderLine, remaining);
+          if (operationStockQty.compareTo(remainingStockQty) > 0) {
+            shortfall =
+                DocumentWorkflowValues.entryQuantity(
+                    orderLine, operationStockQty.subtract(remainingStockQty));
             error = DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey();
           }
         }

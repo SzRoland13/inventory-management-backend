@@ -44,6 +44,7 @@ import dev.roland.inventory_management_backend.features.document_line_allocation
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.product.Product;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
+import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -129,11 +130,10 @@ class WarehouseOperationRecordServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     assertSame(response, service.createReturn(request, company, actor, "key"));
-    assertEquals(new BigDecimal("2"), sourceLine.getReturnedQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(sourceLine.getReturnedQuantity()));
     assertEquals(warehouse, returned.getTargetWarehouse());
     verify(writer).complete(returned);
     verify(writer).consumeKey(eq(sourceDocument), eq("key"), any(Document.class));
@@ -173,7 +173,7 @@ class WarehouseOperationRecordServiceTest {
     when(support.line(22L, COMPANY_ID)).thenReturn(source);
     when(support.defaultCorrectionWarehouse(original)).thenReturn(warehouse);
     when(productService.findByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(Optional.of(product));
-    when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(new DocumentLine());
+    when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(source);
     when(stockMovementService.postMovement(
             any(),
             any(),
@@ -181,8 +181,7 @@ class WarehouseOperationRecordServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     assertSame(response, service.createCorrection(original, request, company, actor, "key"));
     verify(writer).complete(correction);
@@ -227,7 +226,7 @@ class WarehouseOperationRecordServiceTest {
     when(allocationService.findAllByFulfillmentLineId(22L)).thenReturn(List.of(allocation));
     when(support.defaultCorrectionWarehouse(original)).thenReturn(warehouse);
     when(productService.findByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(Optional.of(product));
-    when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(new DocumentLine());
+    when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(source);
     when(stockMovementService.postMovement(
             any(),
             any(),
@@ -235,8 +234,7 @@ class WarehouseOperationRecordServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     service.createCorrection(original, request, company, actor, "correction-key");
 
@@ -283,12 +281,11 @@ class WarehouseOperationRecordServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     assertSame(response, service.releaseQuarantine(returned, request, company, actor, "key"));
 
-    assertEquals(new BigDecimal("2"), returnedLine.getReleasedQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(returnedLine.getReleasedQuantity()));
     assertEquals(quarantine, release.getSourceWarehouse());
     assertEquals(target, release.getTargetWarehouse());
     verify(writer).complete(release);
@@ -321,13 +318,12 @@ class WarehouseOperationRecordServiceTest {
             any(),
             any(),
             org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     assertSame(response, service.createReplacement(request, company, actor, "key"));
 
     assertEquals(true, delivery.isNonBillable());
-    assertEquals(new BigDecimal("2"), returnedLine.getReplacedQuantity());
+    assertEquals(0, new BigDecimal("2").compareTo(returnedLine.getReplacedQuantity()));
     verify(writer).complete(delivery);
   }
 
@@ -358,8 +354,7 @@ class WarehouseOperationRecordServiceTest {
     when(support.cloneLine(adjustment, countLine, new BigDecimal("2")))
         .thenReturn(new DocumentLine());
     when(stockMovementService.postMovement(any(), any(), any(), any(), any()))
-        .thenReturn(
-            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+        .thenReturn(new StockMovement());
 
     assertSame(response, service.postCount(count, request, company, actor, "key"));
 
@@ -551,11 +546,14 @@ class WarehouseOperationRecordServiceTest {
   }
 
   private DocumentLine sourceLine(final Document parent, final Long id, final BigDecimal quantity) {
-    final Product product = Product.builder().id(40L).build();
+    final Unit unit = Unit.builder().id(1L).code("EA").name("Each").build();
+    final Product product = Product.builder().id(40L).unit(unit).build();
     final DocumentLine line = new DocumentLine();
     line.setId(id);
     line.setDocument(parent);
     line.setProduct(product);
+    line.setUnitSnapshot(unit);
+    line.setConversionFactorSnapshot(BigDecimal.ONE);
     line.setQuantity(quantity);
     line.setUnitPrice(BigDecimal.ONE);
     return line;
