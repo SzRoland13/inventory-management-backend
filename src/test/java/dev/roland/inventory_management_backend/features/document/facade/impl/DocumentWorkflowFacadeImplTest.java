@@ -13,6 +13,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1150,6 +1154,50 @@ class DocumentWorkflowFacadeImplTest {
     var response = facade.post(3L, "key", "0");
 
     assertEquals("DRAFT", response.status());
+  }
+
+  @Test
+  void concurrentRetriesSerializeOnDocumentLockAndDoNotPostTwice() throws Exception {
+    final Document document = document(DocumentType.DELIVERY_NOTE, DocumentStatus.DRAFT);
+    final Object documentLock = new Object();
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID))
+        .thenAnswer(
+            invocation -> {
+              synchronized (documentLock) {
+                return Optional.of(document);
+              }
+            });
+    when(documentService.postingKeyExists(3L, "same-key")).thenReturn(true);
+
+    final CountDownLatch ready = new CountDownLatch(2);
+    final CountDownLatch start = new CountDownLatch(1);
+    try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+      final Future<String> first =
+          executor.submit(
+              () -> {
+                ready.countDown();
+                start.await();
+                return facade.post(3L, "same-key", "0").status();
+              });
+      final Future<String> second =
+          executor.submit(
+              () -> {
+                ready.countDown();
+                start.await();
+                return facade.post(3L, "same-key", "0").status();
+              });
+
+      ready.await();
+      start.countDown();
+      assertEquals("DRAFT", first.get());
+      assertEquals("DRAFT", second.get());
+    }
+
+    org.mockito.Mockito.verify(documentService, org.mockito.Mockito.times(2))
+        .lockByIdAndCompanyId(3L, COMPANY_ID);
+    org.mockito.Mockito.verify(documentService, org.mockito.Mockito.times(2))
+        .postingKeyExists(3L, "same-key");
+    org.mockito.Mockito.verify(postingService, org.mockito.Mockito.never()).complete(any());
   }
 
   @Test
