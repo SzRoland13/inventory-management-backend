@@ -3,7 +3,9 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -12,9 +14,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import jakarta.persistence.LockModeType;
+import jakarta.transaction.Transactional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,6 +41,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
+import dev.roland.inventory_management_backend.features.document.repository.DocumentRepository;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
@@ -227,6 +234,45 @@ class CommercialDocumentWorkflowServiceTest {
     workflow.createDraft(request);
 
     assertEquals(2, savedDocument.get().getLines().size());
+  }
+
+  @Test
+  void locksSourceDocumentsInStableOrderBeforeCheckingExistingBillingAllocations() {
+    final Document secondSource = secondReceipt();
+    secondSource.setCurrency(currency);
+    lenient().when(access.lock(12L, COMPANY_ID)).thenReturn(secondSource);
+    final CommercialDraft draft = twoSourceDraft();
+
+    workflow.createDraft(
+        new CommercialDraft(
+            draft.type(),
+            List.of(12L, SOURCE_ID),
+            draft.date(),
+            draft.currencyId(),
+            draft.paymentTerms(),
+            draft.reason(),
+            draft.referenceNumber(),
+            draft.settlementOwnerId(),
+            draft.lines()));
+
+    final InOrder order = inOrder(access, documents);
+    order.verify(access).lock(SOURCE_ID, COMPANY_ID);
+    order.verify(access).lock(12L, COMPANY_ID);
+    order.verify(documents, times(2)).findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID);
+  }
+
+  @Test
+  void commercialDraftCreationUsesTransactionalPessimisticSourceLocks() throws Exception {
+    final var lockMethod =
+        DocumentRepository.class.getMethod("lockByIdAndCompanyId", Long.class, Long.class);
+    final var createDraftMethod =
+        CommercialDocumentWorkflowService.class.getMethod("createDraft", CommercialDraft.class);
+
+    assertEquals(
+        LockModeType.PESSIMISTIC_WRITE,
+        lockMethod.getAnnotation(org.springframework.data.jpa.repository.Lock.class).value());
+    org.junit.jupiter.api.Assertions.assertNotNull(
+        createDraftMethod.getAnnotation(Transactional.class));
   }
 
   @Test
