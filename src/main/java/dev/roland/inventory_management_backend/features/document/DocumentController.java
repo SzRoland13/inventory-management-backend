@@ -22,6 +22,8 @@ import dev.roland.inventory_management_backend.features.document.dto.CloseRemain
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -75,6 +77,7 @@ public class DocumentController {
   public static final String STOCK_COUNT_POST = "/stock-counts/{id}/post";
   public static final String CORRECTION_PREVIEW = ID_PARAM + "/corrections/preview";
   public static final String CORRECTION = ID_PARAM + "/corrections";
+  public static final String COMMERCIAL_PREVIEW = "/commercial/preview";
   public static final String COMMERCIAL_DRAFTS = "/commercial/drafts";
   public static final String COMMERCIAL_DRAFT = ID_PARAM + "/commercial/draft";
   public static final String COMMERCIAL_APPROVE = ID_PARAM + "/commercial/approve";
@@ -93,6 +96,18 @@ public class DocumentController {
   @GetMapping(COMMERCIAL_SETTLEMENT_OWNERS)
   public ResponseEntity<ApiResponse<java.util.List<SettlementOwner>>> settlementOwners() {
     return success(facade.settlementOwners());
+  }
+
+  /**
+   * Previews commercial source balances and totals without persisting a document.
+   *
+   * @param request commercial draft data
+   * @return balances and totals for the proposed draft
+   */
+  @PostMapping(COMMERCIAL_PREVIEW)
+  public ResponseEntity<ApiResponse<CommercialPreviewResponse>> previewCommercialDraft(
+      @Valid @RequestBody final CommercialPreviewRequest request) {
+    return success(facade.previewCommercialDraft(request));
   }
 
   /**

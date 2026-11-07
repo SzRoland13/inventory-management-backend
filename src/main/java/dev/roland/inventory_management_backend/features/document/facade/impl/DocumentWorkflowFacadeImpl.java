@@ -19,6 +19,8 @@ import dev.roland.inventory_management_backend.features.document.dto.CloseRemain
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -149,6 +151,12 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
   @Override
   public DocumentResponse createCommercialDraft(final CommercialDraft request) {
     return commercialWorkflowService.createDraft(request);
+  }
+
+  @Transactional
+  @Override
+  public CommercialPreviewResponse previewCommercialDraft(final CommercialPreviewRequest request) {
+    return commercialWorkflowService.preview(request);
   }
 
   @Transactional

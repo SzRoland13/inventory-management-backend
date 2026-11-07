@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +24,11 @@ import dev.roland.inventory_management_backend.features.document.dto.CommercialD
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialLineDraft;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewLine;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.DocumentTotals;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
 import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
@@ -34,6 +39,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
+import dev.roland.inventory_management_backend.features.document.utils.DocumentTotalsCalculator;
 import dev.roland.inventory_management_backend.features.document.utils.DocumentWorkflowValues;
 import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
@@ -61,6 +67,201 @@ public class CommercialDocumentWorkflowService {
   private final CurrentCompanyProvider companyProvider;
   private final CurrencyService currencyService;
   private final UserService userService;
+
+  /**
+   * Calculates source balances and monetary totals without persisting a document.
+   *
+   * @param previewRequest proposed draft and optional draft excluded from availability checks
+   * @return calculated totals and per-source-line balances
+   */
+  @Transactional
+  public CommercialPreviewResponse preview(final CommercialPreviewRequest previewRequest) {
+    final CommercialDraft request = previewRequest.draft();
+    final Company company = companyProvider.getCurrentCompany();
+    final User actor = access.currentActor();
+    if (actor == null || !access.canCreateType(request.type(), actor)) {
+      throw invalid();
+    }
+    final Long excludedId = previewRequest.excludeDocumentId();
+    if (excludedId != null) {
+      final Document excluded = access.lock(excludedId, company.getId());
+      if (excluded.getStatus() != DocumentStatus.DRAFT
+          || excluded.getType() != request.type()
+          || !access.canManageDocument(excluded, actor)) {
+        throw invalid();
+      }
+    }
+    final List<Long> sourceIds = request.sourceDocumentIds().stream().distinct().sorted().toList();
+    final boolean credit = request.type() == DocumentType.FINANCIAL_CREDIT;
+    if (sourceIds.size() != request.sourceDocumentIds().size()
+        || (credit && sourceIds.size() != 1)) {
+      throw invalid();
+    }
+    final List<Document> sources =
+        sourceIds.stream().map(id -> access.lock(id, company.getId())).toList();
+    validateSources(request, sources, company.getId());
+    final Currency currency =
+        currencyService
+            .findById(request.currencyId())
+            .orElseThrow(() -> new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES));
+    if (sources.stream()
+        .anyMatch(
+            source ->
+                source.getCurrency() == null
+                    || !source.getCurrency().getId().equals(currency.getId()))) {
+      throw invalid();
+    }
+    final Map<Long, DocumentLine> sourceLines = new HashMap<>();
+    sources.forEach(
+        source ->
+            DocumentWorkflowValues.safe(source.getLines())
+                .forEach(line -> sourceLines.put(line.getId(), line)));
+    final Set<Long> seen = new HashSet<>();
+    final List<CommercialPreviewLine> balances = new ArrayList<>();
+    final List<DocumentLine> previewLines = new ArrayList<>();
+    boolean valid = true;
+    boolean discrepancy = false;
+    final Document previewDocument = new Document();
+    previewDocument.setCurrency(currency);
+    for (CommercialLineDraft draftLine : request.lines()) {
+      final DocumentLine sourceLine = sourceLines.get(draftLine.sourceLineId());
+      if (sourceLine == null || !seen.add(sourceLine.getId())) {
+        throw invalid();
+      }
+      final BigDecimal quantity = DocumentWorkflowValues.nz(draftLine.quantity());
+      final BigDecimal sourceQuantity = DocumentWorkflowValues.nz(sourceLine.getQuantity());
+      final BigDecimal billedQuantity =
+          credit ? BigDecimal.ZERO : billedQuantity(sourceLine, company.getId(), excludedId);
+      final BigDecimal remainingQuantity =
+          sourceQuantity.subtract(billedQuantity).max(BigDecimal.ZERO);
+      final CreditBalance creditBalance =
+          credit ? creditBalance(sourceLine, company.getId(), excludedId) : CreditBalance.empty();
+      final BigDecimal remainingCreditQuantity =
+          sourceQuantity.subtract(creditBalance.quantity()).max(BigDecimal.ZERO);
+      final BigDecimal remainingCreditNet =
+          sourceQuantity
+              .multiply(DocumentWorkflowValues.nz(sourceLine.getUnitPrice()))
+              .subtract(creditBalance.net())
+              .max(BigDecimal.ZERO);
+      final BigDecimal price =
+          draftLine.unitPrice() == null
+              ? DocumentWorkflowValues.nz(sourceLine.getUnitPrice())
+              : draftLine.unitPrice();
+      final BigDecimal vat =
+          draftLine.vatRate() == null
+              ? DocumentWorkflowValues.nz(sourceLine.getVatRateSnapshot())
+              : draftLine.vatRate();
+      validatePriceAndVat(price, vat);
+      final BigDecimal requestedNet =
+          draftLine.amount() == null ? price.multiply(quantity) : draftLine.amount();
+      if (quantity.signum() < 0
+          || (!credit && quantity.signum() == 0)
+          || (credit
+              && quantity.signum() == 0
+              && DocumentWorkflowValues.nz(draftLine.amount()).signum() <= 0)
+          || requestedNet.signum() < 0
+          || (!credit && quantity.compareTo(remainingQuantity) > 0)
+          || (credit
+              && (quantity.compareTo(remainingCreditQuantity) > 0
+                  || requestedNet.compareTo(remainingCreditNet) > 0))) {
+        valid = false;
+      }
+      if (!credit) {
+        discrepancy |=
+            price.compareTo(DocumentWorkflowValues.nz(sourceLine.getUnitPrice())) != 0
+                || vat.compareTo(DocumentWorkflowValues.nz(sourceLine.getVatRateSnapshot())) != 0;
+      }
+      balances.add(
+          new CommercialPreviewLine(
+              sourceLine.getId(),
+              sourceQuantity,
+              billedQuantity,
+              remainingQuantity,
+              creditBalance.quantity(),
+              remainingCreditQuantity,
+              creditBalance.net(),
+              remainingCreditNet,
+              quantity,
+              requestedNet));
+      previewLines.add(
+          cloneCommercialLine(
+              previewDocument,
+              sourceLine,
+              quantity,
+              price,
+              vat,
+              credit ? draftLine.amount() : null));
+    }
+    if (previewLines.isEmpty()) {
+      throw invalid();
+    }
+    final DocumentTotalsCalculator.Totals calculated =
+        DocumentTotalsCalculator.calculate(previewLines);
+    return new CommercialPreviewResponse(
+        balances,
+        new DocumentTotals(
+            currency.getCode(),
+            calculated.net(),
+            calculated.tax(),
+            calculated.gross(),
+            BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)),
+        discrepancy,
+        valid);
+  }
+
+  private BigDecimal billedQuantity(
+      final DocumentLine sourceLine, final Long companyId, final Long excludedDocumentId) {
+    BigDecimal allocated = BigDecimal.ZERO;
+    for (Document document : documents.findAllByCompanyIdOrderByUpdatedAtDesc(companyId)) {
+      if (excludedDocumentId != null && excludedDocumentId.equals(document.getId())) {
+        continue;
+      }
+      if (document.getType() != DocumentType.SUPPLIER_BILL
+          && document.getType() != DocumentType.CUSTOMER_INVOICE) {
+        continue;
+      }
+      for (DocumentLine line : DocumentWorkflowValues.safe(document.getLines())) {
+        if (line.getSourceLine() != null
+            && line.getSourceLine().getId().equals(sourceLine.getId())) {
+          allocated = allocated.add(DocumentWorkflowValues.nz(line.getQuantity()));
+        }
+      }
+    }
+    return allocated;
+  }
+
+  private CreditBalance creditBalance(
+      final DocumentLine sourceLine, final Long companyId, final Long excludedDocumentId) {
+    BigDecimal creditedQuantity = BigDecimal.ZERO;
+    BigDecimal creditedNet = BigDecimal.ZERO;
+    for (Document document : documents.findAllByCompanyIdOrderByUpdatedAtDesc(companyId)) {
+      if (excludedDocumentId != null && excludedDocumentId.equals(document.getId())) {
+        continue;
+      }
+      if (document.getType() != DocumentType.FINANCIAL_CREDIT) {
+        continue;
+      }
+      for (DocumentLine line : DocumentWorkflowValues.safe(document.getLines())) {
+        if (line.getSourceLine() != null
+            && line.getSourceLine().getId().equals(sourceLine.getId())) {
+          creditedQuantity = creditedQuantity.add(DocumentWorkflowValues.nz(line.getQuantity()));
+          creditedNet =
+              creditedNet.add(
+                  line.getCommercialNetAmountOverride() == null
+                      ? DocumentWorkflowValues.nz(line.getUnitPrice())
+                          .multiply(DocumentWorkflowValues.nz(line.getQuantity()))
+                      : line.getCommercialNetAmountOverride());
+        }
+      }
+    }
+    return new CreditBalance(creditedQuantity, creditedNet);
+  }
+
+  private record CreditBalance(BigDecimal quantity, BigDecimal net) {
+    private static CreditBalance empty() {
+      return new CreditBalance(BigDecimal.ZERO, BigDecimal.ZERO);
+    }
+  }
 
   /**
    * Creates a commercial document draft from source documents.
@@ -421,7 +622,7 @@ public class CommercialDocumentWorkflowService {
       throw invalid();
     }
     if (type == DocumentType.FINANCIAL_CREDIT) {
-      final Document source = sources.get(0);
+      final Document source = sources.getFirst();
       if (!isFinalInvoice(source)) {
         throw invalid();
       }
@@ -481,28 +682,9 @@ public class CommercialDocumentWorkflowService {
       final BigDecimal requestedAmount,
       final Long companyId,
       final Long excludedDocumentId) {
-    BigDecimal creditedQuantity = BigDecimal.ZERO;
-    BigDecimal creditedNet = BigDecimal.ZERO;
-    for (Document document : documents.findAllByCompanyIdOrderByUpdatedAtDesc(companyId)) {
-      if (excludedDocumentId != null && excludedDocumentId.equals(document.getId())) {
-        continue;
-      }
-      if (document.getType() != DocumentType.FINANCIAL_CREDIT) {
-        continue;
-      }
-      for (DocumentLine line : DocumentWorkflowValues.safe(document.getLines())) {
-        if (line.getSourceLine() != null
-            && line.getSourceLine().getId().equals(sourceLine.getId())) {
-          creditedQuantity = creditedQuantity.add(DocumentWorkflowValues.nz(line.getQuantity()));
-          creditedNet =
-              creditedNet.add(
-                  line.getCommercialNetAmountOverride() == null
-                      ? DocumentWorkflowValues.nz(line.getUnitPrice())
-                          .multiply(DocumentWorkflowValues.nz(line.getQuantity()))
-                      : line.getCommercialNetAmountOverride());
-        }
-      }
-    }
+    final CreditBalance balance = creditBalance(sourceLine, companyId, excludedDocumentId);
+    final BigDecimal creditedQuantity = balance.quantity();
+    final BigDecimal creditedNet = balance.net();
     final BigDecimal unitPrice =
         requestedPrice == null
             ? DocumentWorkflowValues.nz(sourceLine.getUnitPrice())

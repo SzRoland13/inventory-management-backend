@@ -34,6 +34,7 @@ import dev.roland.inventory_management_backend.features.document.dto.CommercialD
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialLineDraft;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
 import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
@@ -273,6 +274,24 @@ class CommercialDocumentWorkflowServiceTest {
         lockMethod.getAnnotation(org.springframework.data.jpa.repository.Lock.class).value());
     org.junit.jupiter.api.Assertions.assertNotNull(
         createDraftMethod.getAnnotation(Transactional.class));
+  }
+
+  @Test
+  void previewReturnsRemainingCreditBalanceAndServerRoundedTotals() {
+    source.setType(DocumentType.CUSTOMER_INVOICE);
+    source.setStatus(DocumentStatus.ISSUED);
+    final CommercialDraft request =
+        draft(DocumentType.FINANCIAL_CREDIT, null, null, new BigDecimal("12.34"));
+
+    final var preview = workflow.preview(new CommercialPreviewRequest(request, null));
+
+    assertEquals(new BigDecimal("5"), preview.lines().getFirst().eligibleQuantity());
+    assertEquals(new BigDecimal("5"), preview.lines().getFirst().remainingCreditableQuantity());
+    assertEquals(new BigDecimal("0"), preview.lines().getFirst().creditedNetAmount());
+    assertEquals(new BigDecimal("12.34"), preview.totals().net());
+    assertEquals(new BigDecimal("3.33"), preview.totals().tax());
+    assertEquals(new BigDecimal("15.67"), preview.totals().gross());
+    assertEquals(true, preview.valid());
   }
 
   @Test

@@ -10,6 +10,8 @@ import dev.roland.inventory_management_backend.features.document.dto.CloseRemain
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDecision;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraft;
 import dev.roland.inventory_management_backend.features.document.dto.CommercialDraftUpdate;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewRequest;
+import dev.roland.inventory_management_backend.features.document.dto.CommercialPreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.Draft;
 import dev.roland.inventory_management_backend.features.document.dto.DraftUpdate;
@@ -75,6 +77,14 @@ public interface DocumentWorkflowFacade {
    * @return created document
    */
   DocumentResponse createCommercialDraft(CommercialDraft request);
+
+  /**
+   * Previews commercial source balances and totals without persisting a document.
+   *
+   * @param request proposed commercial draft
+   * @return preview totals and source balances
+   */
+  CommercialPreviewResponse previewCommercialDraft(CommercialPreviewRequest request);
 
   /**
    * Updates a commercial document draft.
