@@ -79,6 +79,7 @@ public record WarehouseOperationRequest(
    * @param productId the productId value
    * @param quantity the quantity value
    * @param reason the reason value
+   * @param closureReopens explicit reasoned reopenings of source order lines
    * @param sourceLineId the sourceLineId value
    * @param varianceReason the varianceReason value
    */
@@ -92,5 +93,51 @@ public record WarehouseOperationRequest(
       BigDecimal countedQuantity,
       String varianceReason,
       ReturnDisposition disposition,
-      String reason) {}
+      String reason,
+      List<ClosureReopen> closureReopens) {
+    /** Keeps the pre-reopen request shape source-compatible for other warehouse operations. */
+    public WarehouseOperationLine(
+        final Long sourceLineId,
+        final Long productId,
+        final BigDecimal quantity,
+        final BigDecimal correctedQuantity,
+        final Long correctedProductId,
+        final Long correctedWarehouseId,
+        final BigDecimal countedQuantity,
+        final String varianceReason,
+        final ReturnDisposition disposition,
+        final String reason) {
+      this(
+          sourceLineId,
+          productId,
+          quantity,
+          correctedQuantity,
+          correctedProductId,
+          correctedWarehouseId,
+          countedQuantity,
+          varianceReason,
+          disposition,
+          reason,
+          List.of());
+    }
+
+    /** Creates a defensive copy of closure adjustments. */
+    public WarehouseOperationLine {
+      closureReopens = immutableCopy(closureReopens);
+    }
+
+    @Override
+    public List<ClosureReopen> closureReopens() {
+      return immutableCopy(closureReopens);
+    }
+  }
+
+  /**
+   * An explicit reduction of a closed quantity on a source order line.
+   *
+   * @param sourceOrderLineId the source order line to reopen
+   * @param quantity the quantity to reopen
+   * @param reason the reason for reopening the quantity
+   */
+  public record ClosureReopen(Long sourceOrderLineId, BigDecimal quantity, String reason) {}
 }

@@ -36,6 +36,8 @@ public enum DocumentApiMessageKey implements MessageKey {
   DOCUMENT_CORRECTION_BLOCKED("document.error.correction_blocked"),
   DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT(
       "document.error.correction_closed_quantity_conflict"),
+  DOCUMENT_CLOSURE_REOPEN_INVALID("document.error.closure_reopen_invalid"),
+  DOCUMENT_CLOSURE_REOPEN_REASON_REQUIRED("document.error.closure_reopen_reason_required"),
   DOCUMENT_CORRECTION_NEGATIVE_STOCK("document.error.correction_negative_stock"),
   DOCUMENT_CORRECTION_WORKFLOW_REQUIRED("document.error.correction_workflow_required");
 

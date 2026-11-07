@@ -35,6 +35,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Ret
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
+import dev.roland.inventory_management_backend.features.document_line_allocation.DocumentLineAllocation;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_relation.DocumentRelation;
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
@@ -415,6 +416,116 @@ class WarehouseOperationPreviewServiceTest {
     assertFalse(preview.valid());
     assertEquals(1, preview.lines().size());
     assertNotNull(preview.lines().getFirst().errorMessageKey());
+  }
+
+  @Test
+  void correctionRequiresAndValidatesAnExplicitClosureReopen() {
+    final Document delivery = document(DocumentType.DELIVERY_NOTE, DocumentStatus.COMPLETED);
+    delivery.setSourceWarehouse(warehouse);
+    final Document order = document(DocumentType.SALES_ORDER, DocumentStatus.COMPLETED);
+    final DocumentLine delivered = documentLine(delivery, new BigDecimal("8"));
+    final DocumentLine orderLine = documentLine(order, new BigDecimal("10"));
+    orderLine.setId(52L);
+    orderLine.setClosedQuantity(new BigDecimal("2"));
+    orderLine.setClosureReason("customer requested closure");
+    final DocumentLineAllocation allocation = new DocumentLineAllocation();
+    allocation.setFulfillmentLine(delivered);
+    allocation.setSourceOrderLine(orderLine);
+    allocation.setQuantity(new BigDecimal("8"));
+    when(accessService.find(DOCUMENT_ID)).thenReturn(delivery);
+    when(supportService.line(LINE_ID, COMPANY_ID)).thenReturn(delivered);
+    when(allocationService.findAllByFulfillmentLineId(LINE_ID)).thenReturn(List.of(allocation));
+    when(accessService.fulfilledFor(orderLine)).thenReturn(new BigDecimal("8"));
+    when(supportService.correctionStockDeltas(any(), any(), any(), anyLong())).thenReturn(Map.of());
+
+    final var correctionLine =
+        new WarehouseOperationRequest.WarehouseOperationLine(
+            LINE_ID,
+            null,
+            null,
+            new BigDecimal("9"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(
+                new WarehouseOperationRequest.ClosureReopen(
+                    orderLine.getId(), new BigDecimal("1"), "correcting the recorded quantity")));
+    final WarehouseOperationPreview valid =
+        service.preview(
+            DOCUMENT_ID,
+            WarehouseOperationType.CORRECTION,
+            request(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "correcting the recorded quantity",
+                List.of(correctionLine),
+                WarehouseOperationType.CORRECT_RECORDING));
+
+    assertTrue(valid.valid());
+
+    final WarehouseOperationPreview conflict =
+        service.preview(
+            DOCUMENT_ID,
+            WarehouseOperationType.CORRECTION,
+            request(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "correcting the recorded quantity",
+                List.of(line(LINE_ID, null, null, "9", null)),
+                WarehouseOperationType.CORRECT_RECORDING));
+    assertFalse(conflict.valid());
+    assertTrue(
+        conflict
+            .blockers()
+            .contains(
+                dev.roland.inventory_management_backend.features.document.message
+                    .DocumentApiMessageKey.DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT
+                    .getKey()));
+
+    final var excessiveReopenLine =
+        new WarehouseOperationRequest.WarehouseOperationLine(
+            LINE_ID,
+            null,
+            null,
+            new BigDecimal("9"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(
+                new WarehouseOperationRequest.ClosureReopen(
+                    orderLine.getId(), new BigDecimal("3"), "too much")));
+    final WarehouseOperationPreview excessive =
+        service.preview(
+            DOCUMENT_ID,
+            WarehouseOperationType.CORRECTION,
+            request(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "correcting the recorded quantity",
+                List.of(excessiveReopenLine),
+                WarehouseOperationType.CORRECT_RECORDING));
+    assertFalse(excessive.valid());
   }
 
   @Test

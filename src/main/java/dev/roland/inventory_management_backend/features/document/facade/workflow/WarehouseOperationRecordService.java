@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.springframework.stereotype.Service;
 
@@ -202,14 +203,37 @@ public class WarehouseOperationRecordService {
     warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
     warehouseOperationSupportService.requireKey(key);
     warehouseOperationSupportService.requireReason(request.reason());
+    lockAffectedOrderDocuments(original, request, company.getId());
     final WarehouseOperationPreview preview =
         previewService.preview(original.getId(), WarehouseOperationType.CORRECTION, request);
+
     if (!preview.valid()) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
     }
+
     final Document correction =
         warehouseOperationSupportService.operationDocument(
             original, DocumentType.CORRECTION, request.reason());
+    final List<ClosureReopenAudit> closureReopenAudits = new ArrayList<>();
+
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      for (var reopen : DocumentWorkflowValues.safe(item.closureReopens())) {
+        final DocumentLine orderLine =
+            warehouseOperationSupportService.line(reopen.sourceOrderLineId(), company.getId());
+        final BigDecimal closedBefore = DocumentWorkflowValues.nz(orderLine.getClosedQuantity());
+        final BigDecimal reopened = DocumentWorkflowValues.nz(reopen.quantity());
+        orderLine.setClosedQuantity(closedBefore.subtract(reopened));
+        lineService.save(orderLine);
+        closureReopenAudits.add(
+            new ClosureReopenAudit(
+                orderLine,
+                closedBefore,
+                reopened,
+                orderLine.getClosedQuantity(),
+                orderLine.getClosureReason(),
+                reopen.reason()));
+      }
+    }
     for (var item : DocumentWorkflowValues.safe(request.lines())) {
       final DocumentLine source =
           warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
@@ -292,10 +316,85 @@ public class WarehouseOperationRecordService {
     writer.complete(correction);
     final Document saved = documentService.save(correction);
     writer.relate(original, saved, DocumentRelationType.CORRECTS);
+    for (ClosureReopenAudit audit : closureReopenAudits) {
+      writer.addActivity(
+          audit.orderLine().getDocument(),
+          DocumentActivityEvent.REMAINDER_REOPENED,
+          closureReopenDetails(saved, audit));
+    }
     writer.consumeKey(original, key);
     writer.addActivity(saved, DocumentActivityEvent.POSTED, request.reason());
     return responseMapper.toResponse(saved);
   }
+
+  private void lockAffectedOrderDocuments(
+      final Document original, final WarehouseOperationRequest request, final Long companyId) {
+    final TreeSet<Long> orderDocumentIds = new TreeSet<>();
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      if (item.sourceLineId() == null) {
+        continue;
+      }
+      final DocumentLine source =
+          warehouseOperationSupportService.line(item.sourceLineId(), companyId);
+      if (!source.getDocument().getId().equals(original.getId())) {
+        continue;
+      }
+      for (DocumentLineAllocation allocation :
+          allocationService.findAllByFulfillmentLineId(source.getId())) {
+        orderDocumentIds.add(allocation.getSourceOrderLine().getDocument().getId());
+      }
+    }
+    orderDocumentIds.forEach(id -> accessService.lock(id, companyId));
+  }
+
+  private String closureReopenDetails(final Document correction, final ClosureReopenAudit audit) {
+    return "{\"correctionId\":"
+        + correction.getId()
+        + ",\"orderLineId\":"
+        + audit.orderLine().getId()
+        + ",\"closedBefore\":"
+        + audit.closedBefore().toPlainString()
+        + ",\"reopened\":"
+        + audit.reopened().toPlainString()
+        + ",\"closedAfter\":"
+        + audit.closedAfter().toPlainString()
+        + ",\"previousReason\":\""
+        + jsonString(audit.previousReason())
+        + "\",\"reason\":\""
+        + jsonString(audit.reason())
+        + "\"}";
+  }
+
+  private String jsonString(final String value) {
+    final StringBuilder escaped = new StringBuilder();
+    for (char character : (value == null ? "" : value).toCharArray()) {
+      switch (character) {
+        case '"' -> escaped.append("\\\"");
+        case '\\' -> escaped.append("\\\\");
+        case '\b' -> escaped.append("\\b");
+        case '\f' -> escaped.append("\\f");
+        case '\n' -> escaped.append("\\n");
+        case '\r' -> escaped.append("\\r");
+        case '\t' -> escaped.append("\\t");
+        default -> {
+          if (character < 0x20) {
+            escaped.append(String.format("\\u%04x", (int) character));
+          } else {
+            escaped.append(character);
+          }
+        }
+      }
+    }
+    return escaped.toString();
+  }
+
+  private record ClosureReopenAudit(
+      DocumentLine orderLine,
+      BigDecimal closedBefore,
+      BigDecimal reopened,
+      BigDecimal closedAfter,
+      String previousReason,
+      String reason) {}
 
   /**
    * * * * * Performs the postCorrectionMovement operation.

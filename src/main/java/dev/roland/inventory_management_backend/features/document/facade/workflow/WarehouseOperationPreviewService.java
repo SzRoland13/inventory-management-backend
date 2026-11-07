@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -253,6 +255,91 @@ public class WarehouseOperationPreviewService {
     if (request.reason() == null || request.reason().isBlank()) {
       blockers.add(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED.getKey());
     }
+    final Map<Long, BigDecimal> fulfillmentDeltas = new HashMap<>();
+    final Map<Long, DocumentLine> affectedOrderLines = new HashMap<>();
+    final Map<Long, WarehouseOperationRequest.ClosureReopen> closureReopens = new HashMap<>();
+
+    for (var item : DocumentWorkflowValues.safe(request.lines())) {
+      final DocumentLine source =
+          item.sourceLineId() == null
+              ? null
+              : warehouseOperationSupportService.line(item.sourceLineId(), company.getId());
+
+      if (source == null
+          || document == null
+          || !source.getDocument().getId().equals(document.getId())) {
+        continue;
+      }
+
+      final BigDecimal corrected = DocumentWorkflowValues.nz(item.correctedQuantity());
+      final BigDecimal original = DocumentWorkflowValues.nz(source.getQuantity());
+      final Set<Long> allocatedOrderLineIds = new HashSet<>();
+
+      for (DocumentLineAllocation allocation :
+          allocationService.findAllByFulfillmentLineId(source.getId())) {
+        final DocumentLine orderLine = allocation.getSourceOrderLine();
+        final BigDecimal allocationDelta =
+            original.signum() == 0
+                ? BigDecimal.ZERO
+                : allocation
+                    .getQuantity()
+                    .multiply(corrected.subtract(original))
+                    .divide(original, 8, RoundingMode.HALF_UP);
+        fulfillmentDeltas.merge(orderLine.getId(), allocationDelta, BigDecimal::add);
+        affectedOrderLines.put(orderLine.getId(), orderLine);
+        allocatedOrderLineIds.add(orderLine.getId());
+      }
+
+      for (var reopen : DocumentWorkflowValues.safe(item.closureReopens())) {
+        final boolean linked =
+            reopen != null
+                && reopen.sourceOrderLineId() != null
+                && allocatedOrderLineIds.contains(reopen.sourceOrderLineId());
+
+        if (!linked || closureReopens.containsKey(reopen.sourceOrderLineId())) {
+          blockers.add(DocumentApiMessageKey.DOCUMENT_CLOSURE_REOPEN_INVALID.getKey());
+
+          continue;
+        }
+
+        final DocumentLine orderLine = affectedOrderLines.get(reopen.sourceOrderLineId());
+        final BigDecimal reopenQuantity = DocumentWorkflowValues.nz(reopen.quantity());
+
+        if (reopenQuantity.signum() <= 0
+            || reopenQuantity.compareTo(DocumentWorkflowValues.nz(orderLine.getClosedQuantity()))
+                > 0) {
+          blockers.add(DocumentApiMessageKey.DOCUMENT_CLOSURE_REOPEN_INVALID.getKey());
+        }
+
+        if (reopen.reason() == null || reopen.reason().isBlank()) {
+          blockers.add(DocumentApiMessageKey.DOCUMENT_CLOSURE_REOPEN_REASON_REQUIRED.getKey());
+        }
+        closureReopens.put(reopen.sourceOrderLineId(), reopen);
+      }
+    }
+
+    for (var entry : affectedOrderLines.entrySet()) {
+      final DocumentLine orderLine = entry.getValue();
+      final var reopen = closureReopens.get(entry.getKey());
+      final BigDecimal closedAfterReopen =
+          DocumentWorkflowValues.nz(orderLine.getClosedQuantity())
+              .subtract(
+                  reopen == null ? BigDecimal.ZERO : DocumentWorkflowValues.nz(reopen.quantity()));
+      final BigDecimal fulfilledAfterCorrection =
+          accessService
+              .fulfilledFor(orderLine)
+              .add(fulfillmentDeltas.getOrDefault(entry.getKey(), BigDecimal.ZERO));
+
+      if (closedAfterReopen.signum() < 0
+          || fulfilledAfterCorrection.signum() < 0
+          || fulfilledAfterCorrection
+                  .add(closedAfterReopen)
+                  .compareTo(DocumentWorkflowValues.nz(orderLine.getQuantity()))
+              > 0) {
+        blockers.add(DocumentApiMessageKey.DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT.getKey());
+      }
+    }
+
     for (var item : request.lines()) {
       final DocumentLine source =
           item.sourceLineId() == null
@@ -269,38 +356,18 @@ public class WarehouseOperationPreviewService {
               && source.getDocument().getId().equals(document == null ? null : document.getId())
               && corrected.signum() >= 0
               && corrected.compareTo(returned) >= 0;
+
       if (!valid) {
         blockers.add(DocumentApiMessageKey.DOCUMENT_CORRECTION_BLOCKED.getKey());
       }
-      if (source != null && DocumentWorkflowValues.nz(source.getQuantity()).signum() > 0) {
-        final BigDecimal fulfillmentDelta =
-            corrected.subtract(DocumentWorkflowValues.nz(source.getQuantity()));
-        for (DocumentLineAllocation allocation :
-            allocationService.findAllByFulfillmentLineId(source.getId())) {
-          final DocumentLine orderLine = allocation.getSourceOrderLine();
-          final BigDecimal allocationDelta =
-              allocation
-                  .getQuantity()
-                  .multiply(fulfillmentDelta)
-                  .divide(DocumentWorkflowValues.nz(source.getQuantity()), 8, RoundingMode.HALF_UP);
-          final BigDecimal projected =
-              accessService
-                  .fulfilledFor(orderLine)
-                  .add(allocationDelta)
-                  .add(DocumentWorkflowValues.nz(orderLine.getClosedQuantity()));
-          if (projected.signum() < 0
-              || projected.compareTo(DocumentWorkflowValues.nz(orderLine.getQuantity())) > 0) {
-            blockers.add(
-                DocumentApiMessageKey.DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT.getKey());
-          }
-        }
-      }
       BigDecimal quantityDelta = delta;
       BigDecimal resultingQuantity = null;
+
       if (source != null && document != null && valid) {
         final Map<WarehouseOperationSupportService.StockKey, BigDecimal> stockDeltas =
             warehouseOperationSupportService.correctionStockDeltas(
                 document, source, item, company.getId());
+
         for (var entry : stockDeltas.entrySet()) {
           final Warehouse warehouse =
               warehouseService.findEntityByIdAndCompanyId(
@@ -315,13 +382,16 @@ public class WarehouseOperationPreviewService {
                   .map(b -> DocumentWorkflowValues.nz(b.getQuantity()))
                   .orElse(BigDecimal.ZERO);
           final BigDecimal projected = current.add(entry.getValue());
+
           if (projected.signum() < 0) {
             blockers.add(DocumentApiMessageKey.DOCUMENT_CORRECTION_NEGATIVE_STOCK.getKey());
           }
+
           final Long correctedWarehouseId =
               item.correctedWarehouseId() == null
                   ? warehouseOperationSupportService.defaultCorrectionWarehouse(document).getId()
                   : item.correctedWarehouseId();
+
           if (entry
                   .getKey()
                   .productId()
@@ -335,6 +405,7 @@ public class WarehouseOperationPreviewService {
           }
         }
       }
+
       previewLines.add(
           WarehouseOperationPreview.Line.builder()
               .sourceLineId(item.sourceLineId())
@@ -356,6 +427,7 @@ public class WarehouseOperationPreviewService {
                   valid ? null : DocumentApiMessageKey.DOCUMENT_CORRECTION_BLOCKED.getKey())
               .build());
     }
+
     if (document != null) {
       relationService
           .findAllBySourceDocumentIdOrTargetDocumentId(document.getId(), document.getId())
@@ -377,6 +449,7 @@ public class WarehouseOperationPreviewService {
                               .reduce(BigDecimal.ZERO, BigDecimal::add))));
       final LocalDateTime after =
           document.getCompletedAt() == null ? document.getCreatedAt() : document.getCompletedAt();
+
       if (after != null) {
         for (var lineRequest : request.lines()) {
           final DocumentLine source =
@@ -385,6 +458,7 @@ public class WarehouseOperationPreviewService {
               document.getType() == DocumentType.GOODS_RECEIPT
                   ? document.getTargetWarehouse()
                   : document.getSourceWarehouse();
+
           if (warehouse != null) {
             stockMovementService
                 .findEffectiveAfter(source.getProduct().getId(), warehouse.getId(), after)
@@ -411,6 +485,7 @@ public class WarehouseOperationPreviewService {
         && accessService.currentActor().getRole() != UserRole.MANAGER) {
       blockers.add(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION.getKey());
     }
+
     for (var item : DocumentWorkflowValues.safe(request.lines())) {
       final DocumentLine line =
           item.sourceLineId() == null
@@ -478,6 +553,7 @@ public class WarehouseOperationPreviewService {
               .errorMessageKey(valid ? null : DocumentApiMessageKey.DOCUMENT_INVALID_LINES.getKey())
               .build());
     }
+
     if (request.reason() == null || request.reason().isBlank()) {
       blockers.add(DocumentApiMessageKey.DOCUMENT_REASON_REQUIRED.getKey());
     }
@@ -591,7 +667,7 @@ public class WarehouseOperationPreviewService {
       final List<WarehouseOperationPreview.Movement> movements,
       final LocalDateTime countedAt) {
     final List<String> versionParts = new ArrayList<>();
-    final Set<Long> countLineIds = new java.util.HashSet<>();
+    final Set<Long> countLineIds = new HashSet<>();
     for (var lineRequest : request.lines()) {
       final DocumentLine countLine =
           warehouseOperationSupportService.line(lineRequest.sourceLineId(), company.getId());

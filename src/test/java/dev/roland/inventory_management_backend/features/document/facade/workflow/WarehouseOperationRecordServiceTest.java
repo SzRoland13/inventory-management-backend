@@ -3,7 +3,9 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,6 +17,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,6 +27,7 @@ import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
@@ -31,8 +35,10 @@ import dev.roland.inventory_management_backend.features.document.enumeration.War
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
 import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
+import dev.roland.inventory_management_backend.features.document_activity.DocumentActivityEvent;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
+import dev.roland.inventory_management_backend.features.document_line_allocation.DocumentLineAllocation;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
 import dev.roland.inventory_management_backend.features.document_relation.service.DocumentRelationService;
 import dev.roland.inventory_management_backend.features.product.Product;
@@ -173,6 +179,57 @@ class WarehouseOperationRecordServiceTest {
             correction,
             dev.roland.inventory_management_backend.features.document.enumeration
                 .DocumentRelationType.CORRECTS);
+  }
+
+  @Test
+  void correctionReopensClosedOrderQuantityAndAuditsTheReason() {
+    stubRecordPersistence();
+    final Document original = document(11L, DocumentType.GOODS_RECEIPT);
+    final Document order = document(12L, DocumentType.PURCHASE_ORDER);
+    order.setStatus(DocumentStatus.PARTIALLY_COMPLETED);
+    final Document correction = operationDocument(DocumentType.CORRECTION);
+    final DocumentLine source = sourceLine(original, 22L, new BigDecimal("3"));
+    final DocumentLine orderLine = sourceLine(order, 23L, new BigDecimal("10"));
+    orderLine.setClosedQuantity(new BigDecimal("2"));
+    orderLine.setClosureReason("initial closure");
+    final DocumentLineAllocation allocation = new DocumentLineAllocation();
+    allocation.setFulfillmentLine(source);
+    allocation.setSourceOrderLine(orderLine);
+    allocation.setQuantity(new BigDecimal("3"));
+    final Warehouse warehouse = warehouse(31L);
+    final Product product = Product.builder().id(40L).unit(Unit.builder().id(1L).build()).build();
+    final WarehouseOperationRequest request =
+        correctionRequest(
+            22L,
+            new BigDecimal("4"),
+            new WarehouseOperationRequest.ClosureReopen(
+                23L, BigDecimal.ONE, "recorded receipt quantity was understated"));
+    when(accessService.lock(12L, COMPANY_ID)).thenReturn(order);
+    when(previewService.preview(11L, WarehouseOperationType.CORRECTION, request))
+        .thenReturn(validPreview());
+    when(support.operationDocument(original, DocumentType.CORRECTION, "reason"))
+        .thenReturn(correction);
+    when(support.line(22L, COMPANY_ID)).thenReturn(source);
+    when(support.line(23L, COMPANY_ID)).thenReturn(orderLine);
+    when(allocationService.findAllByFulfillmentLineId(22L)).thenReturn(List.of(allocation));
+    when(support.defaultCorrectionWarehouse(original)).thenReturn(warehouse);
+    when(productService.findByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(new DocumentLine());
+    when(stockMovementService.postMovement(any(), any(), any(), any(), any()))
+        .thenReturn(
+            new dev.roland.inventory_management_backend.features.stock_movement.StockMovement());
+
+    service.createCorrection(original, request, company, actor, "correction-key");
+
+    assertEquals(BigDecimal.ONE, orderLine.getClosedQuantity());
+    final ArgumentCaptor<String> details = ArgumentCaptor.forClass(String.class);
+    verify(writer)
+        .addActivity(eq(order), eq(DocumentActivityEvent.REMAINDER_REOPENED), details.capture());
+    assertTrue(details.getValue().contains("\"closedBefore\":2"));
+    assertTrue(details.getValue().contains("\"reopened\":1"));
+    assertTrue(details.getValue().contains("\"closedAfter\":1"));
+    assertTrue(details.getValue().contains("initial closure"));
+    assertTrue(details.getValue().contains("recorded receipt quantity was understated"));
   }
 
   @Test
@@ -317,9 +374,26 @@ class WarehouseOperationRecordServiceTest {
 
   private WarehouseOperationRequest correctionRequest(
       final Long sourceLineId, final BigDecimal correctedQuantity) {
+    return correctionRequest(sourceLineId, correctedQuantity, null);
+  }
+
+  private WarehouseOperationRequest correctionRequest(
+      final Long sourceLineId,
+      final BigDecimal correctedQuantity,
+      final WarehouseOperationRequest.ClosureReopen closureReopen) {
     final var line =
         new WarehouseOperationRequest.WarehouseOperationLine(
-            sourceLineId, null, null, correctedQuantity, null, null, null, null, null, null);
+            sourceLineId,
+            null,
+            null,
+            correctedQuantity,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            closureReopen == null ? List.of() : List.of(closureReopen));
     return new WarehouseOperationRequest(
         null,
         null,
