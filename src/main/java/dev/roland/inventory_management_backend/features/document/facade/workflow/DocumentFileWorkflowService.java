@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.features.document.facade.workflow;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -125,7 +126,7 @@ public class DocumentFileWorkflowService {
   @Transactional
   public DocumentResponse generatePdf(
       final Long id, final String idempotencyKey, final String language) {
-    return queuePdf(id, idempotencyKey, normalizePdfLanguage(language));
+    return queuePdf(id, idempotencyKey, normalizePdfLanguage(language), false);
   }
 
   /**
@@ -134,10 +135,15 @@ public class DocumentFileWorkflowService {
    * @param id the id value
    * @param idempotencyKey the idempotencyKey value
    * @return the resulting value
+   * @throws ApiException when the idempotency key is missing
    */
   @Transactional
   public DocumentResponse retryPdf(final Long id, final String idempotencyKey) {
-    return queuePdf(id, idempotencyKey, null);
+    if (idempotencyKey == null || idempotencyKey.isBlank()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED);
+    }
+
+    return queuePdf(id, idempotencyKey, null, true);
   }
 
   /**
@@ -146,20 +152,27 @@ public class DocumentFileWorkflowService {
    * @param id the id value
    * @param idempotencyKey the idempotencyKey value
    * @param requestedLanguage the requestedLanguage value
+   * @param retry whether this request must retry the latest failed attempt
    * @return the resulting value
    * @throws ApiException when the operation cannot be completed
    */
   DocumentResponse queuePdf(
-      final Long id, final String idempotencyKey, final String requestedLanguage) {
+      final Long id,
+      final String idempotencyKey,
+      final String requestedLanguage,
+      final boolean retry) {
     final Company company = companyProvider.getCurrentCompany();
     final Document document = accessService.lock(id, company.getId());
+
     if (!accessService.canManageDocument(document, accessService.currentActor())) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
+
     if (document.getStatus() == DocumentStatus.DRAFT
         || document.getStatus() == DocumentStatus.CANCELLED) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
     }
+
     final String key =
         idempotencyKey == null || idempotencyKey.isBlank()
             ? UUID.randomUUID().toString()
@@ -172,37 +185,58 @@ public class DocumentFileWorkflowService {
             id,
             DocumentFileSource.GENERATED_PDF,
             List.of(DocumentFileStatus.QUEUED, DocumentFileStatus.PROCESSING));
-    if (!duplicateRequest && !busy) {
+
+    if (!(retry && duplicateRequest)) {
+      if (retry && busy) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+      }
+
       final List<DocumentFile> prior =
           fileService.findAllByDocumentIdOrderByCreatedAtDesc(id).stream()
               .filter(f -> f.getSource() == DocumentFileSource.GENERATED_PDF)
+              .sorted(
+                  Comparator.comparing(
+                          DocumentFile::getAttempt,
+                          Comparator.nullsFirst(Comparator.naturalOrder()))
+                      .reversed())
               .toList();
-      final String languageTag =
-          requestedLanguage == null
-              ? prior.stream()
-                  .map(DocumentFile::getLanguageTag)
-                  .filter(Objects::nonNull)
-                  .findFirst()
-                  .orElse("en")
-              : requestedLanguage;
-      final DocumentFile attempt = new DocumentFile();
-      attempt.setDocument(document);
-      attempt.setSource(DocumentFileSource.GENERATED_PDF);
-      attempt.setStatus(DocumentFileStatus.QUEUED);
-      attempt.setLanguageTag(languageTag);
-      attempt.setIdempotencyKey(key);
-      attempt.setAttempt(prior.size() + 1);
-      if (!prior.isEmpty()) {
-        attempt.setParentFile(prior.getFirst());
+
+      if (retry && (prior.isEmpty() || prior.getFirst().getStatus() != DocumentFileStatus.FAILED)) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
       }
-      final DocumentFile saved = fileService.save(attempt);
-      outboxService.enqueue(
-          AsyncJobType.DOCUMENT_PDF,
-          Map.of("documentId", id, "fileId", saved.getId(), "idempotencyKey", key),
-          company.getId(),
-          id);
-      writer.addActivity(document, DocumentActivityEvent.PDF_QUEUED, String.valueOf(saved.getId()));
+
+      if (!busy) {
+        final String languageTag =
+            requestedLanguage == null
+                ? prior.stream()
+                    .map(DocumentFile::getLanguageTag)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse("en")
+                : requestedLanguage;
+        final DocumentFile attempt = new DocumentFile();
+        attempt.setDocument(document);
+        attempt.setSource(DocumentFileSource.GENERATED_PDF);
+        attempt.setStatus(DocumentFileStatus.QUEUED);
+        attempt.setLanguageTag(languageTag);
+        attempt.setIdempotencyKey(key);
+        attempt.setAttempt(prior.size() + 1);
+
+        if (!prior.isEmpty()) {
+          attempt.setParentFile(prior.getFirst());
+        }
+
+        final DocumentFile saved = fileService.save(attempt);
+        outboxService.enqueue(
+            AsyncJobType.DOCUMENT_PDF,
+            Map.of("documentId", id, "fileId", saved.getId(), "idempotencyKey", key),
+            company.getId(),
+            id);
+        writer.addActivity(
+            document, DocumentActivityEvent.PDF_QUEUED, String.valueOf(saved.getId()));
+      }
     }
+
     return responseMapper.toResponse(document);
   }
 
@@ -218,9 +252,11 @@ public class DocumentFileWorkflowService {
         language == null || language.isBlank()
             ? "en"
             : Locale.forLanguageTag(language.trim()).getLanguage();
+
     if (!"en".equals(languageTag) && !"hu".equals(languageTag)) {
       throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_PDF_LANGUAGE);
     }
+
     return languageTag;
   }
 }

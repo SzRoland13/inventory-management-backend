@@ -60,6 +60,7 @@ import dev.roland.inventory_management_backend.features.document.service.Documen
 import dev.roland.inventory_management_backend.features.document.service.DocumentService;
 import dev.roland.inventory_management_backend.features.document_activity.service.DocumentActivityService;
 import dev.roland.inventory_management_backend.features.document_file.DocumentFile;
+import dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus;
 import dev.roland.inventory_management_backend.features.document_file.service.DocumentFileService;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
@@ -1019,8 +1020,7 @@ class DocumentWorkflowFacadeImplTest {
         dev.roland.inventory_management_backend.features.document_file.DocumentFileSource
             .GENERATED_PDF);
     previous.setLanguageTag("hu");
-    previous.setStatus(
-        dev.roland.inventory_management_backend.features.document_file.DocumentFileStatus.FAILED);
+    previous.setStatus(DocumentFileStatus.FAILED);
     when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
     when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
         .thenReturn(false);
@@ -1035,7 +1035,7 @@ class DocumentWorkflowFacadeImplTest {
               return file;
             });
 
-    facade.retryPdf(3L, null);
+    facade.retryPdf(3L, "retry-key");
 
     org.mockito.Mockito.verify(outboxService)
         .enqueue(
@@ -1044,6 +1044,50 @@ class DocumentWorkflowFacadeImplTest {
             any(),
             org.mockito.ArgumentMatchers.eq(COMPANY_ID),
             org.mockito.ArgumentMatchers.eq(3L));
+  }
+
+  @Test
+  void retryPdfRejectsWhenTheLatestAttemptDidNotFail() {
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
+    document.setCreatedByUser(user);
+    final DocumentFile completedPdf = new DocumentFile();
+    completedPdf.setSource(
+        dev.roland.inventory_management_backend.features.document_file.DocumentFileSource
+            .GENERATED_PDF);
+    completedPdf.setStatus(DocumentFileStatus.COMPLETED);
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.existsByDocumentIdAndSourceAndStatusIn(anyLong(), any(), any()))
+        .thenReturn(false);
+    when(fileService.findAllByDocumentIdOrderByCreatedAtDesc(3L)).thenReturn(List.of(completedPdf));
+
+    assertThrows(ApiException.class, () -> facade.retryPdf(3L, "retry-key"));
+
+    org.mockito.Mockito.verify(outboxService, org.mockito.Mockito.never())
+        .enqueue(any(), any(), anyLong(), anyLong());
+  }
+
+  @Test
+  void retryPdfRequiresAnIdempotencyKey() {
+    final ApiException error = assertThrows(ApiException.class, () -> facade.retryPdf(3L, " "));
+
+    assertEquals(DocumentApiMessageKey.DOCUMENT_IDEMPOTENCY_KEY_REQUIRED, error.getMessageKey());
+  }
+
+  @Test
+  void retryPdfIsIdempotentForARepeatedKey() {
+    final Document document = document(DocumentType.PURCHASE_ORDER, DocumentStatus.CONFIRMED);
+    document.setCreatedByUser(user);
+    final DocumentFile previousAttempt = new DocumentFile();
+    when(documentService.lockByIdAndCompanyId(3L, COMPANY_ID)).thenReturn(Optional.of(document));
+    when(fileService.findByDocumentIdAndIdempotencyKey(3L, "retry-key"))
+        .thenReturn(Optional.of(previousAttempt));
+
+    facade.retryPdf(3L, "retry-key");
+
+    org.mockito.Mockito.verify(fileService, org.mockito.Mockito.never())
+        .save(any(DocumentFile.class));
+    org.mockito.Mockito.verify(outboxService, org.mockito.Mockito.never())
+        .enqueue(any(), any(), anyLong(), anyLong());
   }
 
   @Test
