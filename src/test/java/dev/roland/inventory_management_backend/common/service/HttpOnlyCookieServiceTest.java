@@ -1,6 +1,7 @@
 package dev.roland.inventory_management_backend.common.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -48,18 +49,17 @@ class HttpOnlyCookieServiceTest {
     service.setAccessCookie(response, "jwt", true, 30);
     service.setRefreshCookie(response, "refresh-jwt", false, 60);
 
-    final Cookie[] cookies = response.getCookies();
-    assertEquals(2, cookies.length);
-    assertEquals("access", cookies[0].getName());
-    assertEquals("jwt", cookies[0].getValue());
-    assertTrue(cookies[0].isHttpOnly());
-    assertTrue(cookies[0].getSecure());
-    assertEquals("/", cookies[0].getPath());
-    assertEquals(30, cookies[0].getMaxAge());
-    assertEquals("refresh", cookies[1].getName());
-    assertEquals("refresh-jwt", cookies[1].getValue());
-    assertTrue(cookies[1].isHttpOnly());
-    assertEquals(60, cookies[1].getMaxAge());
+    final var cookies = response.getHeaders("Set-Cookie");
+    assertEquals(2, cookies.size());
+    assertTrue(cookies.get(0).contains("access=jwt"));
+    assertTrue(cookies.get(0).contains("HttpOnly"));
+    assertTrue(cookies.get(0).contains("Secure"));
+    assertTrue(cookies.get(0).contains("Path=/"));
+    assertTrue(cookies.get(0).contains("Max-Age=30"));
+    assertTrue(cookies.get(1).contains("refresh=refresh-jwt"));
+    assertTrue(cookies.get(1).contains("HttpOnly"));
+    assertFalse(cookies.get(1).contains("; Secure"));
+    assertTrue(cookies.get(1).contains("Max-Age=60"));
   }
 
   @Test
@@ -69,9 +69,10 @@ class HttpOnlyCookieServiceTest {
     service.clearAccessCookie(response, true);
     service.clearRefreshCookie(response, true);
 
-    assertEquals(0, response.getCookies()[0].getMaxAge());
-    assertEquals("", response.getCookies()[0].getValue());
-    assertEquals(0, response.getCookies()[1].getMaxAge());
-    assertEquals("", response.getCookies()[1].getValue());
+    final var cookies = response.getHeaders("Set-Cookie");
+    assertTrue(cookies.get(0).contains("access="));
+    assertTrue(cookies.get(0).contains("Max-Age=0"));
+    assertTrue(cookies.get(1).contains("refresh="));
+    assertTrue(cookies.get(1).contains("Max-Age=0"));
   }
 }
