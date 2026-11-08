@@ -71,7 +71,7 @@ class AuthControllerTest {
     validation.setEmail("alice@example.com");
     validation.setOneTimeCode("123");
     final PasswordSetupRequest password = new PasswordSetupRequest();
-    password.setEmail("alice@example.com");
+    password.setSetupToken("setup-token");
     final LoginRequest login = new LoginRequest();
     login.setEmail("alice@example.com");
     login.setPassword("secret");

@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.common.service.LoginSessionService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
@@ -31,12 +32,13 @@ class AuthServiceImplTest {
 
   @Mock private UserService userService;
   @Mock private PasswordEncoder passwordEncoder;
+  @Mock private LoginSessionService loginSessionService;
 
   private AuthServiceImpl service;
 
   @BeforeEach
   void setUp() {
-    service = new AuthServiceImpl(userService, passwordEncoder);
+    service = new AuthServiceImpl(userService, passwordEncoder, loginSessionService);
   }
 
   @Test
@@ -53,6 +55,8 @@ class AuthServiceImplTest {
   @Test
   void setsPasswordOnlyForAnUninitializedAccountWithMatchingConfirmation() {
     final User user = User.builder().email("new@example.com").build();
+    when(loginSessionService.consumePasswordSetupToken("setup-token"))
+        .thenReturn("new@example.com");
     when(userService.findUserByEmailOrThrow("new@example.com")).thenReturn(user);
     when(passwordEncoder.encode("Correct!42")).thenReturn("encoded");
     final PasswordSetupRequest request = passwordRequest("Correct!42", "Correct!42");
@@ -66,8 +70,9 @@ class AuthServiceImplTest {
 
   @Test
   void rejectsMismatchedOrAlreadyCompletedPasswordSetup() {
+    when(loginSessionService.consumePasswordSetupToken("setup-token"))
+        .thenReturn("new@example.com");
     when(userService.findUserByEmailOrThrow("new@example.com"))
-        .thenReturn(User.builder().email("new@example.com").build())
         .thenReturn(User.builder().email("new@example.com").password("hash").build());
 
     final ApiException mismatch =
@@ -115,7 +120,7 @@ class AuthServiceImplTest {
 
   private PasswordSetupRequest passwordRequest(final String password, final String repeated) {
     final PasswordSetupRequest request = new PasswordSetupRequest();
-    request.setEmail("new@example.com");
+    request.setSetupToken("setup-token");
     request.setPassword(password);
     request.setRepeatPassword(repeated);
     return request;

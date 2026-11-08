@@ -1,6 +1,5 @@
 package dev.roland.inventory_management_backend.features.auth.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 import dev.roland.inventory_management_backend.common.annotation.PasswordsMatch;
@@ -12,9 +11,8 @@ import lombok.Data;
 @PasswordsMatch
 public class PasswordSetupRequest {
 
-  @NotBlank(message = "Email cannot be empty")
-  @Email(message = "Invalid email format")
-  private String email;
+  @NotBlank(message = "Password setup token is required")
+  private String setupToken;
 
   @ValidPassword private String password;
 

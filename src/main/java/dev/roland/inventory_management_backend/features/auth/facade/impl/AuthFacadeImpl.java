@@ -27,6 +27,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizati
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
@@ -88,7 +89,7 @@ public class AuthFacadeImpl implements AuthFacade {
   /** {@inheritDoc} */
   @Transactional
   @Override
-  public void validateOneTimeCode(final FirstLoginValidationRequest request) {
+  public PasswordSetupTokenResponse validateOneTimeCode(final FirstLoginValidationRequest request) {
     final OneTimeCode oneTimeCode =
         oneTimeCodeService
             .findByCode(request.getOneTimeCode())
@@ -105,6 +106,10 @@ public class AuthFacadeImpl implements AuthFacade {
     }
 
     oneTimeCodeService.delete(oneTimeCode);
+    final TokenWithExpiry setupToken =
+        loginSessionService.createPasswordSetupToken(user.getEmail());
+
+    return new PasswordSetupTokenResponse(setupToken.getToken(), setupToken.getExpiresAt());
   }
 
   /**

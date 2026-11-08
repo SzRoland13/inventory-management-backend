@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
+import dev.roland.inventory_management_backend.common.service.LoginSessionService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
@@ -24,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
 
   private final UserService userService;
   private final PasswordEncoder passwordEncoder;
+  private final LoginSessionService loginSessionService;
 
   /**
    * Checks whether the supplied email belongs to an account that has not set a password.
@@ -47,14 +49,20 @@ public class AuthServiceImpl implements AuthService {
    */
   @Override
   public void handleSetupOfNewPassword(final PasswordSetupRequest request) {
-    final User user = userService.findUserByEmailOrThrow(request.getEmail());
+    if (!request.getPassword().equals(request.getRepeatPassword())) {
+      throw new ApiException(AuthMessageKey.PASSWORDS_NOT_MATCH);
+    }
+
+    final String email = loginSessionService.consumePasswordSetupToken(request.getSetupToken());
+
+    if (email == null) {
+      throw new ApiException(AuthMessageKey.INVALID_OR_EXPIRED_SESSION);
+    }
+
+    final User user = userService.findUserByEmailOrThrow(email);
 
     if (user.getPassword() != null || user.isOtcSetupComplete()) {
       throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
-    }
-
-    if (!request.getPassword().equals(request.getRepeatPassword())) {
-      throw new ApiException(AuthMessageKey.PASSWORDS_NOT_MATCH);
     }
 
     user.setPassword(passwordEncoder.encode(request.getPassword()));

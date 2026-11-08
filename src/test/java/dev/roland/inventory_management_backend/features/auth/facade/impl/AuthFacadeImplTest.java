@@ -131,6 +131,8 @@ class AuthFacadeImplTest {
             .expiresAt(LocalDateTime.now().plusMinutes(5))
             .build();
     when(oneTimeCodeService.findByCode("one-time")).thenReturn(Optional.of(code));
+    when(loginSessionService.createPasswordSetupToken("alice@example.com"))
+        .thenReturn(new TokenWithExpiry("setup-token", Instant.now().plusSeconds(60)));
 
     facade.validateOneTimeCode(validation("alice@example.com", "one-time"));
 

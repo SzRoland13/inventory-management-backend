@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LoginSessionService {
 
+  private static final String PASSWORD_SETUP_TOKEN_PREFIX = "password-setup:";
+
   private final RedisTemplate<String, String> redisTemplate;
   private final AppConfiguration appConfiguration;
 
@@ -33,6 +35,39 @@ public class LoginSessionService {
         .opsForValue()
         .set(token, email, appConfiguration.getSessionTtlMinutes(), TimeUnit.MINUTES);
     return new TokenWithExpiry(token, expiresAt);
+  }
+
+  /**
+   * Creates a short-lived token that authorizes first-login password setup.
+   *
+   * @param email email address associated with the setup token
+   * @return generated token with its expiry timestamp
+   */
+  public TokenWithExpiry createPasswordSetupToken(final String email) {
+    final String token = UUID.randomUUID().toString();
+    final Instant expiresAt =
+        Instant.now().plusSeconds(appConfiguration.getSessionTtlMinutes() * 60);
+    redisTemplate
+        .opsForValue()
+        .set(
+            PASSWORD_SETUP_TOKEN_PREFIX + token,
+            email,
+            appConfiguration.getSessionTtlMinutes(),
+            TimeUnit.MINUTES);
+
+    return new TokenWithExpiry(token, expiresAt);
+  }
+
+  /**
+   * Atomically consumes a password-setup token.
+   *
+   * @param token setup token
+   * @return associated email address, or null when the token is missing, expired, or already used
+   */
+  public String consumePasswordSetupToken(final String token) {
+    return token == null || token.isBlank()
+        ? null
+        : redisTemplate.opsForValue().getAndDelete(PASSWORD_SETUP_TOKEN_PREFIX + token);
   }
 
   /**

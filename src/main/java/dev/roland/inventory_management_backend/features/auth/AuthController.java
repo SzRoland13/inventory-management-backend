@@ -27,6 +27,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
@@ -94,15 +95,15 @@ public class AuthController {
    * Validates the first-login one-time code.
    *
    * @param request email and one-time code to validate
-   * @return validation response
+   * @return short-lived password setup authorization
    */
   @PostMapping(VALIDATE_OTC_ENDPOINT)
-  ResponseEntity<ApiResponse<Void>> validateOneTimeCode(
+  ResponseEntity<ApiResponse<PasswordSetupTokenResponse>> validateOneTimeCode(
       @Valid @RequestBody final FirstLoginValidationRequest request) {
-    authFacade.validateOneTimeCode(request);
+    final PasswordSetupTokenResponse setupToken = authFacade.validateOneTimeCode(request);
 
     return ResponseEntity.ok(
-        ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, null));
+        ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, setupToken));
   }
 
   /**

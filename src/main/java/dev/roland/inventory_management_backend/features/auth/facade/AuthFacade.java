@@ -6,6 +6,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValid
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
+import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
@@ -25,9 +26,10 @@ public interface AuthFacade {
    * Validates the user's first-login one-time code.
    *
    * @param request user's email and one time code
+   * @return short-lived token authorizing password setup
    * @throws ApiException if user does not exist or one time code invalid
    */
-  void validateOneTimeCode(FirstLoginValidationRequest request);
+  PasswordSetupTokenResponse validateOneTimeCode(FirstLoginValidationRequest request);
 
   /**
    * Handles login by verifying credentials and generating authentication tokens.
