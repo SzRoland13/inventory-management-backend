@@ -41,12 +41,11 @@ class MediaAssetControllerTest {
   }
 
   @Test
-  void returnsPreviewAndAcceptsDeletion() {
+  void returnsPreview() {
     final MediaPreviewResponse preview = new MediaPreviewResponse(5L, "https://get", null);
     when(mediaAssetFacade.getPreview(5L)).thenReturn(preview);
 
     assertEquals(preview, controller.getPreview(5L).getBody().getPayload());
-    assertEquals(202, controller.delete(5L).getStatusCode().value());
-    verify(mediaAssetFacade).deleteAsset(5L);
+    verify(mediaAssetFacade).getPreview(5L);
   }
 }

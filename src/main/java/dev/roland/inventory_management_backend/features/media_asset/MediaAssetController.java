@@ -3,7 +3,6 @@ package dev.roland.inventory_management_backend.features.media_asset;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +19,7 @@ import dev.roland.inventory_management_backend.features.media_asset.facade.Media
 import dev.roland.inventory_management_backend.features.media_asset.message.MediaMessageKey;
 import lombok.RequiredArgsConstructor;
 
-/** Exposes media upload, preview, and deletion endpoints. */
+/** Exposes media upload and preview endpoints. */
 @RestController
 @RequestMapping(MediaAssetController.MEDIA_ASSET_BASE_ENDPOINT)
 @RequiredArgsConstructor
@@ -73,18 +72,5 @@ public class MediaAssetController {
     return ResponseEntity.ok(
         ApiResponse.success(
             MediaMessageKey.URL_GENERATED, mediaAssetFacade.getThumbnailPreview(id)));
-  }
-
-  /**
-   * Deletes the requested media asset.
-   *
-   * @param id identifier of the media asset to delete
-   * @return deletion confirmation response
-   */
-  @DeleteMapping(ID_PARAM)
-  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable final Long id) {
-    mediaAssetFacade.deleteAsset(id);
-
-    return ResponseEntity.accepted().body(ApiResponse.success(MediaMessageKey.MEDIA_DELETED, null));
   }
 }
