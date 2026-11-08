@@ -10,6 +10,7 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import dev.roland.inventory_management_backend.common.annotation.validator.PasswordValidator;
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 
 /** Declares the validation constraint for acceptable password values. */
 @Documented
@@ -22,7 +23,7 @@ public @interface ValidPassword {
    *
    * @return message shown when validation fails
    */
-  String message() default "Invalid password format";
+  String message() default ValidationKeys.INVALID_VALUE;
 
   /**
    * Returns the validation groups for this constraint.

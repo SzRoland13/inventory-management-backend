@@ -5,6 +5,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
@@ -35,27 +41,27 @@ import dev.roland.inventory_management_backend.features.document.enumeration.War
  * @param warehouseId the warehouseId value
  */
 public record WarehouseOperationRequest(
-    Long documentId,
-    Long sourceDocumentId,
-    Long sourceWarehouseId,
-    Long destinationWarehouseId,
-    Long transitWarehouseId,
-    Long warehouseId,
-    Long targetWarehouseId,
-    Long returnDocumentId,
-    Long originalDeliveryId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long documentId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceDocumentId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceWarehouseId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long destinationWarehouseId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long transitWarehouseId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long warehouseId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long targetWarehouseId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long returnDocumentId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long originalDeliveryId,
     LocalDate date,
     LocalDateTime countedAt,
-    String version,
-    String idempotencyKey,
-    String calculationVersion,
+    @Size(max = 100, message = ValidationKeys.TOO_LONG) String version,
+    @Size(max = 255, message = ValidationKeys.TOO_LONG) String idempotencyKey,
+    @Size(max = 100, message = ValidationKeys.TOO_LONG) String calculationVersion,
     LocalDateTime effectiveAt,
     WarehouseOperationType operation,
     ReturnDirection direction,
-    String reason,
+    @Size(max = 500, message = ValidationKeys.TOO_LONG) String reason,
     Boolean confirmed,
     Boolean nonBillable,
-    List<WarehouseOperationLine> lines) {
+    @Valid List<WarehouseOperationLine> lines) {
   /** Keeps the existing request constructor source-compatible. */
   public WarehouseOperationRequest(
       final Long documentId,
@@ -133,18 +139,24 @@ public record WarehouseOperationRequest(
    * @param unitId unit selected for the entered quantity
    */
   public record WarehouseOperationLine(
-      Long sourceLineId,
-      Long productId,
-      BigDecimal quantity,
-      BigDecimal correctedQuantity,
-      Long correctedProductId,
-      Long correctedWarehouseId,
-      BigDecimal countedQuantity,
-      String varianceReason,
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceLineId,
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long productId,
+      @Positive(message = ValidationKeys.INVALID_VALUE)
+          @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+          BigDecimal quantity,
+      @Positive(message = ValidationKeys.INVALID_VALUE)
+          @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+          BigDecimal correctedQuantity,
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long correctedProductId,
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long correctedWarehouseId,
+      @Positive(message = ValidationKeys.INVALID_VALUE)
+          @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+          BigDecimal countedQuantity,
+      @Size(max = 500, message = ValidationKeys.TOO_LONG) String varianceReason,
       ReturnDisposition disposition,
-      String reason,
-      List<ClosureReopen> closureReopens,
-      Long unitId) {
+      @Size(max = 500, message = ValidationKeys.TOO_LONG) String reason,
+      @Valid List<ClosureReopen> closureReopens,
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long unitId) {
     /** Keeps the pre-reopen request shape source-compatible for other warehouse operations. */
     public WarehouseOperationLine(
         final Long sourceLineId,
@@ -218,5 +230,8 @@ public record WarehouseOperationRequest(
    * @param quantity the quantity to reopen
    * @param reason the reason for reopening the quantity
    */
-  public record ClosureReopen(Long sourceOrderLineId, BigDecimal quantity, String reason) {}
+  public record ClosureReopen(
+      @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceOrderLineId,
+      @Positive(message = ValidationKeys.INVALID_VALUE) BigDecimal quantity,
+      @Size(max = 500, message = ValidationKeys.TOO_LONG) String reason) {}
 }

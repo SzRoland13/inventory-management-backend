@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.features.partner.enumeration.PartnerType;
 
 /**
@@ -14,6 +15,7 @@ import dev.roland.inventory_management_backend.features.partner.enumeration.Part
  * @param taxNumber optional tax registration number
  */
 public record PartnerRequest(
-    @NotBlank @Size(max = 255) String name,
-    @NotNull PartnerType type,
-    @Size(max = 50) String taxNumber) {}
+    @NotBlank(message = ValidationKeys.REQUIRED) @Size(max = 255, message = ValidationKeys.TOO_LONG)
+        String name,
+    @NotNull(message = ValidationKeys.REQUIRED) PartnerType type,
+    @Size(max = 50, message = ValidationKeys.TOO_LONG) String taxNumber) {}

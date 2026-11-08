@@ -3,6 +3,10 @@ package dev.roland.inventory_management_backend.features.warehouse.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import dev.roland.inventory_management_backend.common.validation.CountryCode;
+import dev.roland.inventory_management_backend.common.validation.E164Phone;
+import dev.roland.inventory_management_backend.common.validation.EmailAddress;
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,25 +19,28 @@ import lombok.Setter;
 @Builder
 public class WarehouseAddressDto {
 
-  @NotBlank
-  @Size(max = 2)
+  @NotBlank(message = ValidationKeys.REQUIRED)
+  @Size(min = 2, max = 2, message = ValidationKeys.INVALID_VALUE)
+  @CountryCode
   private String country;
 
-  @NotBlank
-  @Size(max = 100)
+  @NotBlank(message = ValidationKeys.REQUIRED)
+  @Size(max = 100, message = ValidationKeys.TOO_LONG)
   private String city;
 
-  @NotBlank
-  @Size(max = 255)
+  @NotBlank(message = ValidationKeys.REQUIRED)
+  @Size(max = 255, message = ValidationKeys.TOO_LONG)
   private String addressLine1;
 
-  @Size(max = 255)
+  @Size(max = 255, message = ValidationKeys.TOO_LONG)
   private String addressLine2;
 
-  @Size(max = 50)
+  @Size(max = 50, message = ValidationKeys.TOO_LONG)
+  @E164Phone
   private String phone;
 
-  @Size(max = 255)
+  @EmailAddress
+  @Size(max = 254, message = ValidationKeys.INVALID_EMAIL)
   private String email;
 
   /**

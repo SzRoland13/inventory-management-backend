@@ -49,7 +49,7 @@ public record ProductRequest(
     @NotNull(message = ProductValidationMessage.REQUIRED) @Valid Pricing pricing,
     @Valid Dimensions dimensions,
     List<@Positive(message = ProductValidationMessage.POSITIVE) Long> categoryIds,
-    List<@Valid ProductAttributeValueRequest> attributes,
+    @Valid List<ProductAttributeValueRequest> attributes,
     @Size(max = 10, message = ProductValidationMessage.TOO_LONG)
         List<@Positive(message = ProductValidationMessage.POSITIVE) Long> imageAssetIds) {
 

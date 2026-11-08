@@ -5,8 +5,13 @@ import static dev.roland.inventory_management_backend.features.document.dto.Docu
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 
 /**
@@ -23,15 +28,17 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param paymentTerms payment terms snapshot
  */
 public record Draft(
-    DocumentType type,
-    LocalDate date,
-    Long partnerId,
-    Long warehouseId,
-    String notes,
-    List<LineDraft> lines,
-    @NotNull Long currencyId,
-    List<ExchangeRateDraft> exchangeRates,
-    String paymentTerms) {
+    @NotNull(message = ValidationKeys.REQUIRED) DocumentType type,
+    @NotNull(message = ValidationKeys.REQUIRED) LocalDate date,
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long partnerId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long warehouseId,
+    @Size(max = 2000, message = ValidationKeys.TOO_LONG) String notes,
+    @NotEmpty(message = ValidationKeys.REQUIRED) @Valid List<LineDraft> lines,
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long currencyId,
+    @Valid List<ExchangeRateDraft> exchangeRates,
+    @Size(max = 500, message = ValidationKeys.TOO_LONG) String paymentTerms) {
   /**
    * Copies the line list to prevent external mutation.
    *

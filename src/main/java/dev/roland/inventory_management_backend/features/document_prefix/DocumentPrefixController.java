@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.document_prefix;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +47,7 @@ public class DocumentPrefixController {
   @PostMapping()
   @AdminOnly
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> update(
-      @RequestBody final DocumentPrefixesUpdateRequest request) {
+      @Valid @RequestBody final DocumentPrefixesUpdateRequest request) {
     final DocumentPrefixesResponse response =
         documentPrefixService.updatePrefixes(request.getPrefixes());
 

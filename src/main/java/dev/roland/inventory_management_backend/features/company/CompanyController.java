@@ -1,5 +1,7 @@
 package dev.roland.inventory_management_backend.features.company;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,7 +73,7 @@ public class CompanyController {
   @PutMapping
   @AdminOnly
   public ResponseEntity<ApiResponse<CompanyBaseDataResponse>> updateCompanyBaseData(
-      @RequestBody final CompanyBaseDataUpdateRequest request) {
+      @Valid @RequestBody final CompanyBaseDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -87,7 +89,7 @@ public class CompanyController {
   @PutMapping(BILLING_ENDPOINT)
   @AdminOnly
   public ResponseEntity<ApiResponse<CompanyBillingDataResponse>> updateCompanyBillingData(
-      @RequestBody final CompanyBillingDataUpdateRequest request) {
+      @Valid @RequestBody final CompanyBillingDataUpdateRequest request) {
 
     return ResponseEntity.ok(
         ApiResponse.success(
@@ -103,7 +105,7 @@ public class CompanyController {
   @PostMapping(LOGO_ENDPOINT)
   @AdminOnly
   public ResponseEntity<ApiResponse<Void>> updateLogo(
-      @RequestBody final LogoUpdateRequest request) {
+      @Valid @RequestBody final LogoUpdateRequest request) {
     companyFacade.updateLogo(request.getMediaAssetId());
 
     return ResponseEntity.ok(ApiResponse.success(CompanyMessageKey.LOGO_UPDATED, null));
@@ -118,7 +120,7 @@ public class CompanyController {
   @PostMapping(PREFERRED_CURRENCY_ENDPOINT)
   @AdminOnly
   public ResponseEntity<ApiResponse<UpdatedPreferredCurrencyResponse>> updatePreferredCurrency(
-      @RequestBody final CompanyPreferredCurrencyUpdateRequest request) {
+      @Valid @RequestBody final CompanyPreferredCurrencyUpdateRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(
             CompanyMessageKey.CURRENCY_UPDATED, companyFacade.updatePreferredCurrency(request)));

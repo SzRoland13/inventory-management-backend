@@ -69,7 +69,7 @@ public class UserController {
   @PutMapping(ID_PARAM)
   @AdminOnly
   public ResponseEntity<ApiResponse<UserDto>> updateUser(
-      @PathVariable final Long id, @RequestBody final AddEditUserRequest updateRequest) {
+      @PathVariable final Long id, @Valid @RequestBody final AddEditUserRequest updateRequest) {
     return ResponseEntity.ok(
         ApiResponse.success(
             UserMessageKey.UPDATE_SUCCESS, userFacade.updateUser(id, updateRequest)));
@@ -166,7 +166,7 @@ public class UserController {
    */
   @PostMapping(AVATAR_ENDPOINT)
   public ResponseEntity<ApiResponse<Void>> updateAvatar(
-      @PathVariable final Long id, @RequestBody final AvatarUploadRequest request) {
+      @PathVariable final Long id, @Valid @RequestBody final AvatarUploadRequest request) {
     userFacade.updateAvatar(id, request.getMediaAssetId());
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.AVATAR_UPDATED, null));

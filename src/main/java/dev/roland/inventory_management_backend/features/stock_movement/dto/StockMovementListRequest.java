@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
+
 /**
  * Paging and filters for the posted stock movement list.
  *
@@ -18,10 +20,12 @@ import jakarta.validation.constraints.Positive;
  * @param endDate inclusive end date
  */
 public record StockMovementListRequest(
-    @Min(0) Integer page,
-    @Min(1) @Max(100) Integer size,
-    @Positive Long productId,
-    @Positive Long warehouseId,
+    @Min(value = 0, message = ValidationKeys.INVALID_VALUE) Integer page,
+    @Min(value = 1, message = ValidationKeys.INVALID_VALUE)
+        @Max(value = 100, message = ValidationKeys.INVALID_VALUE)
+        Integer size,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long productId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long warehouseId,
     LocalDate startDate,
     LocalDate endDate) {
   /**
@@ -40,7 +44,7 @@ public record StockMovementListRequest(
   }
 
   /** Rejects a range whose beginning is after its end. */
-  @AssertTrue(message = "Start date must not be after end date")
+  @AssertTrue(message = ValidationKeys.INVALID_VALUE)
   public boolean isDateRangeValid() {
     return startDate == null || endDate == null || !startDate.isAfter(endDate);
   }
