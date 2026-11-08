@@ -5,10 +5,12 @@ import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
@@ -25,6 +27,7 @@ import dev.roland.inventory_management_backend.features.user.dto.UserDtoWithAvat
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.user.facade.UserFacade;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class UserFacadeImpl implements UserFacade {
 
   private final UserService userService;
+  private final EmailService emailService;
   private final MediaAssetService mediaAssetService;
   private final MediaUsageService mediaUsageService;
   private final MediaAssetFacade mediaAssetFacade;
@@ -66,6 +70,11 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     final User newUser = userService.save(user);
+    emailService.enqueue(
+        new UserInvitationMailable(
+            newUser.getEmail(),
+            newUser.getUsername(),
+            LocaleContextHolder.getLocale().toLanguageTag()));
 
     return new UserDto(newUser);
   }

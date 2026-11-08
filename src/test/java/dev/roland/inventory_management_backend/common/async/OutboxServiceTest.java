@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxServiceTest {
@@ -66,6 +67,20 @@ class OutboxServiceTest {
     encrypted[encrypted.length - 1] ^= 1;
 
     Assertions.assertThrows(AsyncJobException.class, () -> encryption.decrypt(encrypted));
+  }
+
+  @Test
+  void restoresUserInvitationMailableFromOutboxPayload() {
+    final var payload =
+        OutboxService.EmailPayload.from(
+            new UserInvitationMailable("alice@example.com", "Alice", "hu-HU"));
+
+    final var restored = payload.toMailable();
+
+    assertTrue(restored instanceof UserInvitationMailable);
+    assertEquals("alice@example.com", restored.recipient());
+    assertEquals("Alice", restored.templateVariables().get("username"));
+    assertEquals("hu-HU", restored.languageTag());
   }
 
   @Test

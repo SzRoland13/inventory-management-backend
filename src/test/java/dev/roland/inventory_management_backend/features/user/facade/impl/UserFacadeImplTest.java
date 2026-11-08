@@ -22,6 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
@@ -34,6 +35,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 
@@ -41,6 +43,7 @@ import dev.roland.inventory_management_backend.features.user.service.UserService
 class UserFacadeImplTest {
 
   @Mock private UserService userService;
+  @Mock private EmailService emailService;
   @Mock private MediaAssetService mediaAssetService;
   @Mock private MediaUsageService mediaUsageService;
   @Mock private MediaAssetFacade mediaAssetFacade;
@@ -50,7 +53,8 @@ class UserFacadeImplTest {
   @BeforeEach
   void setUp() {
     facade =
-        new UserFacadeImpl(userService, mediaAssetService, mediaUsageService, mediaAssetFacade);
+        new UserFacadeImpl(
+            userService, emailService, mediaAssetService, mediaUsageService, mediaAssetFacade);
     SecurityContextHolder.getContext()
         .setAuthentication(
             new UsernamePasswordAuthenticationToken(
@@ -92,6 +96,13 @@ class UserFacadeImplTest {
                     user.getRole() == UserRole.MANAGER
                         && user.getStatus() == UserStatus.SETUP_REQUIRED
                         && user.getPassword() == null));
+    verify(emailService)
+        .enqueue(
+            ArgumentMatchers.argThat(
+                mailable ->
+                    mailable instanceof UserInvitationMailable
+                        && mailable.recipient().equals("new@example.com")
+                        && mailable.templateVariables().get("username").equals("new-user")));
   }
 
   @Test
@@ -103,6 +114,7 @@ class UserFacadeImplTest {
 
     assertEquals(UserMessageKey.INVALID_ROLE, exception.getMessageKey());
     verify(userService, never()).save(ArgumentMatchers.any(User.class));
+    verify(emailService, never()).enqueue(ArgumentMatchers.any());
   }
 
   @Test
