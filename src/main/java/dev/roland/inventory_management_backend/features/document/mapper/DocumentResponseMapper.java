@@ -477,7 +477,9 @@ public class DocumentResponseMapper {
                           > 0)) {
         actions.add(DocumentAction.CREATE_RETURN);
       }
-      if (doc.getType() == DocumentType.STOCK_COUNT && doc.getStatus() == DocumentStatus.DRAFT) {
+      if (doc.getType() == DocumentType.STOCK_COUNT
+          && doc.getStatus() == DocumentStatus.DRAFT
+          && (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.MANAGER)) {
         actions.add(DocumentAction.RECONCILE);
       }
       if (doc.getStatus() == DocumentStatus.COMPLETED

@@ -22,6 +22,7 @@ import dev.roland.inventory_management_backend.features.document_line.DocumentLi
 import dev.roland.inventory_management_backend.features.stock_balance.StockBalance;
 import dev.roland.inventory_management_backend.features.stock_balance.repository.StockBalanceRepository;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.dto.EffectiveStockSnapshot;
 import dev.roland.inventory_management_backend.features.stock_movement.dto.StockMovementQueryRow;
 import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.stock_movement.repository.StockMovementRepository;
@@ -41,6 +42,12 @@ public class StockMovementServiceImpl implements StockMovementService {
   private final StockMovementRepository stockMovementRepository;
   private final StockBalanceRepository stockBalanceRepository;
   private final WarehouseRepository warehouseRepository;
+
+  @Override
+  public List<EffectiveStockSnapshot> findEffectiveStockThrough(
+      final Long companyId, final Long warehouseId, final LocalDateTime effectiveAt) {
+    return stockMovementRepository.findEffectiveStockThrough(companyId, warehouseId, effectiveAt);
+  }
 
   @Override
   public List<StockMovement> findEffectiveThrough(

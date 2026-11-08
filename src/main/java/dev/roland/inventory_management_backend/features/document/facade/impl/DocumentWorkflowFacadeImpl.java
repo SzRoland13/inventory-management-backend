@@ -30,6 +30,7 @@ import dev.roland.inventory_management_backend.features.document.dto.PageRespons
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
+import dev.roland.inventory_management_backend.features.document.dto.StockCountItemsRequest;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
@@ -270,6 +271,12 @@ public class DocumentWorkflowFacadeImpl implements DocumentWorkflowFacade {
       final String suppliedVersion) {
     return warehouseOperationCommandService.apply(
         id, operation, request, suppliedKey, suppliedVersion);
+  }
+
+  @Transactional
+  @Override
+  public DocumentResponse addStockCountItems(final Long id, final StockCountItemsRequest request) {
+    return warehouseOperationCommandService.addStockCountItems(id, request);
   }
 
   /**

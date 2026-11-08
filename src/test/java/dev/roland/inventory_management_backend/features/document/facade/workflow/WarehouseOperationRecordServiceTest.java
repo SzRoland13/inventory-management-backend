@@ -6,11 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ import dev.roland.inventory_management_backend.features.document.dto.DocumentRes
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.CommercialApprovalStatus;
+import dev.roland.inventory_management_backend.features.document.enumeration.DocumentRelationType;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDirection;
@@ -125,12 +129,7 @@ class WarehouseOperationRecordServiceTest {
     when(support.cloneLine(returned, sourceLine, new BigDecimal("2")))
         .thenReturn(new DocumentLine());
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
 
     assertSame(response, service.createReturn(request, company, actor, "key"));
@@ -169,7 +168,7 @@ class WarehouseOperationRecordServiceTest {
     draftBill.setApprovalRequired(true);
     draftBill.setApprovalStatus(CommercialApprovalStatus.APPROVED);
     draftBill.setApprovedByUser(actor);
-    draftBill.setApprovedAt(java.time.LocalDateTime.now());
+    draftBill.setApprovedAt(LocalDateTime.now());
     final DocumentLine draftLine = new DocumentLine();
     draftLine.setSourceLine(source);
     draftLine.setQuantity(new BigDecimal("5"));
@@ -196,22 +195,12 @@ class WarehouseOperationRecordServiceTest {
     when(documentService.findAllByCompanyIdOrderByUpdatedAtDesc(COMPANY_ID))
         .thenReturn(List.of(draftBill, issuedInvoice));
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
 
     assertSame(response, service.createCorrection(original, request, company, actor, "key"));
     verify(writer).complete(correction);
-    verify(writer)
-        .relate(
-            original,
-            correction,
-            dev.roland.inventory_management_backend.features.document.enumeration
-                .DocumentRelationType.CORRECTS);
+    verify(writer).relate(original, correction, DocumentRelationType.CORRECTS);
     assertEquals(new BigDecimal("4"), draftLine.getQuantity());
     assertEquals(CommercialApprovalStatus.PENDING, draftBill.getApprovalStatus());
     assertEquals(null, draftBill.getApprovedByUser());
@@ -267,12 +256,7 @@ class WarehouseOperationRecordServiceTest {
     when(productService.findByIdAndCompanyId(40L, COMPANY_ID)).thenReturn(Optional.of(product));
     when(support.cloneLine(correction, source, new BigDecimal("3"))).thenReturn(source);
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
 
     service.createCorrection(original, request, company, actor, "correction-key");
@@ -314,12 +298,7 @@ class WarehouseOperationRecordServiceTest {
     when(support.cloneLine(release, returnedLine, new BigDecimal("2")))
         .thenReturn(new DocumentLine());
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
 
     assertSame(response, service.releaseQuarantine(returned, request, company, actor, "key"));
@@ -351,12 +330,7 @@ class WarehouseOperationRecordServiceTest {
         .thenReturn(delivery);
     when(support.line(74L, COMPANY_ID)).thenReturn(returnedLine);
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
 
     assertSame(response, service.createReplacement(request, company, actor, "key"));
@@ -410,6 +384,25 @@ class WarehouseOperationRecordServiceTest {
     operationOrder
         .verify(previewService)
         .preview(80L, WarehouseOperationType.STOCK_COUNT_RECONCILE, request);
+  }
+
+  @Test
+  void refusesToPostEmptyStockCount() {
+    final Document count = document(80L, DocumentType.STOCK_COUNT);
+    count.setSourceWarehouse(warehouse(81L));
+    final WarehouseOperationRequest request = emptyCountRequest();
+    when(previewService.preview(80L, WarehouseOperationType.STOCK_COUNT_RECONCILE, request))
+        .thenReturn(
+            new WarehouseOperationPreview(
+                false, null, List.of(), List.of("invalid"), List.of(), List.of()));
+
+    final ApiException error =
+        assertThrows(
+            ApiException.class, () -> service.postCount(count, request, company, actor, "key"));
+
+    assertEquals(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION, error.getMessageKey());
+    verify(writer, never()).complete(count);
+    verify(stockMovementService, never()).postMovement(any(), any(), any(), any(), any());
   }
 
   private WarehouseOperationRequest request(
@@ -569,6 +562,30 @@ class WarehouseOperationRecordServiceTest {
         true,
         null,
         List.of(line));
+  }
+
+  private WarehouseOperationRequest emptyCountRequest() {
+    return new WarehouseOperationRequest(
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "empty-v1",
+        WarehouseOperationType.STOCK_COUNT_RECONCILE,
+        null,
+        "reason",
+        true,
+        null,
+        List.of());
   }
 
   private Document document(final Long id, final DocumentType type) {

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import dev.roland.inventory_management_backend.common.service.BaseService;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.dto.EffectiveStockSnapshot;
 import dev.roland.inventory_management_backend.features.stock_movement.dto.StockMovementQueryRow;
 import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -17,6 +18,17 @@ import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
 
 /** Defines operations supported by the stock movement feature. */
 public interface StockMovementService extends BaseService<StockMovement, Long> {
+  /**
+   * Finds products with nonzero effective stock in a warehouse at the supplied timestamp.
+   *
+   * @param companyId owning company identifier
+   * @param warehouseId warehouse identifier
+   * @param effectiveAt inclusive effective timestamp
+   * @return nonzero product stock snapshots
+   */
+  List<EffectiveStockSnapshot> findEffectiveStockThrough(
+      Long companyId, Long warehouseId, LocalDateTime effectiveAt);
+
   /**
    * Finds movements through the supplied timestamp in chronological order.
    *

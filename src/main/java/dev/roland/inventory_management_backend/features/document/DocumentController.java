@@ -34,6 +34,7 @@ import dev.roland.inventory_management_backend.features.document.dto.PageRespons
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
+import dev.roland.inventory_management_backend.features.document.dto.StockCountItemsRequest;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
@@ -72,6 +73,7 @@ public class DocumentController {
       "/returns/replacement-deliveries/preview";
   public static final String REPLACEMENT_DELIVERY = "/returns/replacement-deliveries";
   public static final String STOCK_COUNTS = "/stock-counts";
+  public static final String STOCK_COUNT_ITEMS = "/stock-counts/{id}/items";
   public static final String STOCK_COUNT_RECONCILIATION_PREVIEW =
       "/stock-counts/{id}/reconciliation-preview";
   public static final String STOCK_COUNT_POST = "/stock-counts/{id}/post";
@@ -574,6 +576,19 @@ public class DocumentController {
     return success(
         facade.applyWarehouseOperation(
             null, WarehouseOperationType.STOCK_COUNT_CREATE, request, null, null));
+  }
+
+  /**
+   * Adds product lines to a draft stock count.
+   *
+   * @param id the stock count identifier
+   * @param request the requested product identifiers and document version
+   * @return the updated stock count
+   */
+  @PostMapping(STOCK_COUNT_ITEMS)
+  public ResponseEntity<ApiResponse<DocumentResponse>> addStockCountItems(
+      @PathVariable final Long id, @Valid @RequestBody final StockCountItemsRequest request) {
+    return success(facade.addStockCountItems(id, request));
   }
 
   /**

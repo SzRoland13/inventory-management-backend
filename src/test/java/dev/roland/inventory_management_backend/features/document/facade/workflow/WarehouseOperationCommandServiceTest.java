@@ -5,18 +5,23 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,6 +30,7 @@ import dev.roland.inventory_management_backend.common.service.CurrentCompanyProv
 import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.StockCountItemsRequest;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentStatus;
@@ -36,8 +42,10 @@ import dev.roland.inventory_management_backend.features.document.service.Documen
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.dto.EffectiveStockSnapshot;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.unit.Unit;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -93,7 +101,8 @@ class WarehouseOperationCommandServiceTest {
     source = warehouse(20L, WarehouseType.STANDARD);
     destination = warehouse(21L, WarehouseType.STANDARD);
     final Unit unit = Unit.builder().id(2L).code("EA").name("Each").build();
-    product = Product.builder().id(30L).name("Widget").unit(unit).build();
+    product =
+        Product.builder().id(30L).name("Widget").unit(unit).status(ProductStatus.ACTIVE).build();
     response =
         new DocumentResponse(
             null, null, null, null, null, null, null, null, null, null, null, null, null, null,
@@ -120,25 +129,57 @@ class WarehouseOperationCommandServiceTest {
   }
 
   @Test
-  void createsStockCountDraftWithExpectedQuantityAtItsCountTime() {
-    stubDocumentCreation();
+  void createsStockCountDraftWithoutClientSuppliedProducts() {
+    when(responseMapper.toResponse(any(Document.class))).thenReturn(response);
+    when(documentService.save(any(Document.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
     final LocalDateTime countedAt = LocalDateTime.of(2026, 10, 20, 12, 0);
-    final WarehouseOperationRequest request =
-        request(
-            null,
-            null,
-            20L,
-            countedAt,
-            List.of(operationLine(BigDecimal.ZERO, new BigDecimal("5"))));
+    final WarehouseOperationRequest request = request(null, null, 20L, countedAt, null);
     when(warehouseService.findEntityByIdAndCompanyId(20L, COMPANY_ID)).thenReturn(source);
-    when(stockMovementService.findEffectiveThrough(30L, 20L, countedAt)).thenReturn(List.of());
 
     final DocumentResponse result =
         service.apply(null, WarehouseOperationType.STOCK_COUNT_CREATE, request, null, null);
 
     assertSame(response, result);
-    verify(lineService).save(any(DocumentLine.class));
+    verify(lineService, never()).save(any(DocumentLine.class));
     verify(writer).addActivity(any(Document.class), any(), any());
+  }
+
+  @Test
+  void addsProductToStockCountWithExpectedQuantityAndZeroInitialCount() {
+    stubResponseAndPersistence();
+    final LocalDateTime countedAt = LocalDateTime.of(2026, 10, 20, 12, 0);
+    final Document count = new Document();
+    count.setId(50L);
+    count.setCompany(company);
+    count.setType(DocumentType.STOCK_COUNT);
+    count.setStatus(DocumentStatus.DRAFT);
+    count.setCountedAt(countedAt);
+    count.setSourceWarehouse(source);
+    count.setLines(new ArrayList<>());
+    when(accessService.lock(50L, COMPANY_ID)).thenReturn(count);
+    when(productService.findByIdAndCompanyId(30L, COMPANY_ID)).thenReturn(Optional.of(product));
+    when(stockMovementService.findEffectiveStockThrough(COMPANY_ID, 20L, countedAt))
+        .thenReturn(
+            List.of(
+                new EffectiveStockSnapshot() {
+                  @Override
+                  public Long getProductId() {
+                    return 30L;
+                  }
+
+                  @Override
+                  public BigDecimal getQuantity() {
+                    return new BigDecimal("5");
+                  }
+                }));
+
+    service.addStockCountItems(50L, new StockCountItemsRequest("0", List.of(30L)));
+
+    final ArgumentCaptor<DocumentLine> lineCaptor = ArgumentCaptor.forClass(DocumentLine.class);
+    verify(lineService).save(lineCaptor.capture());
+    assertEquals(new BigDecimal("5"), lineCaptor.getValue().getExpectedQuantity());
+    assertEquals(BigDecimal.ZERO, lineCaptor.getValue().getCountedQuantity());
   }
 
   @Test
@@ -294,24 +335,17 @@ class WarehouseOperationCommandServiceTest {
       final WarehouseOperationType previewType) {
     when(accessService.lock(50L, COMPANY_ID)).thenReturn(root);
     when(documentService.postingKeyExists(50L, "key")).thenReturn(false);
-    when(supportService.withOperation(org.mockito.ArgumentMatchers.eq(request), any()))
-        .thenReturn(request);
+    when(supportService.withOperation(eq(request), any())).thenReturn(request);
     when(previewService.preview(50L, previewType, request))
         .thenReturn(
             new WarehouseOperationPreview(
                 true, "version", List.of(), List.of(), List.of(), List.of()));
-    when(supportService.operationDocument(org.mockito.ArgumentMatchers.eq(root), any(), any()))
-        .thenReturn(child);
+    when(supportService.operationDocument(eq(root), any(), any())).thenReturn(child);
     when(supportService.line(90L, COMPANY_ID)).thenReturn(sourceLine);
     when(supportService.cloneLine(child, sourceLine, new BigDecimal("2")))
         .thenReturn(new DocumentLine());
     when(stockMovementService.postMovement(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            org.mockito.ArgumentMatchers.nullable(java.time.LocalDateTime.class)))
+            any(), any(), any(), any(), any(), nullable(LocalDateTime.class)))
         .thenReturn(new StockMovement());
   }
 
@@ -331,14 +365,14 @@ class WarehouseOperationCommandServiceTest {
     line.setQuantity(new BigDecimal("2"));
     line.setFulfilledQuantity(BigDecimal.ZERO);
     line.setInTransitQuantity(transit == null ? null : new BigDecimal("2"));
-    root.setLines(new java.util.ArrayList<>(List.of(line)));
+    root.setLines(new ArrayList<>(List.of(line)));
     return root;
   }
 
   private Document operationDocument(final DocumentType type) {
     final Document document = new Document();
     document.setType(type);
-    document.setLines(new java.util.ArrayList<>());
+    document.setLines(new ArrayList<>());
     return document;
   }
 

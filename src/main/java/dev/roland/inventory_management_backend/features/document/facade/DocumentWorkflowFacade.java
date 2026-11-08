@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.document.dto.PageRespons
 import dev.roland.inventory_management_backend.features.document.dto.PreviewResponse;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementAssignment;
 import dev.roland.inventory_management_backend.features.document.dto.SettlementOwner;
+import dev.roland.inventory_management_backend.features.document.dto.StockCountItemsRequest;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
@@ -242,4 +243,13 @@ public interface DocumentWorkflowFacade {
       WarehouseOperationRequest request,
       String idempotencyKey,
       String expectedVersion);
+
+  /**
+   * Adds product lines to a draft stock count.
+   *
+   * @param id the stock count identifier
+   * @param request the requested products and current document version
+   * @return the updated stock count
+   */
+  DocumentResponse addStockCountItems(Long id, StockCountItemsRequest request);
 }

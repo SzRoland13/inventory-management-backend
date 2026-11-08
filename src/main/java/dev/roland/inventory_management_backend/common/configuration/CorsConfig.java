@@ -43,7 +43,8 @@ public class CorsConfig {
             "X-XSRF-TOKEN",
             "Authorization",
             "If-Match",
-            "Idempotency-Key"));
+            "Idempotency-Key",
+            "X-Calculation-Version"));
 
     final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
