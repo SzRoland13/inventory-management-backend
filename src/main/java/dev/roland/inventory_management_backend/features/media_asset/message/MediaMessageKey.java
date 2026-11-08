@@ -4,14 +4,12 @@ import dev.roland.inventory_management_backend.common.message.MessageKey;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/** Message keys for media upload, preview, and deletion responses. */
+/** Message keys for media upload, preview, and thumbnail processing. */
 @Getter
 @RequiredArgsConstructor
 public enum MediaMessageKey implements MessageKey {
   /** Message key for url generated. */
   URL_GENERATED("media.url-generated"),
-  /** Message key for media deleted. */
-  MEDIA_DELETED("media.deleted"),
   THUMBNAIL_JOB_NOT_FOUND("media.thumbnail.job-not-found"),
   THUMBNAIL_JOB_INVALID("media.thumbnail.job-invalid"),
   THUMBNAIL_PAYLOAD_INVALID("media.thumbnail.payload-invalid"),

@@ -260,7 +260,7 @@ public class DocumentController {
    */
   @PostMapping(FULFILLMENT_DRAFTS_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> fulfillmentDraft(
-      @RequestBody final FulfillmentDraft request) {
+      @Valid @RequestBody final FulfillmentDraft request) {
     return success(facade.createFulfillmentDraft(request));
   }
 
@@ -272,7 +272,7 @@ public class DocumentController {
    */
   @PostMapping(FULFILLMENT_PREVIEW_ENDPOINT)
   public ResponseEntity<ApiResponse<PreviewResponse>> preview(
-      @RequestBody final FulfillmentPreview request) {
+      @Valid @RequestBody final FulfillmentPreview request) {
     return success(facade.preview(request));
   }
 
@@ -288,7 +288,7 @@ public class DocumentController {
   @PostMapping(POST_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> post(
       @PathVariable final Long id,
-      @RequestBody(required = false) final FulfillmentPost request,
+      @Valid @RequestBody(required = false) final FulfillmentPost request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String idempotencyKey,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -320,7 +320,7 @@ public class DocumentController {
   @PostMapping(CLOSE_REMAINING_ENDPOINT)
   public ResponseEntity<ApiResponse<DocumentResponse>> closeRemaining(
       @PathVariable final Long id,
-      @RequestBody final CloseRemaining request,
+      @Valid @RequestBody final CloseRemaining request,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(facade.closeRemaining(id, request, version));
   }
@@ -376,7 +376,7 @@ public class DocumentController {
    */
   @PostMapping(TRANSFER_DRAFTS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createTransferDraft(
-      @RequestBody final WarehouseOperationRequest request) {
+      @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.applyWarehouseOperation(
             null, WarehouseOperationType.TRANSFER_DRAFT, request, null, null));
@@ -390,7 +390,7 @@ public class DocumentController {
    */
   @PostMapping(TRANSFER_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransfer(
-      @RequestBody final WarehouseOperationRequest request) {
+      @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(null, WarehouseOperationType.TRANSFER_PREVIEW, request));
   }
@@ -404,7 +404,7 @@ public class DocumentController {
    */
   @PostMapping(TRANSFER_RESOLUTION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewTransferResolution(
-      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+      @PathVariable final Long id, @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(id, WarehouseOperationType.TRANSFER_RESOLUTION, request));
   }
@@ -421,7 +421,7 @@ public class DocumentController {
   @PostMapping(TRANSFER_DISPATCH)
   public ResponseEntity<ApiResponse<DocumentResponse>> dispatchTransfer(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -441,7 +441,7 @@ public class DocumentController {
   @PostMapping(TRANSFER_RECEIPT)
   public ResponseEntity<ApiResponse<DocumentResponse>> receiveTransfer(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -461,7 +461,7 @@ public class DocumentController {
   @PostMapping(TRANSFER_RESOLVE)
   public ResponseEntity<ApiResponse<DocumentResponse>> resolveTransfer(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -478,7 +478,7 @@ public class DocumentController {
    */
   @PostMapping(RETURNS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createReturn(
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
     return success(
         facade.applyWarehouseOperation(
@@ -493,7 +493,7 @@ public class DocumentController {
    */
   @PostMapping(RETURN_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReturn(
-      @RequestBody final WarehouseOperationRequest request) {
+      @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(null, WarehouseOperationType.RETURN_CREATE, request));
   }
@@ -507,7 +507,7 @@ public class DocumentController {
    */
   @PostMapping(QUARANTINE_RELEASE_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewQuarantineRelease(
-      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+      @PathVariable final Long id, @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(id, WarehouseOperationType.QUARANTINE_RELEASE, request));
   }
@@ -524,7 +524,7 @@ public class DocumentController {
   @PostMapping(QUARANTINE_RELEASE)
   public ResponseEntity<ApiResponse<DocumentResponse>> releaseQuarantine(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -540,7 +540,7 @@ public class DocumentController {
    */
   @PostMapping(REPLACEMENT_DELIVERY_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewReplacement(
-      @RequestBody final WarehouseOperationRequest request) {
+      @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(
             null, WarehouseOperationType.REPLACEMENT_DELIVERY, request));
@@ -555,7 +555,7 @@ public class DocumentController {
    */
   @PostMapping(REPLACEMENT_DELIVERY)
   public ResponseEntity<ApiResponse<DocumentResponse>> createReplacement(
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key) {
     return success(
         facade.applyWarehouseOperation(
@@ -570,7 +570,7 @@ public class DocumentController {
    */
   @PostMapping(STOCK_COUNTS)
   public ResponseEntity<ApiResponse<DocumentResponse>> createStockCount(
-      @RequestBody final WarehouseOperationRequest request) {
+      @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.applyWarehouseOperation(
             null, WarehouseOperationType.STOCK_COUNT_CREATE, request, null, null));
@@ -585,7 +585,7 @@ public class DocumentController {
    */
   @PostMapping(STOCK_COUNT_RECONCILIATION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewStockCount(
-      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+      @PathVariable final Long id, @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(
             id, WarehouseOperationType.STOCK_COUNT_RECONCILE, request));
@@ -603,7 +603,7 @@ public class DocumentController {
   @PostMapping(STOCK_COUNT_POST)
   public ResponseEntity<ApiResponse<DocumentResponse>> postStockCount(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(
@@ -620,7 +620,7 @@ public class DocumentController {
    */
   @PostMapping(CORRECTION_PREVIEW)
   public ResponseEntity<ApiResponse<WarehouseOperationPreview>> previewCorrection(
-      @PathVariable final Long id, @RequestBody final WarehouseOperationRequest request) {
+      @PathVariable final Long id, @Valid @RequestBody final WarehouseOperationRequest request) {
     return success(
         facade.previewWarehouseOperation(id, WarehouseOperationType.CORRECTION, request));
   }
@@ -637,7 +637,7 @@ public class DocumentController {
   @PostMapping(CORRECTION)
   public ResponseEntity<ApiResponse<DocumentResponse>> correctDocument(
       @PathVariable final Long id,
-      @RequestBody final WarehouseOperationRequest request,
+      @Valid @RequestBody final WarehouseOperationRequest request,
       @RequestHeader(value = "Idempotency-Key", required = false) final String key,
       @RequestHeader(value = "If-Match", required = false) final String version) {
     return success(

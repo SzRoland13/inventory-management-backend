@@ -18,6 +18,15 @@ public interface UserFacade {
   UserDto registerUser(AddEditUserRequest request);
 
   /**
+   * Updates a user and refreshes the setup invitation if the email changes.
+   *
+   * @param id user identifier
+   * @param request updated user details
+   * @return updated user
+   */
+  UserDto updateUser(Long id, AddEditUserRequest request);
+
+  /**
    * Resets two-factor authentication for one user.
    *
    * @param id user id to reset two-factor authentication for
@@ -44,6 +53,13 @@ public interface UserFacade {
    * @param id user id to reset password for.
    */
   void resetPassword(Long id);
+
+  /**
+   * Sends a new password setup invitation to a user whose account setup is still pending.
+   *
+   * @param id user identifier
+   */
+  void resendPasswordSetup(Long id);
 
   /**
    * Associates a media asset with a user as the user's avatar.

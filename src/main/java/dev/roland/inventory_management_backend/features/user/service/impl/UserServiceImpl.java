@@ -14,6 +14,7 @@ import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
+import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.repository.UserRepository;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
@@ -87,6 +88,7 @@ public class UserServiceImpl implements UserService {
                 user.setTotpSecret(null);
                 user.set2faEnabled(false);
                 user.setPassword(null);
+                user.setStatus(UserStatus.SETUP_REQUIRED);
               }
 
               user.setEmail(request.getEmail());

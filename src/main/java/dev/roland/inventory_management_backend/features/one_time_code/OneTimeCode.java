@@ -22,10 +22,10 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Stores a short-lived one-time code used during user onboarding.
+ * Stores a hash of the short-lived setup-link token used during user onboarding.
  *
- * <p>Each code belongs to one {@link User} through {@code user_id} and contains its expiry time.
- * The code is consumed and deleted after successful validation; it is not a permanent credential.
+ * <p>Each token belongs to one {@link User} through {@code user_id} and contains its expiry time.
+ * It is consumed and deleted after successful password setup; it is not a permanent credential.
  */
 @Entity
 @Table(name = "one_time_codes")
@@ -45,8 +45,8 @@ public class OneTimeCode implements IdInterface<Long> {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  @Column(nullable = false)
-  private String code;
+  @Column(name = "code_hash", nullable = false, unique = true)
+  private String codeHash;
 
   @Column(name = "expires_at", nullable = false)
   private LocalDateTime expiresAt;

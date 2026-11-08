@@ -38,7 +38,7 @@ class PasswordsMatchValidatorTest {
 
   private PasswordSetupRequest request(final String password, final String repeatPassword) {
     final PasswordSetupRequest request = new PasswordSetupRequest();
-    request.setEmail("alice@example.com");
+    request.setOneTimeCode("setup-token");
     request.setPassword(password);
     request.setRepeatPassword(repeatPassword);
     return request;

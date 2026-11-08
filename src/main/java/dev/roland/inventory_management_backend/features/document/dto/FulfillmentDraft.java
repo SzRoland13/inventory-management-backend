@@ -5,6 +5,12 @@ import static dev.roland.inventory_management_backend.features.document.dto.Docu
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 
 /**
@@ -17,11 +23,13 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  * @param effectiveAt optional effective movement time
  */
 public record FulfillmentDraft(
-    Long sourceDocumentId,
-    DocumentType type,
-    Long warehouseId,
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long sourceDocumentId,
+    @NotNull(message = ValidationKeys.REQUIRED) DocumentType type,
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long warehouseId,
     LocalDateTime effectiveAt,
-    List<FulfillmentLine> lines) {
+    @NotEmpty(message = ValidationKeys.REQUIRED) @Valid List<FulfillmentLine> lines) {
   /** Keeps the existing request constructor source-compatible. */
   public FulfillmentDraft(
       final Long sourceDocumentId,

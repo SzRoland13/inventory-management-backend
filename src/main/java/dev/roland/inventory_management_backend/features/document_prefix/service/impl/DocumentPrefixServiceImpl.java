@@ -1,7 +1,9 @@
 package dev.roland.inventory_management_backend.features.document_prefix.service.impl;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.transaction.Transactional;
@@ -54,22 +56,22 @@ public class DocumentPrefixServiceImpl implements DocumentPrefixService {
     final List<DocumentPrefix> prefixes =
         documentPrefixRepository.findAllByCompanyId(
             currentCompanyProvider.getCurrentCompany().getId());
-    final List<DocumentPrefixDto> dtos;
-
-    if (prefixes.isEmpty()) {
-      dtos =
-          Arrays.stream(DocumentType.values())
-              .map(
-                  dt ->
-                      DocumentPrefixDto.builder()
+    final Map<DocumentType, DocumentPrefix> prefixesByType = new EnumMap<>(DocumentType.class);
+    prefixes.forEach(prefix -> prefixesByType.put(prefix.getDocumentType(), prefix));
+    final List<DocumentPrefixDto> dtos =
+        Arrays.stream(DocumentType.values())
+            .map(
+                type -> {
+                  final DocumentPrefix prefix = prefixesByType.get(type);
+                  return prefix == null
+                      ? DocumentPrefixDto.builder()
                           .id(null)
-                          .documentType(dt)
-                          .prefix(dt.getDefaultPrefix())
-                          .build())
-              .toList();
-    } else {
-      dtos = prefixes.stream().map(DocumentPrefixDto::toDto).toList();
-    }
+                          .documentType(type)
+                          .prefix(type.getDefaultPrefix())
+                          .build()
+                      : DocumentPrefixDto.toDto(prefix);
+                })
+            .toList();
 
     return DocumentPrefixesResponse.builder().prefixes(dtos).build();
   }

@@ -2,6 +2,13 @@ package dev.roland.inventory_management_backend.features.document.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
+
 /**
  * Defines the line draft document API contract.
  *
@@ -13,12 +20,21 @@ import java.math.BigDecimal;
  * @param sourceCurrencyId source currency snapshot identifier
  */
 public record LineDraft(
-    Long productId,
-    Long unitId,
-    BigDecimal quantity,
-    BigDecimal unitPrice,
-    BigDecimal sourceUnitPrice,
-    Long sourceCurrencyId) {
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long productId,
+    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
+        Long unitId,
+    @NotNull(message = ValidationKeys.REQUIRED)
+        @Positive(message = ValidationKeys.INVALID_VALUE)
+        @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+        BigDecimal quantity,
+    @DecimalMin(value = "0", message = ValidationKeys.INVALID_VALUE)
+        @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+        BigDecimal unitPrice,
+    @DecimalMin(value = "0", message = ValidationKeys.INVALID_VALUE)
+        @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
+        BigDecimal sourceUnitPrice,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceCurrencyId) {
   /**
    * Creates a draft line with a source price and no currency snapshot.
    *

@@ -38,6 +38,9 @@ public class MediaCleanupService {
     for (MediaAsset asset : orphanedAssets) {
       try {
         objectStorageService.delete(asset.getObjectPath());
+        if (asset.getThumbnailObjectPath() != null) {
+          objectStorageService.delete(asset.getThumbnailObjectPath());
+        }
         mediaAssetService.deleteById(asset.getId());
         log.debug("Deleted orphaned media asset: {}", asset.getId());
       } catch (Exception e) {

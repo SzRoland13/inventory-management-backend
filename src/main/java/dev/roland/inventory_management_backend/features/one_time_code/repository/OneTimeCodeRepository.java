@@ -2,21 +2,29 @@ package dev.roland.inventory_management_backend.features.one_time_code.repositor
 
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
 
-/** Provides queries for one-time codes by code value and user. */
+/** Provides queries for one-time setup tokens by hash and user. */
 @Repository
 public interface OneTimeCodeRepository extends JpaRepository<OneTimeCode, Long> {
   /**
-   * Finds a one-time code by its value.
+   * Locks and finds a one-time code by its stored hash.
    *
-   * @param code one-time code value to look up
+   * @param codeHash SHA-256 hash of the raw token
    * @return matching code, if one exists
    */
-  Optional<OneTimeCode> findByCode(String code);
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select otc from OneTimeCode otc where otc.codeHash = :codeHash")
+  Optional<OneTimeCode> findByCodeHashForUpdate(@Param("codeHash") String codeHash);
 
   /**
    * Finds the one-time code associated with a user.
@@ -25,4 +33,13 @@ public interface OneTimeCodeRepository extends JpaRepository<OneTimeCode, Long> 
    * @return matching code, if one exists
    */
   Optional<OneTimeCode> findByUserId(Long userId);
+
+  /**
+   * Immediately removes a user's existing token before a replacement token is inserted.
+   *
+   * @param userId identifier of the user
+   */
+  @Modifying(flushAutomatically = true)
+  @Query("delete from OneTimeCode otc where otc.user.id = :userId")
+  void deleteByUserId(@Param("userId") Long userId);
 }

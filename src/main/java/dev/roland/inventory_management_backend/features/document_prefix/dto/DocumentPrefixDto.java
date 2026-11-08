@@ -1,5 +1,10 @@
 package dev.roland.inventory_management_backend.features.document_prefix.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentType;
 import dev.roland.inventory_management_backend.features.document_prefix.DocumentPrefix;
 import lombok.Builder;
@@ -10,7 +15,12 @@ import lombok.Data;
 @Builder
 public class DocumentPrefixDto {
   private Long id;
+
+  @NotNull(message = ValidationKeys.REQUIRED)
   private DocumentType documentType;
+
+  @NotBlank(message = ValidationKeys.REQUIRED)
+  @Size(max = 20, message = ValidationKeys.TOO_LONG)
   private String prefix;
 
   /**

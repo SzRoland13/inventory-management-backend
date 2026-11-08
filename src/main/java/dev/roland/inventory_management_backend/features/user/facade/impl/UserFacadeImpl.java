@@ -1,14 +1,19 @@
 package dev.roland.inventory_management_backend.features.user.facade.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import jakarta.transaction.Transactional;
 
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
 import dev.roland.inventory_management_backend.features.media_asset.MediaAsset;
 import dev.roland.inventory_management_backend.features.media_asset.facade.MediaAssetFacade;
@@ -17,6 +22,9 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
+import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCodeTokens;
+import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
 import dev.roland.inventory_management_backend.features.user.dto.AllUserResponse;
@@ -25,6 +33,7 @@ import dev.roland.inventory_management_backend.features.user.dto.UserDtoWithAvat
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.user.facade.UserFacade;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
 import dev.roland.inventory_management_backend.features.user.message.UserMessageKey;
 import dev.roland.inventory_management_backend.features.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +44,12 @@ import lombok.RequiredArgsConstructor;
 public class UserFacadeImpl implements UserFacade {
 
   private final UserService userService;
+  private final EmailService emailService;
   private final MediaAssetService mediaAssetService;
   private final MediaUsageService mediaUsageService;
   private final MediaAssetFacade mediaAssetFacade;
+  private final OneTimeCodeService oneTimeCodeService;
+  private final AppConfiguration appConfiguration;
 
   /** {@inheritDoc} */
   @Transactional
@@ -66,6 +78,7 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     final User newUser = userService.save(user);
+    sendPasswordSetupInvitation(newUser);
 
     return new UserDto(newUser);
   }
@@ -85,6 +98,7 @@ public class UserFacadeImpl implements UserFacade {
   }
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public void suspendUser(final Long id) {
     final User user = userService.findByIdOrThrow(id);
@@ -100,6 +114,7 @@ public class UserFacadeImpl implements UserFacade {
   }
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public void activateUser(final Long id) {
     final User user = userService.findByIdOrThrow(id);
@@ -112,9 +127,11 @@ public class UserFacadeImpl implements UserFacade {
     // User will need to set up password and optionally 2FA again
     user.setStatus(UserStatus.SETUP_REQUIRED);
     userService.save(user);
+    sendPasswordSetupInvitation(user);
   }
 
   /** {@inheritDoc} */
+  @Transactional
   @Override
   public void resetPassword(final Long id) {
     final User user = userService.findByIdOrThrow(id);
@@ -127,6 +144,40 @@ public class UserFacadeImpl implements UserFacade {
     user.setStatus(UserStatus.SETUP_REQUIRED);
 
     userService.save(user);
+    sendPasswordSetupInvitation(user);
+  }
+
+  /** {@inheritDoc} */
+  @Transactional
+  @Override
+  public void resendPasswordSetup(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
+
+    if (user.getStatus() != UserStatus.SETUP_REQUIRED) {
+      throw new ApiException(UserMessageKey.PASSWORD_SETUP_NOT_REQUIRED);
+    }
+
+    sendPasswordSetupInvitation(user);
+  }
+
+  /**
+   * Updates an account and sends a new setup link when its email address changes.
+   *
+   * @param id user identifier
+   * @param request updated user details
+   * @return updated user
+   */
+  @Transactional
+  public UserDto updateUser(final Long id, final AddEditUserRequest request) {
+    final User beforeUpdate = userService.findByIdOrThrow(id);
+    final boolean emailChanged = !beforeUpdate.getEmail().equals(request.getEmail());
+    final UserDto updated = userService.updateUser(id, request);
+
+    if (emailChanged) {
+      sendPasswordSetupInvitation(userService.findByIdOrThrow(id));
+    }
+
+    return updated;
   }
 
   /**
@@ -135,15 +186,40 @@ public class UserFacadeImpl implements UserFacade {
    * @param user account whose credentials and authentication state are reset
    */
   private void resetUserPasswordAndAuth(final User user) {
-    // Reset password - set to null so user must request new one-time password
+    // Reset password so the user must complete setup through a fresh invitation link.
     user.setPassword(null);
     user.setOtcSetupComplete(false);
+    oneTimeCodeService.findByUserId(user.getId()).ifPresent(oneTimeCodeService::delete);
 
     // Reset 2FA only if it's actually enabled
     if (user.is2faEnabled() || user.getTotpSecret() != null) {
       user.setTotpSecret(null);
       user.set2faEnabled(false);
     }
+  }
+
+  private void sendPasswordSetupInvitation(final User user) {
+    oneTimeCodeService.deleteByUserId(user.getId());
+
+    final String token = UUID.randomUUID().toString().replace("-", "");
+    oneTimeCodeService.save(
+        OneTimeCode.builder()
+            .user(user)
+            .codeHash(OneTimeCodeTokens.hash(token))
+            .expiresAt(LocalDateTime.now().plusMinutes(30))
+            .build());
+    final String setupLink =
+        appConfiguration.getFrontendUrl().replaceAll("/+$", "")
+            + "/"
+            + LocaleContextHolder.getLocale().getLanguage()
+            + "/setup-password?setupToken="
+            + token;
+    emailService.enqueue(
+        new UserInvitationMailable(
+            user.getEmail(),
+            user.getUsername(),
+            LocaleContextHolder.getLocale().toLanguageTag(),
+            setupLink));
   }
 
   /**

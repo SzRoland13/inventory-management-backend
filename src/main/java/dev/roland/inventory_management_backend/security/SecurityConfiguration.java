@@ -56,10 +56,6 @@ public class SecurityConfiguration {
                 auth
                     // Public auth endpoints
                     .requestMatchers(
-                        AuthController.AUTH_BASE_ENDPOINT
-                            + AuthController.CHECK_FIRST_LOGIN_ENDPOINT,
-                        AuthController.AUTH_BASE_ENDPOINT + AuthController.SEND_OTC_ENDPOINT,
-                        AuthController.AUTH_BASE_ENDPOINT + AuthController.VALIDATE_OTC_ENDPOINT,
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.SETUP_PASSWORD_ENDPOINT,
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.LOGIN_ENDPOINT,
                         AuthController.AUTH_BASE_ENDPOINT + AuthController.TWO_FA_SETUP_ENDPOINT,

@@ -8,13 +8,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,21 +21,16 @@ import org.springframework.security.authentication.BadCredentialsException;
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.common.service.JwtService;
 import dev.roland.inventory_management_backend.common.service.LoginSessionService;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.common.service.TwoFactorAuthService;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
-import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
-import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
-import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -49,8 +42,6 @@ import dev.roland.inventory_management_backend.features.user.service.UserService
 class AuthFacadeImplTest {
 
   @Mock private UserService userService;
-  @Mock private EmailService emailService;
-  @Mock private OneTimeCodeService oneTimeCodeService;
   @Mock private JwtService jwtService;
   @Mock private AuthenticationManager authenticationManager;
   @Mock private RefreshTokenService refreshTokenService;
@@ -67,8 +58,6 @@ class AuthFacadeImplTest {
     facade =
         new AuthFacadeImpl(
             userService,
-            emailService,
-            oneTimeCodeService,
             jwtService,
             authenticationManager,
             refreshTokenService,
@@ -80,111 +69,14 @@ class AuthFacadeImplTest {
   }
 
   @Test
-  void sendsAndPersistsOneTimeCodeForUserWithoutPassword() {
-    final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
-    when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
-    when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    facade.sendOneTimeCode(email("alice@example.com"));
-
-    verify(oneTimeCodeService)
-        .save(
-            ArgumentMatchers.argThat(
-                code ->
-                    code.getUser() == user
-                        && code.getCode().length() == 32
-                        && code.getExpiresAt().isAfter(LocalDateTime.now())
-                        && code.getExpiresAt().isBefore(LocalDateTime.now().plusMinutes(31))));
-    verify(emailService).enqueue(any(OneTimeCodeMailable.class));
-  }
-
-  @Test
-  void doesNotSendFirstLoginCodeForAccountWithPassword() {
-    final User user = User.builder().password("hashed").email("alice@example.com").build();
-    when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
-
-    final ApiException exception =
-        assertThrows(ApiException.class, () -> facade.sendOneTimeCode(email("alice@example.com")));
-
-    assertEquals(AuthMessageKey.NOT_FIRST_LOGIN, exception.getMessageKey());
-    verify(emailService, never()).enqueue(any(OneTimeCodeMailable.class));
-    verify(oneTimeCodeService, never()).save(any());
-  }
-
-  @Test
-  void persistsCodeAndQueuesEmailWithoutWaitingForTransport() {
-    final User user = User.builder().id(4L).username("alice").email("alice@example.com").build();
-    when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
-    when(oneTimeCodeService.findByUserId(4L)).thenReturn(Optional.empty());
-    facade.sendOneTimeCode(email("alice@example.com"));
-
-    verify(oneTimeCodeService).save(any());
-    verify(emailService).enqueue(any(OneTimeCodeMailable.class));
-  }
-
-  @Test
-  void validatesAndConsumesCodeForMatchingUnexpiredUser() {
-    final User user = User.builder().email("alice@example.com").build();
-    final OneTimeCode code =
-        OneTimeCode.builder()
-            .user(user)
-            .code("one-time")
-            .expiresAt(LocalDateTime.now().plusMinutes(5))
-            .build();
-    when(oneTimeCodeService.findByCode("one-time")).thenReturn(Optional.of(code));
-
-    facade.validateOneTimeCode(validation("alice@example.com", "one-time"));
-
-    verify(oneTimeCodeService).delete(code);
-  }
-
-  @Test
-  void rejectsExpiredCodeAndDoesNotConsumeIt() {
-    final OneTimeCode code =
-        OneTimeCode.builder()
-            .user(User.builder().email("alice@example.com").build())
-            .code("expired")
-            .expiresAt(LocalDateTime.now().minusSeconds(1))
-            .build();
-    when(oneTimeCodeService.findByCode("expired")).thenReturn(Optional.of(code));
-
-    final ApiException exception =
-        assertThrows(
-            ApiException.class,
-            () -> facade.validateOneTimeCode(validation("alice@example.com", "expired")));
-
-    assertEquals(AuthMessageKey.ONE_TIME_CODE_EXPIRED, exception.getMessageKey());
-    verify(oneTimeCodeService, never()).delete(code);
-  }
-
-  @Test
-  void rejectsCodeForAnotherEmailAndUnknownCode() {
-    final OneTimeCode code =
-        OneTimeCode.builder()
-            .user(User.builder().email("other@example.com").build())
-            .code("code")
-            .expiresAt(LocalDateTime.now().plusMinutes(1))
-            .build();
-    when(oneTimeCodeService.findByCode("code")).thenReturn(Optional.of(code));
-    when(oneTimeCodeService.findByCode("missing")).thenReturn(Optional.empty());
-
-    assertEquals(
-        AuthMessageKey.INVALID_CREDENTIALS,
-        assertThrows(
-                ApiException.class,
-                () -> facade.validateOneTimeCode(validation("alice@example.com", "code")))
-            .getMessageKey());
-    assertEquals(
-        AuthMessageKey.INVALID_CREDENTIALS,
-        assertThrows(
-                ApiException.class,
-                () -> facade.validateOneTimeCode(validation("alice@example.com", "missing")))
-            .getMessageKey());
-  }
-
-  @Test
   void loginCreatesTemporarySessionAfterCredentialAuthentication() {
     final User user =
-        User.builder().username("alice").email("alice@example.com").is2faEnabled(true).build();
+        User.builder()
+            .username("alice")
+            .email("alice@example.com")
+            .password("encoded-password")
+            .is2faEnabled(true)
+            .build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(loginSessionService.createTemporarySessionWithExpiry("alice@example.com"))
         .thenReturn(new TokenWithExpiry("short-lived", Instant.now().plusSeconds(60)));
@@ -200,7 +92,8 @@ class AuthFacadeImplTest {
 
   @Test
   void loginMapsBadCredentialsToInvalidCredentials() {
-    final User user = User.builder().username("alice").email("alice@example.com").build();
+    final User user =
+        User.builder().username("alice").email("alice@example.com").password("encoded").build();
     when(userService.findUserByEmailOrThrow("alice@example.com")).thenReturn(user);
     when(authenticationManager.authenticate(any()))
         .thenThrow(new BadCredentialsException("bad credentials"));
@@ -246,18 +139,27 @@ class AuthFacadeImplTest {
 
   @Test
   void setupTwoFactorRejectsAlreadyEnabledOrIncompleteAccountsAndPersistsSecret() {
+    when(loginSessionService.consumeSessionToken("session")).thenReturn("ready@example.com");
+    when(loginSessionService.consumeSessionToken("enabled-session"))
+        .thenReturn("enabled@example.com");
+    when(loginSessionService.consumeSessionToken("incomplete-session"))
+        .thenReturn("incomplete@example.com");
     when(userService.findUserByEmailOrThrow("enabled@example.com"))
         .thenReturn(User.builder().is2faEnabled(true).build());
     assertEquals(
         AuthMessageKey.TWO_FA_ALREADY_ENABLED,
-        assertThrows(ApiException.class, () -> facade.setup2fa(email("enabled@example.com")))
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("enabled@example.com", "enabled-session")))
             .getMessageKey());
 
     when(userService.findUserByEmailOrThrow("incomplete@example.com"))
         .thenReturn(User.builder().isOtcSetupComplete(false).build());
     assertEquals(
         AuthMessageKey.ONE_TIME_CODE_SHOULD_BE_VERIFIED_FIRST,
-        assertThrows(ApiException.class, () -> facade.setup2fa(email("incomplete@example.com")))
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("incomplete@example.com", "incomplete-session")))
             .getMessageKey());
 
     final User user = User.builder().email("ready@example.com").isOtcSetupComplete(true).build();
@@ -266,9 +168,38 @@ class AuthFacadeImplTest {
     when(twoFactorAuthService.generateQrCodeImage("totp-secret", "ready@example.com"))
         .thenReturn("qr-data");
 
-    assertEquals("qr-data", facade.setup2fa(email("ready@example.com")));
+    assertEquals("qr-data", facade.setup2fa(setupRequest("ready@example.com", "session")));
     assertEquals("totp-secret", user.getTotpSecret());
     verify(userService).save(user);
+  }
+
+  @Test
+  void setupTwoFactorRejectsMissingExpiredAndMismatchedSessionTokens() {
+    when(loginSessionService.consumeSessionToken("expired")).thenReturn(null);
+    when(loginSessionService.consumeSessionToken("other-user-session"))
+        .thenReturn("other@example.com");
+
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class, () -> facade.setup2fa(setupRequest("alice@example.com", null)))
+            .getMessageKey());
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("alice@example.com", "expired")))
+            .getMessageKey());
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("alice@example.com", "other-user-session")))
+            .getMessageKey());
+
+    verify(userService, never()).findUserByEmailOrThrow(any());
+    verify(twoFactorAuthService, never()).generateSecret();
+    verify(userService, never()).save(any(User.class));
   }
 
   @Test
@@ -342,16 +273,10 @@ class AuthFacadeImplTest {
     verify(refreshTokenService).delete(token);
   }
 
-  private EmailRequest email(final String address) {
-    final EmailRequest request = new EmailRequest();
+  private TwoFactorSetupRequest setupRequest(final String address, final String token) {
+    final TwoFactorSetupRequest request = new TwoFactorSetupRequest();
     request.setEmail(address);
-    return request;
-  }
-
-  private FirstLoginValidationRequest validation(final String address, final String code) {
-    final FirstLoginValidationRequest request = new FirstLoginValidationRequest();
-    request.setEmail(address);
-    request.setOneTimeCode(code);
+    request.setShortLifeToken(token);
     return request;
   }
 

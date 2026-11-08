@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
+
 /**
  * Paging and filters for the company stock balance list.
  *
@@ -15,11 +17,13 @@ import jakarta.validation.constraints.Size;
  * @param warehouseId optional warehouse filter
  */
 public record StockBalanceListRequest(
-    @Min(0) Integer page,
-    @Min(1) @Max(100) Integer size,
-    @Size(max = 200) String search,
-    @Positive Long productId,
-    @Positive Long warehouseId) {
+    @Min(value = 0, message = ValidationKeys.INVALID_VALUE) Integer page,
+    @Min(value = 1, message = ValidationKeys.INVALID_VALUE)
+        @Max(value = 100, message = ValidationKeys.INVALID_VALUE)
+        Integer size,
+    @Size(max = 200, message = ValidationKeys.TOO_LONG) String search,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long productId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long warehouseId) {
   /**
    * Applies defaults for omitted paging values.
    *

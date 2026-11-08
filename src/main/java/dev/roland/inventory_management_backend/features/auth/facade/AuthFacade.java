@@ -1,33 +1,16 @@
 package dev.roland.inventory_management_backend.features.auth.facade;
 
 import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 
 /** Coordinates authentication flows that span multiple authentication services. */
 public interface AuthFacade {
-
-  /**
-   * Handles first-time login by verifying credentials and sending a one-time code.
-   *
-   * @param request user's email address
-   * @throws ApiException if user does not exist or is not a first-time login
-   */
-  void sendOneTimeCode(EmailRequest request);
-
-  /**
-   * Validates the user's first-login one-time code.
-   *
-   * @param request user's email and one time code
-   * @throws ApiException if user does not exist or one time code invalid
-   */
-  void validateOneTimeCode(FirstLoginValidationRequest request);
 
   /**
    * Handles login by verifying credentials and generating authentication tokens.
@@ -50,11 +33,11 @@ public interface AuthFacade {
   /**
    * Initializes Two-Factor Authentication (2FA) setup for a user by generating a TOTP secret.
    *
-   * @param request contains the user's email
+   * @param request contains the user's email and short-lived login token
    * @return {@link String} with the generated QR code image (Base64 data URI)
    * @throws ApiException if user does not exist or already has 2FA enabled
    */
-  String setup2fa(EmailRequest request);
+  String setup2fa(TwoFactorSetupRequest request);
 
   /**
    * Validates a user's TOTP code during the login flow.

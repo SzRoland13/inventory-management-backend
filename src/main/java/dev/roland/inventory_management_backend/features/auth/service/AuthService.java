@@ -2,9 +2,6 @@ package dev.roland.inventory_management_backend.features.auth.service;
 
 import org.springframework.security.core.Authentication;
 
-import dev.roland.inventory_management_backend.common.exception.ApiException;
-import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 
@@ -12,18 +9,9 @@ import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 public interface AuthService {
 
   /**
-   * Checks whether the supplied email belongs to an account that has not set a password.
+   * Saves the new password after validating the emailed one-time token.
    *
-   * @param request email address of user
-   * @return first-login status for the requested email
-   * @throws ApiException if user is not registered
-   */
-  CheckFirstLoginResponse checkIfFirstLogin(EmailRequest request);
-
-  /**
-   * Saves the new password after validating first-login credentials.
-   *
-   * @param request email of user and the password two times
+   * @param request one-time token and the password two times
    * @throws ApiException if user credentials are invalid or the two passwords do not match
    */
   void handleSetupOfNewPassword(PasswordSetupRequest request);

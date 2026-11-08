@@ -17,6 +17,8 @@ import dev.roland.inventory_management_backend.common.exception.MailException;
 import dev.roland.inventory_management_backend.common.mail.AbstractMailable;
 import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailFactory;
 import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailFactory;
+import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
 
 class OneTimeCodeMailFactoryTest {
 
@@ -52,6 +54,40 @@ class OneTimeCodeMailFactoryTest {
         MailException.class,
         () ->
             factory.compose(new OneTimeCodeMailable("alice@example.com", "Alice", "123456", "  ")));
+  }
+
+  @Test
+  void composesLocalizedUserInvitationEmail() {
+    final var factory = new UserInvitationMailFactory(templateEngine(), emailMessages);
+
+    final var composed =
+        factory.compose(
+            new UserInvitationMailable(
+                "alice@example.com", "<Alice>", "hu", "https://example.com/setup#token"));
+
+    assertEquals("alice@example.com", composed.recipient());
+    assertEquals("Hozzáadták a Készletkezelő rendszerhez", composed.subject());
+    assertTrue(composed.htmlBody().contains("Fiókja beállításra kész"));
+    assertTrue(composed.htmlBody().contains("&lt;Alice&gt;"));
+    assertTrue(composed.htmlBody().contains("Jelszó beállítása"));
+  }
+
+  @Test
+  void rejectsInvalidUserInvitationRecipientAndLanguage() {
+    final var factory = new UserInvitationMailFactory(templateEngine(), emailMessages);
+
+    assertThrows(
+        MailException.class,
+        () ->
+            factory.compose(
+                new UserInvitationMailable(
+                    null, "Alice", "en", "https://example.com/setup#token")));
+    assertThrows(
+        MailException.class,
+        () ->
+            factory.compose(
+                new UserInvitationMailable(
+                    "alice@example.com", "Alice", " ", "https://example.com/setup#token")));
   }
 
   private static SpringTemplateEngine templateEngine() {

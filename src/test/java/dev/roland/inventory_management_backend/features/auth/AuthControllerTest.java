@@ -15,9 +15,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.service.HttpOnlyCookieService;
 import dev.roland.inventory_management_backend.features.auth.dto.AuthTokens;
-import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
@@ -25,6 +22,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.facade.AuthFacade;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
@@ -50,40 +48,17 @@ class AuthControllerTest {
   }
 
   @Test
-  void firstLoginEndpointUsesTheMatchingMessageAndDelegatesRequest() {
-    final EmailRequest request = email("alice@example.com");
-    when(authService.checkIfFirstLogin(request))
-        .thenReturn(
-            new CheckFirstLoginResponse(true, true), new CheckFirstLoginResponse(true, false));
-
-    final var firstLogin = controller.checkIfFirstLogin(request);
-    final var returningLogin = controller.checkIfFirstLogin(request);
-
-    assertEquals(200, firstLogin.getStatusCode().value());
-    assertEquals(AuthMessageKey.FIRST_LOGIN.getKey(), firstLogin.getBody().getMessageKey());
-    assertEquals(AuthMessageKey.NOT_FIRST_LOGIN.getKey(), returningLogin.getBody().getMessageKey());
-  }
-
-  @Test
   void onboardingAndLoginEndpointsReturnSuccessfulResponses() {
-    final EmailRequest email = email("alice@example.com");
-    final FirstLoginValidationRequest validation = new FirstLoginValidationRequest();
-    validation.setEmail("alice@example.com");
-    validation.setOneTimeCode("123");
     final PasswordSetupRequest password = new PasswordSetupRequest();
-    password.setEmail("alice@example.com");
+    password.setOneTimeCode("setup-token");
     final LoginRequest login = new LoginRequest();
     login.setEmail("alice@example.com");
     login.setPassword("secret");
     when(authFacade.handleLogin(login))
         .thenReturn(ShortLifeTokenResponse.builder().shortLifeToken("short").build());
 
-    assertEquals(201, controller.sendOneTimeCode(email).getStatusCode().value());
-    assertEquals(200, controller.validateOneTimeCode(validation).getStatusCode().value());
     assertEquals(200, controller.handleSetupOfNewPassword(password).getStatusCode().value());
     assertEquals("short", controller.handleLogin(login).getBody().getPayload().getShortLifeToken());
-    verify(authFacade).sendOneTimeCode(email);
-    verify(authFacade).validateOneTimeCode(validation);
     verify(authService).handleSetupOfNewPassword(password);
   }
 
@@ -106,9 +81,9 @@ class AuthControllerTest {
 
   @Test
   void twoFactorSetupAndLoginSetAuthenticationCookies() {
-    final EmailRequest email = email("alice@example.com");
-    when(authFacade.setup2fa(email)).thenReturn("qr-code");
-    assertEquals("qr-code", controller.setup2fa(email).getBody().getPayload());
+    final TwoFactorSetupRequest setupRequest = setupRequest("alice@example.com", "session");
+    when(authFacade.setup2fa(setupRequest)).thenReturn("qr-code");
+    assertEquals("qr-code", controller.setup2fa(setupRequest).getBody().getPayload());
 
     when(appConfiguration.isSecureCookie()).thenReturn(false);
     when(appConfiguration.getAccessTokenExpirationTime()).thenReturn(120_000L);
@@ -158,9 +133,10 @@ class AuthControllerTest {
     verify(cookieService).clearRefreshCookie(response, true);
   }
 
-  private EmailRequest email(final String address) {
-    final EmailRequest request = new EmailRequest();
+  private TwoFactorSetupRequest setupRequest(final String address, final String token) {
+    final TwoFactorSetupRequest request = new TwoFactorSetupRequest();
     request.setEmail(address);
+    request.setShortLifeToken(token);
     return request;
   }
 }
