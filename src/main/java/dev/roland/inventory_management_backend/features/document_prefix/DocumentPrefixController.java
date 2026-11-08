@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import dev.roland.inventory_management_backend.common.annotation.AdminOnly;
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.GenericMessageKey;
 import dev.roland.inventory_management_backend.features.document_prefix.dto.DocumentPrefixesResponse;
@@ -42,6 +43,7 @@ public class DocumentPrefixController {
    * @return update result
    */
   @PostMapping()
+  @AdminOnly
   public ResponseEntity<ApiResponse<DocumentPrefixesResponse>> update(
       @RequestBody final DocumentPrefixesUpdateRequest request) {
     final DocumentPrefixesResponse response =
