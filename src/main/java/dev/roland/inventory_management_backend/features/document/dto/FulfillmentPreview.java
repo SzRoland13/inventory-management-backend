@@ -18,14 +18,13 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Doc
  *
  * @param documentId document identifier value
  * @param lines lines value
- * @param sourceDocumentId source document identifier value
+ * @param sourceDocumentId optional source document identifier value
  * @param type type value
  * @param warehouseId warehouse identifier value
  * @param effectiveAt optional effective movement time
  */
 public record FulfillmentPreview(
-    @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
-        Long sourceDocumentId,
+    @Positive(message = ValidationKeys.INVALID_VALUE) Long sourceDocumentId,
     @Positive(message = ValidationKeys.INVALID_VALUE) Long documentId,
     @NotNull(message = ValidationKeys.REQUIRED) DocumentType type,
     @NotNull(message = ValidationKeys.REQUIRED) @Positive(message = ValidationKeys.INVALID_VALUE)
