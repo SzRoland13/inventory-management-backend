@@ -71,7 +71,7 @@ public class UserController {
       @PathVariable final Long id, @RequestBody final AddEditUserRequest updateRequest) {
     return ResponseEntity.ok(
         ApiResponse.success(
-            UserMessageKey.UPDATE_SUCCESS, userService.updateUser(id, updateRequest)));
+            UserMessageKey.UPDATE_SUCCESS, userFacade.updateUser(id, updateRequest)));
   }
 
   /**

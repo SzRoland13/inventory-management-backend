@@ -30,4 +30,5 @@
     <include file="db/changelog/changes/023-warehouse-operations.xml"/>
     <include file="db/changelog/changes/024-document-posting-key-result.xml"/>
     <include file="db/changelog/changes/025-commercial-documents.xml"/>
+    <include file="db/changelog/changes/026-hash-one-time-codes.xml"/>
 </databaseChangeLog>

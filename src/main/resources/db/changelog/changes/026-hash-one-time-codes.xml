@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="026-hash-one-time-codes" author="roland">
+        <delete tableName="one_time_codes"/>
+        <renameColumn tableName="one_time_codes" oldColumnName="code" newColumnName="code_hash" columnDataType="VARCHAR(255)"/>
+        <addUniqueConstraint tableName="one_time_codes" columnNames="code_hash" constraintName="uq_one_time_codes_code_hash"/>
+    </changeSet>
+</databaseChangeLog>

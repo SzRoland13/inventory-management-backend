@@ -66,6 +66,8 @@ management:
       show-details: when_authorized
 #App config
 app:
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3001}
   initial-admin:
     username: ${INITIAL_ADMIN_USERNAME:}
     email: ${INITIAL_ADMIN_EMAIL:}

@@ -73,7 +73,8 @@ class OutboxServiceTest {
   void restoresUserInvitationMailableFromOutboxPayload() {
     final var payload =
         OutboxService.EmailPayload.from(
-            new UserInvitationMailable("alice@example.com", "Alice", "hu-HU"));
+            new UserInvitationMailable(
+                "alice@example.com", "Alice", "hu-HU", "https://example.com/setup#token"));
 
     final var restored = payload.toMailable();
 
@@ -81,6 +82,7 @@ class OutboxServiceTest {
     assertEquals("alice@example.com", restored.recipient());
     assertEquals("Alice", restored.templateVariables().get("username"));
     assertEquals("hu-HU", restored.languageTag());
+    assertEquals("https://example.com/setup#token", restored.templateVariables().get("setupLink"));
   }
 
   @Test

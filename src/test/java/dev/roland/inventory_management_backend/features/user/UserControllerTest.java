@@ -38,7 +38,7 @@ class UserControllerTest {
     final UserDto user = UserDto.builder().id(7L).username("alice").build();
     final AllUserResponse allUsers = new AllUserResponse(List.of(userWithAvatar()));
     when(userFacade.registerUser(request)).thenReturn(user);
-    when(userService.updateUser(7L, request)).thenReturn(user);
+    when(userFacade.updateUser(7L, request)).thenReturn(user);
     when(userFacade.getAllUsers()).thenReturn(allUsers);
 
     assertEquals(user, controller.registerUser(request).getBody().getPayload());
@@ -46,7 +46,7 @@ class UserControllerTest {
     assertEquals(allUsers, controller.getAllUsers().getBody().getPayload());
 
     verify(userFacade).registerUser(request);
-    verify(userService).updateUser(7L, request);
+    verify(userFacade).updateUser(7L, request);
     verify(userFacade).getAllUsers();
   }
 

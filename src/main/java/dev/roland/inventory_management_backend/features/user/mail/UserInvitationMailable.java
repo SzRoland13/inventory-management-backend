@@ -15,9 +15,13 @@ public final class UserInvitationMailable extends AbstractMailable {
    * @param recipient recipient email address
    * @param username recipient name shown in the email
    * @param languageTag locale used to render the email
+   * @param setupLink link used to set the initial password
    */
   public UserInvitationMailable(
-      final String recipient, final String username, final String languageTag) {
+      final String recipient,
+      final String username,
+      final String languageTag,
+      final String setupLink) {
     super(
         MailType.USER_INVITATION,
         recipient,
@@ -25,7 +29,7 @@ public final class UserInvitationMailable extends AbstractMailable {
         "email.user-invitation.title",
         "email.user-invitation.preheader",
         "mail/user-invitation-mail",
-        Map.of("username", username),
+        Map.of("username", username, "setupLink", setupLink),
         List.of(),
         languageTag);
   }

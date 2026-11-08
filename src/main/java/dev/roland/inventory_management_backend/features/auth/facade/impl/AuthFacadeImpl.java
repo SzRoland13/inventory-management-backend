@@ -2,32 +2,27 @@ package dev.roland.inventory_management_backend.features.auth.facade.impl;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import jakarta.transaction.Transactional;
 
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
+import dev.roland.inventory_management_backend.common.exception.NotFoundException;
 import dev.roland.inventory_management_backend.common.exception.UnauthorizedException;
-import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.common.service.JwtService;
 import dev.roland.inventory_management_backend.common.service.LoginSessionService;
 import dev.roland.inventory_management_backend.common.service.ObjectStorageService;
 import dev.roland.inventory_management_backend.common.service.TwoFactorAuthService;
 import dev.roland.inventory_management_backend.features.auth.dto.AuthTokens;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
-import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
@@ -40,9 +35,6 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
-import dev.roland.inventory_management_backend.features.one_time_code.OneTimeCode;
-import dev.roland.inventory_management_backend.features.one_time_code.mail.OneTimeCodeMailable;
-import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.refresh_token.RefreshToken;
 import dev.roland.inventory_management_backend.features.refresh_token.service.RefreshTokenService;
 import dev.roland.inventory_management_backend.features.user.User;
@@ -56,8 +48,6 @@ import lombok.RequiredArgsConstructor;
 public class AuthFacadeImpl implements AuthFacade {
 
   private final UserService userService;
-  private final EmailService emailService;
-  private final OneTimeCodeService oneTimeCodeService;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
   private final RefreshTokenService refreshTokenService;
@@ -68,96 +58,27 @@ public class AuthFacadeImpl implements AuthFacade {
   private final ObjectStorageService objectStorageService;
 
   /** {@inheritDoc} */
-  @Transactional
-  @Override
-  public void sendOneTimeCode(final EmailRequest request) {
-    final User user = userService.findUserByEmailOrThrow(request.getEmail());
-
-    if (user.getPassword() != null) {
-      throw new ApiException(AuthMessageKey.NOT_FIRST_LOGIN);
-    }
-
-    final OneTimeCode code =
-        oneTimeCodeService.findByUserId(user.getId()).orElse(new OneTimeCode());
-
-    code.setUser(user);
-    code.setCode(generateOneTimeCode());
-    code.setExpiresAt(LocalDateTime.now().plusMinutes(30));
-    oneTimeCodeService.save(code);
-    sendFirstLoginEmail(user, code.getCode());
-  }
-
-  /** {@inheritDoc} */
-  @Transactional
-  @Override
-  public PasswordSetupTokenResponse validateOneTimeCode(final FirstLoginValidationRequest request) {
-    final OneTimeCode oneTimeCode =
-        oneTimeCodeService
-            .findByCode(request.getOneTimeCode())
-            .orElseThrow(() -> new ApiException(AuthMessageKey.INVALID_CREDENTIALS));
-
-    final User user = oneTimeCode.getUser();
-
-    if (user == null || !user.getEmail().equals(request.getEmail())) {
-      throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
-    }
-
-    if (oneTimeCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-      throw new ApiException(AuthMessageKey.ONE_TIME_CODE_EXPIRED);
-    }
-
-    oneTimeCodeService.delete(oneTimeCode);
-    final TokenWithExpiry setupToken =
-        loginSessionService.createPasswordSetupToken(user.getEmail());
-
-    return new PasswordSetupTokenResponse(setupToken.getToken(), setupToken.getExpiresAt());
-  }
-
-  /**
-   * Generates a random one-time code for login verification.
-   *
-   * @return generated one-time code
-   */
-  private String generateOneTimeCode() {
-    return UUID.randomUUID().toString().replace("-", "");
-  }
-
-  /**
-   * Sends the one-time code email to the user.
-   *
-   * @param user account receiving the code
-   * @param code one-time code included in the email
-   */
-  private void sendFirstLoginEmail(final User user, final String code) {
-    emailService.enqueue(
-        new OneTimeCodeMailable(
-            user.getEmail(),
-            user.getUsername(),
-            code,
-            LocaleContextHolder.getLocale().toLanguageTag()));
-  }
-
-  /** {@inheritDoc} */
   @Override
   public ShortLifeTokenResponse handleLogin(final LoginRequest request) {
-    final User user = userService.findUserByEmailOrThrow(request.getEmail());
-
     try {
+      final User user = userService.findUserByEmailOrThrow(request.getEmail());
+      if (user.getPassword() == null) {
+        throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
+      }
       final UsernamePasswordAuthenticationToken authInputToken =
           new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword());
       authenticationManager.authenticate(authInputToken);
-    } catch (BadCredentialsException e) {
+      final TokenWithExpiry tokenWithExpiry =
+          loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
+
+      return ShortLifeTokenResponse.builder()
+          .twoFactorEnabled(user.is2faEnabled())
+          .shortLifeToken(tokenWithExpiry.getToken())
+          .expiresAt(tokenWithExpiry.getExpiresAt())
+          .build();
+    } catch (AuthenticationException | NotFoundException e) {
       throw new ApiException(AuthMessageKey.INVALID_CREDENTIALS);
     }
-
-    final TokenWithExpiry tokenWithExpiry =
-        loginSessionService.createTemporarySessionWithExpiry(user.getEmail());
-
-    return ShortLifeTokenResponse.builder()
-        .twoFactorEnabled(user.is2faEnabled())
-        .shortLifeToken(tokenWithExpiry.getToken())
-        .expiresAt(tokenWithExpiry.getExpiresAt())
-        .build();
   }
 
   /** {@inheritDoc} */

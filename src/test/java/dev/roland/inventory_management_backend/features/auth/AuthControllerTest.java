@@ -15,9 +15,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.service.HttpOnlyCookieService;
 import dev.roland.inventory_management_backend.features.auth.dto.AuthTokens;
-import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
@@ -51,40 +48,17 @@ class AuthControllerTest {
   }
 
   @Test
-  void firstLoginEndpointUsesTheMatchingMessageAndDelegatesRequest() {
-    final EmailRequest request = email("alice@example.com");
-    when(authService.checkIfFirstLogin(request))
-        .thenReturn(
-            new CheckFirstLoginResponse(true, true), new CheckFirstLoginResponse(true, false));
-
-    final var firstLogin = controller.checkIfFirstLogin(request);
-    final var returningLogin = controller.checkIfFirstLogin(request);
-
-    assertEquals(200, firstLogin.getStatusCode().value());
-    assertEquals(AuthMessageKey.FIRST_LOGIN.getKey(), firstLogin.getBody().getMessageKey());
-    assertEquals(AuthMessageKey.NOT_FIRST_LOGIN.getKey(), returningLogin.getBody().getMessageKey());
-  }
-
-  @Test
   void onboardingAndLoginEndpointsReturnSuccessfulResponses() {
-    final EmailRequest email = email("alice@example.com");
-    final FirstLoginValidationRequest validation = new FirstLoginValidationRequest();
-    validation.setEmail("alice@example.com");
-    validation.setOneTimeCode("123");
     final PasswordSetupRequest password = new PasswordSetupRequest();
-    password.setSetupToken("setup-token");
+    password.setOneTimeCode("setup-token");
     final LoginRequest login = new LoginRequest();
     login.setEmail("alice@example.com");
     login.setPassword("secret");
     when(authFacade.handleLogin(login))
         .thenReturn(ShortLifeTokenResponse.builder().shortLifeToken("short").build());
 
-    assertEquals(201, controller.sendOneTimeCode(email).getStatusCode().value());
-    assertEquals(200, controller.validateOneTimeCode(validation).getStatusCode().value());
     assertEquals(200, controller.handleSetupOfNewPassword(password).getStatusCode().value());
     assertEquals("short", controller.handleLogin(login).getBody().getPayload().getShortLifeToken());
-    verify(authFacade).sendOneTimeCode(email);
-    verify(authFacade).validateOneTimeCode(validation);
     verify(authService).handleSetupOfNewPassword(password);
   }
 
@@ -157,12 +131,6 @@ class AuthControllerTest {
 
     verify(cookieService).clearAccessCookie(response, true);
     verify(cookieService).clearRefreshCookie(response, true);
-  }
-
-  private EmailRequest email(final String address) {
-    final EmailRequest request = new EmailRequest();
-    request.setEmail(address);
-    return request;
   }
 
   private TwoFactorSetupRequest setupRequest(final String address, final String token) {

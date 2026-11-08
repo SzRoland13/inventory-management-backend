@@ -19,15 +19,11 @@ import dev.roland.inventory_management_backend.common.configuration.AppConfigura
 import dev.roland.inventory_management_backend.common.dto.ApiResponse;
 import dev.roland.inventory_management_backend.common.message.MessageKey;
 import dev.roland.inventory_management_backend.common.service.HttpOnlyCookieService;
-import dev.roland.inventory_management_backend.features.auth.dto.CheckFirstLoginResponse;
-import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginFinalizationResult;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
-import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
@@ -44,9 +40,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
   public static final String AUTH_BASE_ENDPOINT = "/api/v1/auth";
-  public static final String CHECK_FIRST_LOGIN_ENDPOINT = "/check-first-login";
-  public static final String SEND_OTC_ENDPOINT = "/send-one-time-code";
-  public static final String VALIDATE_OTC_ENDPOINT = "/validate-one-time-code";
   public static final String SETUP_PASSWORD_ENDPOINT = "/setup-password";
   public static final String LOGIN_ENDPOINT = "/login";
   public static final String REFRESH_ENDPOINT = "/refresh";
@@ -61,54 +54,7 @@ public class AuthController {
   private final AppConfiguration appConfiguration;
 
   /**
-   * Checks whether the email belongs to an account completing first login.
-   *
-   * @param request email to check
-   * @return response indicating whether this is the account's first login
-   */
-  @PostMapping(CHECK_FIRST_LOGIN_ENDPOINT)
-  ResponseEntity<ApiResponse<CheckFirstLoginResponse>> checkIfFirstLogin(
-      @Valid @RequestBody final EmailRequest request) {
-    final CheckFirstLoginResponse response = authService.checkIfFirstLogin(request);
-
-    final AuthMessageKey messageKey =
-        response.isFirstLogin() ? AuthMessageKey.FIRST_LOGIN : AuthMessageKey.NOT_FIRST_LOGIN;
-
-    return ResponseEntity.ok(ApiResponse.success(messageKey, response));
-  }
-
-  /**
-   * Sends a one-time code for first-login verification.
-   *
-   * @param request email address receiving the code
-   * @return confirmation response
-   */
-  @PostMapping(SEND_OTC_ENDPOINT)
-  ResponseEntity<ApiResponse<Void>> sendOneTimeCode(
-      @Valid @RequestBody final EmailRequest request) {
-    authFacade.sendOneTimeCode(request);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_SENT, null));
-  }
-
-  /**
-   * Validates the first-login one-time code.
-   *
-   * @param request email and one-time code to validate
-   * @return short-lived password setup authorization
-   */
-  @PostMapping(VALIDATE_OTC_ENDPOINT)
-  ResponseEntity<ApiResponse<PasswordSetupTokenResponse>> validateOneTimeCode(
-      @Valid @RequestBody final FirstLoginValidationRequest request) {
-    final PasswordSetupTokenResponse setupToken = authFacade.validateOneTimeCode(request);
-
-    return ResponseEntity.ok(
-        ApiResponse.success(AuthMessageKey.ONE_TIME_CODE_VALIDATION_SUCCESS, setupToken));
-  }
-
-  /**
-   * Sets the password after first-login verification.
+   * Sets the password after validating an invitation link token.
    *
    * @param request password setup details
    * @return confirmation response

@@ -3,6 +3,7 @@
         <span style="color:#182230; font-weight:600;" th:text="#{email.user-invitation.greeting(${username})}">Hello there,</span>
     </p>
     <p style="margin:0; color:#475467; font-size:16px; line-height:1.65;">
-        <span th:text="#{email.user-invitation.instruction}">An administrator added you to Inventory Management. Visit the sign-in page and request a one-time code to finish setting up your account.</span>
+        <span th:text="#{email.user-invitation.instruction}">An administrator added you to Inventory Management. Set your password using the secure link below.</span>
+        <p><a th:href="${setupLink}" th:text="#{email.user-invitation.setup-link}">Set up your password</a></p>
     </p>
 </th:block>

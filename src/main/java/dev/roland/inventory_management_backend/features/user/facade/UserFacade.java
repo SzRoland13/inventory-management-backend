@@ -18,6 +18,15 @@ public interface UserFacade {
   UserDto registerUser(AddEditUserRequest request);
 
   /**
+   * Updates a user and refreshes the setup invitation if the email changes.
+   *
+   * @param id user identifier
+   * @param request updated user details
+   * @return updated user
+   */
+  UserDto updateUser(Long id, AddEditUserRequest request);
+
+  /**
    * Resets two-factor authentication for one user.
    *
    * @param id user id to reset two-factor authentication for

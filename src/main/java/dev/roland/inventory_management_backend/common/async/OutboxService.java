@@ -140,7 +140,10 @@ public class OutboxService {
             templateVariables.get("oneTimeCode"),
             languageTag);
         case USER_INVITATION -> new UserInvitationMailable(
-            recipient, templateVariables.get("username"), languageTag);
+            recipient,
+            templateVariables.get("username"),
+            languageTag,
+            templateVariables.get("setupLink"));
       };
     }
   }

@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import dev.roland.inventory_management_backend.common.configuration.AppConfiguration;
 import dev.roland.inventory_management_backend.common.exception.ApiException;
 import dev.roland.inventory_management_backend.common.service.EmailService;
 import dev.roland.inventory_management_backend.features.auth.CustomUserDetails;
@@ -31,8 +32,10 @@ import dev.roland.inventory_management_backend.features.media_usage.MediaUsage;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaEntityType;
 import dev.roland.inventory_management_backend.features.media_usage.enumeration.MediaUsageType;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
+import dev.roland.inventory_management_backend.features.one_time_code.service.OneTimeCodeService;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.dto.AddEditUserRequest;
+import dev.roland.inventory_management_backend.features.user.dto.UserDto;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserStatus;
 import dev.roland.inventory_management_backend.features.user.mail.UserInvitationMailable;
@@ -47,14 +50,23 @@ class UserFacadeImplTest {
   @Mock private MediaAssetService mediaAssetService;
   @Mock private MediaUsageService mediaUsageService;
   @Mock private MediaAssetFacade mediaAssetFacade;
+  @Mock private OneTimeCodeService oneTimeCodeService;
+  @Mock private AppConfiguration appConfiguration;
 
   private UserFacadeImpl facade;
 
   @BeforeEach
   void setUp() {
+    Mockito.lenient().when(appConfiguration.getFrontendUrl()).thenReturn("https://app.example.com");
     facade =
         new UserFacadeImpl(
-            userService, emailService, mediaAssetService, mediaUsageService, mediaAssetFacade);
+            userService,
+            emailService,
+            mediaAssetService,
+            mediaUsageService,
+            mediaAssetFacade,
+            oneTimeCodeService,
+            appConfiguration);
     SecurityContextHolder.getContext()
         .setAuthentication(
             new UsernamePasswordAuthenticationToken(
@@ -157,6 +169,8 @@ class UserFacadeImplTest {
     final User user =
         User.builder()
             .id(8L)
+            .username("suspended-user")
+            .email("suspended@example.com")
             .status(UserStatus.ACTIVE)
             .password("hashed")
             .totpSecret("secret")
@@ -195,6 +209,8 @@ class UserFacadeImplTest {
     final User user =
         User.builder()
             .id(9L)
+            .username("reset-user")
+            .email("reset@example.com")
             .status(UserStatus.ACTIVE)
             .password("hashed")
             .isOtcSetupComplete(true)
@@ -218,6 +234,38 @@ class UserFacadeImplTest {
 
     assertEquals(UserMessageKey.USER_NOT_SUSPENDED, exception.getMessageKey());
     verify(userService, never()).save(ArgumentMatchers.any(User.class));
+  }
+
+  @Test
+  void updatingEmailIssuesANewPasswordSetupInvitation() {
+    final User existingUser =
+        User.builder().id(13L).username("alice").email("old@example.com").build();
+    final User updatedUser =
+        User.builder().id(13L).username("alice").email("new@example.com").build();
+    final AddEditUserRequest request = request("alice", "new@example.com", "MANAGER");
+    when(userService.findByIdOrThrow(13L)).thenReturn(existingUser, updatedUser);
+    when(userService.updateUser(13L, request))
+        .thenReturn(UserDto.builder().id(13L).email("new@example.com").build());
+
+    facade.updateUser(13L, request);
+
+    verify(oneTimeCodeService).save(ArgumentMatchers.any());
+    verify(emailService).enqueue(ArgumentMatchers.any(UserInvitationMailable.class));
+  }
+
+  @Test
+  void updatingOtherUserFieldsDoesNotSendANewPasswordSetupInvitation() {
+    final User existingUser =
+        User.builder().id(14L).username("alice").email("alice@example.com").build();
+    final AddEditUserRequest request = request("alice-2", "alice@example.com", "MANAGER");
+    when(userService.findByIdOrThrow(14L)).thenReturn(existingUser);
+    when(userService.updateUser(14L, request))
+        .thenReturn(UserDto.builder().id(14L).email("alice@example.com").build());
+
+    facade.updateUser(14L, request);
+
+    verify(oneTimeCodeService, never()).save(ArgumentMatchers.any());
+    verify(emailService, never()).enqueue(ArgumentMatchers.any(UserInvitationMailable.class));
   }
 
   @Test

@@ -102,6 +102,9 @@ public class AppConfiguration {
   @Value("${app.mail.from:noreply@example.com}")
   private String mailFrom;
 
+  @Value("${app.frontend.url:http://localhost:3001}")
+  private String frontendUrl;
+
   @Value("${spring.data.redis.host}")
   private String redisHost;
 

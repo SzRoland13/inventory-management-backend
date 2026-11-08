@@ -11,8 +11,8 @@ import lombok.Data;
 @PasswordsMatch
 public class PasswordSetupRequest {
 
-  @NotBlank(message = "Password setup token is required")
-  private String setupToken;
+  @NotBlank(message = "One-time setup token is required")
+  private String oneTimeCode;
 
   @ValidPassword private String password;
 

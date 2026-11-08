@@ -61,13 +61,15 @@ class OneTimeCodeMailFactoryTest {
     final var factory = new UserInvitationMailFactory(templateEngine(), emailMessages);
 
     final var composed =
-        factory.compose(new UserInvitationMailable("alice@example.com", "<Alice>", "hu"));
+        factory.compose(
+            new UserInvitationMailable(
+                "alice@example.com", "<Alice>", "hu", "https://example.com/setup#token"));
 
     assertEquals("alice@example.com", composed.recipient());
     assertEquals("Hozzáadták a Készletkezelő rendszerhez", composed.subject());
     assertTrue(composed.htmlBody().contains("Fiókja beállításra kész"));
     assertTrue(composed.htmlBody().contains("&lt;Alice&gt;"));
-    assertTrue(composed.htmlBody().contains("egyszer használatos kódot"));
+    assertTrue(composed.htmlBody().contains("Jelszó beállítása"));
   }
 
   @Test
@@ -76,10 +78,16 @@ class OneTimeCodeMailFactoryTest {
 
     assertThrows(
         MailException.class,
-        () -> factory.compose(new UserInvitationMailable(null, "Alice", "en")));
+        () ->
+            factory.compose(
+                new UserInvitationMailable(
+                    null, "Alice", "en", "https://example.com/setup#token")));
     assertThrows(
         MailException.class,
-        () -> factory.compose(new UserInvitationMailable("alice@example.com", "Alice", " ")));
+        () ->
+            factory.compose(
+                new UserInvitationMailable(
+                    "alice@example.com", "Alice", " ", "https://example.com/setup#token")));
   }
 
   private static SpringTemplateEngine templateEngine() {
