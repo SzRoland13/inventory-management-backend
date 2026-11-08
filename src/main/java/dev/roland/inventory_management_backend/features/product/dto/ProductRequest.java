@@ -28,6 +28,7 @@ import dev.roland.inventory_management_backend.features.product.message.ProductV
  * @param ean product European Article Number
  * @param imageAssetIds ordered image asset identifiers; null preserves images on update
  * @param name display name
+ * @param minimumStockQuantity optional low-stock threshold in the main unit
  * @param pricing product pricing configuration
  * @param sku product stock keeping unit
  * @param status product status
@@ -42,6 +43,9 @@ public record ProductRequest(
     @NotBlank(message = ProductValidationMessage.REQUIRED)
         @Size(max = 255, message = ProductValidationMessage.TOO_LONG)
         String name,
+    @DecimalMin(value = "0.0", message = ProductValidationMessage.NON_NEGATIVE)
+        @Digits(integer = 16, fraction = 8, message = ProductValidationMessage.DECIMAL_PRECISION)
+        BigDecimal minimumStockQuantity,
     String description,
     @Positive(message = ProductValidationMessage.POSITIVE) Long brandId,
     ProductStatus status,
@@ -52,6 +56,36 @@ public record ProductRequest(
     @Valid List<ProductAttributeValueRequest> attributes,
     @Size(max = 10, message = ProductValidationMessage.TOO_LONG)
         List<@Positive(message = ProductValidationMessage.POSITIVE) Long> imageAssetIds) {
+
+  /** Backwards-compatible constructor for internal callers predating stock thresholds. */
+  public ProductRequest(
+      final String sku,
+      final String ean,
+      final String name,
+      final String description,
+      final Long brandId,
+      final ProductStatus status,
+      final Units units,
+      final Pricing pricing,
+      final Dimensions dimensions,
+      final List<Long> categoryIds,
+      final List<ProductAttributeValueRequest> attributes,
+      final List<Long> imageAssetIds) {
+    this(
+        sku,
+        ean,
+        name,
+        null,
+        description,
+        brandId,
+        status,
+        units,
+        pricing,
+        dimensions,
+        categoryIds,
+        attributes,
+        imageAssetIds);
+  }
 
   /** Copies request collections while preserving their optional null state. */
   public ProductRequest {

@@ -70,6 +70,9 @@ public class Product implements IdInterface<Long> {
   @Column(name = "description")
   private String description;
 
+  @Column(name = "minimum_stock_quantity", precision = 24, scale = 8)
+  private BigDecimal minimumStockQuantity;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "brand_id")
   private Brand brand;

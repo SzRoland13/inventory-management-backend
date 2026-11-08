@@ -57,6 +57,18 @@ public class Partner {
   @Column(name = "tax_number", length = 50)
   private String taxNumber;
 
+  @Column(name = "vat_number", length = 50)
+  private String vatNumber;
+
+  @Column(name = "registration_number", length = 100)
+  private String registrationNumber;
+
+  @Column(name = "bank_account", length = 100)
+  private String bankAccount;
+
+  @Column(name = "iban", length = 50)
+  private String iban;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "company_id", nullable = false)
   private Company company;
