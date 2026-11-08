@@ -32,16 +32,47 @@ class MediaCleanupServiceTest {
 
   @Test
   void deletesEachOldOrphanFromStorageAndDatabase() {
-    final MediaAsset first = MediaAsset.builder().id(1L).objectPath("temp/one").build();
+    final MediaAsset first =
+        MediaAsset.builder()
+            .id(1L)
+            .objectPath("temp/one")
+            .thumbnailObjectPath("thumbnails/one.webp")
+            .build();
     final MediaAsset second = MediaAsset.builder().id(2L).objectPath("temp/two").build();
     when(mediaAssetService.findOrphanAssetsOlderThan(any())).thenReturn(List.of(first, second));
 
     service.cleanupOrphanedMedia();
 
     verify(objectStorageService).delete("temp/one");
+    verify(objectStorageService).delete("thumbnails/one.webp");
     verify(objectStorageService).delete("temp/two");
     verify(mediaAssetService).deleteById(1L);
     verify(mediaAssetService).deleteById(2L);
+  }
+
+  @Test
+  void retainsAssetWhenThumbnailDeletionFailsAndRetriesOnNextCleanup() {
+    final MediaAsset failed =
+        MediaAsset.builder()
+            .id(1L)
+            .objectPath("temp/failed")
+            .thumbnailObjectPath("thumbnails/failed.webp")
+            .build();
+    when(mediaAssetService.findOrphanAssetsOlderThan(any())).thenReturn(List.of(failed));
+    Mockito.doNothing().when(objectStorageService).delete("temp/failed");
+    Mockito.doThrow(new IllegalStateException("storage unavailable"))
+        .doNothing()
+        .when(objectStorageService)
+        .delete("thumbnails/failed.webp");
+
+    service.cleanupOrphanedMedia();
+    verify(mediaAssetService, never()).deleteById(1L);
+
+    service.cleanupOrphanedMedia();
+
+    verify(objectStorageService, Mockito.times(2)).delete("temp/failed");
+    verify(objectStorageService, Mockito.times(2)).delete("thumbnails/failed.webp");
+    verify(mediaAssetService).deleteById(1L);
   }
 
   @Test
