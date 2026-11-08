@@ -38,6 +38,7 @@ public class UserController {
   public static final String SUSPEND_ENDPOINT = "/suspend" + ID_PARAM;
   public static final String ACTIVATE_ENDPOINT = "/activate" + ID_PARAM;
   public static final String RESET_PASSWORD_ENDPOINT = "/reset-password" + ID_PARAM;
+  public static final String RESEND_PASSWORD_SETUP_ENDPOINT = "/resend-password-setup" + ID_PARAM;
   public static final String AVATAR_ENDPOINT = ID_PARAM + "/avatar";
 
   private final UserService userService;
@@ -140,6 +141,20 @@ public class UserController {
     userFacade.resetPassword(id);
 
     return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_RESET_COMPLETE, null));
+  }
+
+  /**
+   * Sends a fresh password setup link to a user who has not completed account setup.
+   *
+   * @param id user identifier
+   * @return confirmation response
+   */
+  @PostMapping(RESEND_PASSWORD_SETUP_ENDPOINT)
+  @AdminOnly
+  public ResponseEntity<ApiResponse<Void>> resendPasswordSetup(@PathVariable final Long id) {
+    userFacade.resendPasswordSetup(id);
+
+    return ResponseEntity.ok(ApiResponse.success(UserMessageKey.PASSWORD_SETUP_LINK_SENT, null));
   }
 
   /**

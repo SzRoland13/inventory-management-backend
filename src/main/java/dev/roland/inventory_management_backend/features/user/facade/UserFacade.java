@@ -55,6 +55,13 @@ public interface UserFacade {
   void resetPassword(Long id);
 
   /**
+   * Sends a new password setup invitation to a user whose account setup is still pending.
+   *
+   * @param id user identifier
+   */
+  void resendPasswordSetup(Long id);
+
+  /**
    * Associates a media asset with a user as the user's avatar.
    *
    * @param id user identifier

@@ -147,6 +147,19 @@ public class UserFacadeImpl implements UserFacade {
     sendPasswordSetupInvitation(user);
   }
 
+  /** {@inheritDoc} */
+  @Transactional
+  @Override
+  public void resendPasswordSetup(final Long id) {
+    final User user = userService.findByIdOrThrow(id);
+
+    if (user.getStatus() != UserStatus.SETUP_REQUIRED) {
+      throw new ApiException(UserMessageKey.PASSWORD_SETUP_NOT_REQUIRED);
+    }
+
+    sendPasswordSetupInvitation(user);
+  }
+
   /**
    * Updates an account and sends a new setup link when its email address changes.
    *

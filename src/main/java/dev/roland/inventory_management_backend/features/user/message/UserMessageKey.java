@@ -26,6 +26,10 @@ public enum UserMessageKey implements MessageKey {
   USER_ACTIVATED("user.activated"),
   /** Message key for password reset complete. */
   PASSWORD_RESET_COMPLETE("user.password-reset-complete"),
+  /** Message key for a new password setup link sent to the user. */
+  PASSWORD_SETUP_LINK_SENT("user.password-setup-link-sent"),
+  /** Message key when password setup is not pending for the user. */
+  PASSWORD_SETUP_NOT_REQUIRED("user.password-setup-not-required"),
   /** Message key for two-factor authentication not enabled. */
   TWO_FA_NOT_ENABLED("user.two-fa-not-enabled"),
   /** Message key for password not set. */
