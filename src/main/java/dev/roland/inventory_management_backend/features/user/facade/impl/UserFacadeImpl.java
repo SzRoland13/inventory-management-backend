@@ -186,7 +186,7 @@ public class UserFacadeImpl implements UserFacade {
   }
 
   private void sendPasswordSetupInvitation(final User user) {
-    oneTimeCodeService.findByUserId(user.getId()).ifPresent(oneTimeCodeService::delete);
+    oneTimeCodeService.deleteByUserId(user.getId());
 
     final String token = UUID.randomUUID().toString().replace("-", "");
     oneTimeCodeService.save(

@@ -25,4 +25,11 @@ public interface OneTimeCodeService extends BaseService<OneTimeCode, Long> {
    *     Optional} if no matching token exists
    */
   Optional<OneTimeCode> findByUserId(Long userId);
+
+  /**
+   * Deletes a user's current token immediately so a replacement can be inserted safely.
+   *
+   * @param userId identifier of the user
+   */
+  void deleteByUserId(Long userId);
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,4 +33,13 @@ public interface OneTimeCodeRepository extends JpaRepository<OneTimeCode, Long> 
    * @return matching code, if one exists
    */
   Optional<OneTimeCode> findByUserId(Long userId);
+
+  /**
+   * Immediately removes a user's existing token before a replacement token is inserted.
+   *
+   * @param userId identifier of the user
+   */
+  @Modifying(flushAutomatically = true)
+  @Query("delete from OneTimeCode otc where otc.user.id = :userId")
+  void deleteByUserId(@Param("userId") Long userId);
 }
