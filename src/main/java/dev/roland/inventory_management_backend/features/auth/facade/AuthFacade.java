@@ -9,6 +9,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 
 /** Coordinates authentication flows that span multiple authentication services. */
@@ -52,11 +53,11 @@ public interface AuthFacade {
   /**
    * Initializes Two-Factor Authentication (2FA) setup for a user by generating a TOTP secret.
    *
-   * @param request contains the user's email
+   * @param request contains the user's email and short-lived login token
    * @return {@link String} with the generated QR code image (Base64 data URI)
    * @throws ApiException if user does not exist or already has 2FA enabled
    */
-  String setup2fa(EmailRequest request);
+  String setup2fa(TwoFactorSetupRequest request);
 
   /**
    * Validates a user's TOTP code during the login flow.

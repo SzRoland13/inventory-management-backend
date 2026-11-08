@@ -25,6 +25,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.LogoutResult;
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.facade.AuthFacade;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
@@ -106,9 +107,9 @@ class AuthControllerTest {
 
   @Test
   void twoFactorSetupAndLoginSetAuthenticationCookies() {
-    final EmailRequest email = email("alice@example.com");
-    when(authFacade.setup2fa(email)).thenReturn("qr-code");
-    assertEquals("qr-code", controller.setup2fa(email).getBody().getPayload());
+    final TwoFactorSetupRequest setupRequest = setupRequest("alice@example.com", "session");
+    when(authFacade.setup2fa(setupRequest)).thenReturn("qr-code");
+    assertEquals("qr-code", controller.setup2fa(setupRequest).getBody().getPayload());
 
     when(appConfiguration.isSecureCookie()).thenReturn(false);
     when(appConfiguration.getAccessTokenExpirationTime()).thenReturn(120_000L);
@@ -161,6 +162,13 @@ class AuthControllerTest {
   private EmailRequest email(final String address) {
     final EmailRequest request = new EmailRequest();
     request.setEmail(address);
+    return request;
+  }
+
+  private TwoFactorSetupRequest setupRequest(final String address, final String token) {
+    final TwoFactorSetupRequest request = new TwoFactorSetupRequest();
+    request.setEmail(address);
+    request.setShortLifeToken(token);
     return request;
   }
 }

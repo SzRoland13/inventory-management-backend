@@ -32,6 +32,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.EmailRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.FirstLoginValidationRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.LoginRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
 import dev.roland.inventory_management_backend.features.media_usage.service.MediaUsageService;
@@ -248,18 +249,27 @@ class AuthFacadeImplTest {
 
   @Test
   void setupTwoFactorRejectsAlreadyEnabledOrIncompleteAccountsAndPersistsSecret() {
+    when(loginSessionService.consumeSessionToken("session")).thenReturn("ready@example.com");
+    when(loginSessionService.consumeSessionToken("enabled-session"))
+        .thenReturn("enabled@example.com");
+    when(loginSessionService.consumeSessionToken("incomplete-session"))
+        .thenReturn("incomplete@example.com");
     when(userService.findUserByEmailOrThrow("enabled@example.com"))
         .thenReturn(User.builder().is2faEnabled(true).build());
     assertEquals(
         AuthMessageKey.TWO_FA_ALREADY_ENABLED,
-        assertThrows(ApiException.class, () -> facade.setup2fa(email("enabled@example.com")))
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("enabled@example.com", "enabled-session")))
             .getMessageKey());
 
     when(userService.findUserByEmailOrThrow("incomplete@example.com"))
         .thenReturn(User.builder().isOtcSetupComplete(false).build());
     assertEquals(
         AuthMessageKey.ONE_TIME_CODE_SHOULD_BE_VERIFIED_FIRST,
-        assertThrows(ApiException.class, () -> facade.setup2fa(email("incomplete@example.com")))
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("incomplete@example.com", "incomplete-session")))
             .getMessageKey());
 
     final User user = User.builder().email("ready@example.com").isOtcSetupComplete(true).build();
@@ -268,9 +278,38 @@ class AuthFacadeImplTest {
     when(twoFactorAuthService.generateQrCodeImage("totp-secret", "ready@example.com"))
         .thenReturn("qr-data");
 
-    assertEquals("qr-data", facade.setup2fa(email("ready@example.com")));
+    assertEquals("qr-data", facade.setup2fa(setupRequest("ready@example.com", "session")));
     assertEquals("totp-secret", user.getTotpSecret());
     verify(userService).save(user);
+  }
+
+  @Test
+  void setupTwoFactorRejectsMissingExpiredAndMismatchedSessionTokens() {
+    when(loginSessionService.consumeSessionToken("expired")).thenReturn(null);
+    when(loginSessionService.consumeSessionToken("other-user-session"))
+        .thenReturn("other@example.com");
+
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class, () -> facade.setup2fa(setupRequest("alice@example.com", null)))
+            .getMessageKey());
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("alice@example.com", "expired")))
+            .getMessageKey());
+    assertEquals(
+        AuthMessageKey.INVALID_OR_EXPIRED_SESSION,
+        assertThrows(
+                ApiException.class,
+                () -> facade.setup2fa(setupRequest("alice@example.com", "other-user-session")))
+            .getMessageKey());
+
+    verify(userService, never()).findUserByEmailOrThrow(any());
+    verify(twoFactorAuthService, never()).generateSecret();
+    verify(userService, never()).save(any(User.class));
   }
 
   @Test
@@ -347,6 +386,13 @@ class AuthFacadeImplTest {
   private EmailRequest email(final String address) {
     final EmailRequest request = new EmailRequest();
     request.setEmail(address);
+    return request;
+  }
+
+  private TwoFactorSetupRequest setupRequest(final String address, final String token) {
+    final TwoFactorSetupRequest request = new TwoFactorSetupRequest();
+    request.setEmail(address);
+    request.setShortLifeToken(token);
     return request;
   }
 

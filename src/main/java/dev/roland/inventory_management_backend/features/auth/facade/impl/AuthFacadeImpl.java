@@ -31,6 +31,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTo
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenWithExpiry;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.facade.AuthFacade;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
@@ -186,7 +187,16 @@ public class AuthFacadeImpl implements AuthFacade {
   /** {@inheritDoc} */
   @Override
   @Transactional
-  public String setup2fa(final EmailRequest request) {
+  public String setup2fa(final TwoFactorSetupRequest request) {
+    final String emailFromToken =
+        request.getShortLifeToken() == null || request.getShortLifeToken().isBlank()
+            ? null
+            : loginSessionService.consumeSessionToken(request.getShortLifeToken());
+
+    if (emailFromToken == null || !emailFromToken.equals(request.getEmail())) {
+      throw new ApiException(AuthMessageKey.INVALID_OR_EXPIRED_SESSION);
+    }
+
     final User user = userService.findUserByEmailOrThrow(request.getEmail());
 
     if (user.is2faEnabled()) {

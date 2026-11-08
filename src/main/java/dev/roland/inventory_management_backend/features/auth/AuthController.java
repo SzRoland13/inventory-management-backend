@@ -30,6 +30,7 @@ import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupRe
 import dev.roland.inventory_management_backend.features.auth.dto.PasswordSetupTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.ShortLifeTokenResponse;
 import dev.roland.inventory_management_backend.features.auth.dto.TokenRefreshResult;
+import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorSetupRequest;
 import dev.roland.inventory_management_backend.features.auth.dto.TwoFactorVerifyRequest;
 import dev.roland.inventory_management_backend.features.auth.facade.AuthFacade;
 import dev.roland.inventory_management_backend.features.auth.message.AuthMessageKey;
@@ -167,11 +168,12 @@ public class AuthController {
   /**
    * Starts two-factor authentication setup for the account.
    *
-   * @param request account email
+   * @param request account email and short-lived login token
    * @return response containing the authenticator setup data
    */
   @PostMapping(TWO_FA_SETUP_ENDPOINT)
-  ResponseEntity<ApiResponse<String>> setup2fa(@Valid @RequestBody final EmailRequest request) {
+  ResponseEntity<ApiResponse<String>> setup2fa(
+      @Valid @RequestBody final TwoFactorSetupRequest request) {
     return ResponseEntity.ok(
         ApiResponse.success(AuthMessageKey.TWO_FA_CODE_GENERATED, authFacade.setup2fa(request)));
   }
