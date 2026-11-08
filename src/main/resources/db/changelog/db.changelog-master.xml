@@ -31,4 +31,6 @@
     <include file="db/changelog/changes/024-document-posting-key-result.xml"/>
     <include file="db/changelog/changes/025-commercial-documents.xml"/>
     <include file="db/changelog/changes/026-hash-one-time-codes.xml"/>
+    <include file="db/changelog/changes/027-product-minimum-stock.xml"/>
+    <include file="db/changelog/changes/028-partner-billing-identifiers.xml"/>
 </databaseChangeLog>

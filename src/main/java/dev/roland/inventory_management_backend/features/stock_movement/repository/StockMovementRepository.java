@@ -10,10 +10,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
+import dev.roland.inventory_management_backend.features.stock_movement.dto.EffectiveStockSnapshot;
 import dev.roland.inventory_management_backend.features.stock_movement.dto.StockMovementQueryRow;
 
 /** Provides database queries for stock movement records. */
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
+  /**
+   * Finds products with nonzero effective stock in a warehouse at the supplied timestamp.
+   *
+   * @param companyId owning company identifier
+   * @param warehouseId warehouse identifier
+   * @param effectiveAt inclusive effective timestamp
+   * @return nonzero product stock snapshots
+   */
+  @Query(
+      "select m.product.id as productId, sum(m.quantityChange) as quantity "
+          + "from StockMovement m where m.warehouse.company.id = :companyId "
+          + "and m.warehouse.id = :warehouseId and m.effectiveAt <= :effectiveAt "
+          + "group by m.product.id having sum(m.quantityChange) <> 0")
+  List<EffectiveStockSnapshot> findEffectiveStockThrough(
+      @Param("companyId") Long companyId,
+      @Param("warehouseId") Long warehouseId,
+      @Param("effectiveAt") LocalDateTime effectiveAt);
+
   /**
    * Finds movements through the supplied timestamp in chronological order.
    *

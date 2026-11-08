@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+    <changeSet id="028-partner-billing-identifiers" author="roland">
+        <addColumn tableName="partners">
+            <column name="vat_number" type="VARCHAR(50)"/>
+            <column name="registration_number" type="VARCHAR(100)"/>
+            <column name="bank_account" type="VARCHAR(100)"/>
+            <column name="iban" type="VARCHAR(50)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

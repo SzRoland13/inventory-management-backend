@@ -3,6 +3,10 @@ package dev.roland.inventory_management_backend.features.document.facade.workflo
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import jakarta.transaction.Transactional;
 
@@ -16,6 +20,7 @@ import dev.roland.inventory_management_backend.features.company.Company;
 import dev.roland.inventory_management_backend.features.document.Document;
 import dev.roland.inventory_management_backend.features.document.DocumentPostingKey;
 import dev.roland.inventory_management_backend.features.document.dto.DocumentResponse;
+import dev.roland.inventory_management_backend.features.document.dto.StockCountItemsRequest;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationPreview;
 import dev.roland.inventory_management_backend.features.document.dto.WarehouseOperationRequest;
 import dev.roland.inventory_management_backend.features.document.enumeration.DocumentCategory;
@@ -32,13 +37,15 @@ import dev.roland.inventory_management_backend.features.document_activity.Docume
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line.service.DocumentLineService;
 import dev.roland.inventory_management_backend.features.product.Product;
+import dev.roland.inventory_management_backend.features.product.enumeration.ProductStatus;
 import dev.roland.inventory_management_backend.features.product.service.ProductService;
-import dev.roland.inventory_management_backend.features.stock_movement.StockMovement;
 import dev.roland.inventory_management_backend.features.stock_movement.enumeration.StockMovementType;
 import dev.roland.inventory_management_backend.features.stock_movement.service.StockMovementService;
 import dev.roland.inventory_management_backend.features.user.User;
 import dev.roland.inventory_management_backend.features.user.enumeration.UserRole;
 import dev.roland.inventory_management_backend.features.warehouse.Warehouse;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseStatus;
+import dev.roland.inventory_management_backend.features.warehouse.enumeration.WarehouseType;
 import dev.roland.inventory_management_backend.features.warehouse.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 
@@ -58,6 +65,70 @@ public class WarehouseOperationCommandService {
   private final WarehouseOperationSupportService warehouseOperationSupportService;
   private final WarehouseOperationPreviewService previewService;
   private final WarehouseOperationRecordService recordService;
+
+  /**
+   * Adds products to a draft stock count with their expected and initial counted quantities.
+   *
+   * @param id the stock count identifier
+   * @param request the requested products and current document version
+   * @return the updated stock count
+   * @throws ApiException when the request is invalid or the operation is not permitted
+   */
+  @Transactional
+  public DocumentResponse addStockCountItems(final Long id, final StockCountItemsRequest request) {
+    if (request == null || request.productIds() == null || request.productIds().isEmpty()) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+    }
+    final Company company = companyProvider.getCurrentCompany();
+    final User user = accessService.currentActor();
+    warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
+    final Document count = accessService.lock(id, company.getId());
+    if (count.getType() != DocumentType.STOCK_COUNT
+        || count.getStatus() != DocumentStatus.DRAFT
+        || count.getCountedAt() == null
+        || count.getSourceWarehouse() == null) {
+      throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_TRANSITION);
+    }
+    warehouseOperationSupportService.requireVersion(count, request.version());
+    if (count.getLines() == null) {
+      count.setLines(new ArrayList<>());
+    }
+
+    final Set<Long> existingProductIds = new HashSet<>();
+    DocumentWorkflowValues.safe(count.getLines())
+        .forEach(line -> existingProductIds.add(line.getProduct().getId()));
+    final Set<Long> requestedProductIds = new HashSet<>();
+    final Map<Long, BigDecimal> expectedByProduct = new HashMap<>();
+    stockMovementService
+        .findEffectiveStockThrough(
+            company.getId(), count.getSourceWarehouse().getId(), count.getCountedAt())
+        .forEach(
+            snapshot -> expectedByProduct.put(snapshot.getProductId(), snapshot.getQuantity()));
+
+    for (final Long productId : request.productIds()) {
+      if (!requestedProductIds.add(productId) || existingProductIds.contains(productId)) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final Product product =
+          productService
+              .findByIdAndCompanyId(productId, company.getId())
+              .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
+      if (product.getStatus() != ProductStatus.ACTIVE) {
+        throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
+      }
+      final var countUnit =
+          product.getSecondaryUnit() == null ? product.getUnit() : product.getSecondaryUnit();
+      final DocumentLine line =
+          DocumentLineMapper.buildLine(count, product, countUnit, BigDecimal.ZERO, BigDecimal.ZERO);
+      line.setConversionFactorSnapshot(BigDecimal.ONE);
+      line.setExpectedQuantity(expectedByProduct.getOrDefault(productId, BigDecimal.ZERO));
+      line.setCountedQuantity(BigDecimal.ZERO);
+      count.getLines().add(lineService.save(line));
+      existingProductIds.add(productId);
+    }
+    writer.addActivity(count, DocumentActivityEvent.EDITED, "stock count products added");
+    return responseMapper.toResponse(documentService.save(count));
+  }
 
   /**
    * Applies a warehouse operation to a document.
@@ -98,7 +169,7 @@ public class WarehouseOperationCommandService {
     }
     if (result == null) {
       if (root != null
-          && java.util.Set.of(
+          && Set.of(
                   WarehouseOperationType.TRANSFER_DISPATCH,
                   WarehouseOperationType.TRANSFER_RECEIPT,
                   WarehouseOperationType.TRANSFER_RESOLVE,
@@ -123,16 +194,9 @@ public class WarehouseOperationCommandService {
                 ? null
                 : warehouseService.findEntityByIdAndCompanyId(
                     request.transitWarehouseId(), company.getId());
-        if (source.getStatus()
-                != dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseStatus.ACTIVE
-            || destination.getStatus()
-                != dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseStatus.ACTIVE
-            || (transit != null
-                && transit.getStatus()
-                    != dev.roland.inventory_management_backend.features.warehouse.enumeration
-                        .WarehouseStatus.ACTIVE)) {
+        if (source.getStatus() != WarehouseStatus.ACTIVE
+            || destination.getStatus() != WarehouseStatus.ACTIVE
+            || (transit != null && transit.getStatus() != WarehouseStatus.ACTIVE)) {
           throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
         }
         if (source.getId().equals(destination.getId())
@@ -141,22 +205,11 @@ public class WarehouseOperationCommandService {
                     || transit.getId().equals(destination.getId())))) {
           throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
         }
-        if (source.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.TRANSIT
-            || source.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.QUARANTINE
-            || destination.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.TRANSIT
-            || destination.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.QUARANTINE
-            || (transit != null
-                && transit.getType()
-                    != dev.roland.inventory_management_backend.features.warehouse.enumeration
-                        .WarehouseType.TRANSIT)
+        if (source.getType() == WarehouseType.TRANSIT
+            || source.getType() == WarehouseType.QUARANTINE
+            || destination.getType() == WarehouseType.TRANSIT
+            || destination.getType() == WarehouseType.QUARANTINE
+            || (transit != null && transit.getType() != WarehouseType.TRANSIT)
             || DocumentWorkflowValues.safe(request.lines()).stream()
                 .anyMatch(
                     l ->
@@ -193,20 +246,14 @@ public class WarehouseOperationCommandService {
       }
       if (operation == WarehouseOperationType.STOCK_COUNT_CREATE) {
         warehouseOperationSupportService.requireRole(user, UserRole.ADMIN, UserRole.MANAGER);
-        if (request.countedAt() == null || request.lines() == null || request.lines().isEmpty()) {
+        if (request.countedAt() == null) {
           throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
         }
         final Warehouse warehouse =
             warehouseService.findEntityByIdAndCompanyId(request.warehouseId(), company.getId());
-        if (warehouse.getStatus()
-                != dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseStatus.ACTIVE
-            || warehouse.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.TRANSIT
-            || warehouse.getType()
-                == dev.roland.inventory_management_backend.features.warehouse.enumeration
-                    .WarehouseType.QUARANTINE) {
+        if (warehouse.getStatus() != WarehouseStatus.ACTIVE
+            || warehouse.getType() == WarehouseType.TRANSIT
+            || warehouse.getType() == WarehouseType.QUARANTINE) {
           throw new ApiException(DocumentApiMessageKey.DOCUMENT_INVALID_LINES);
         }
         root = new Document();
@@ -220,27 +267,6 @@ public class WarehouseOperationCommandService {
         root.setWorkflowReason(request.reason());
         root.setCreatedByUser(user);
         root.setLines(new ArrayList<>());
-        root = documentService.save(root);
-        for (var item : DocumentWorkflowValues.safe(request.lines())) {
-          final Product product =
-              productService
-                  .findByIdAndCompanyId(item.productId(), company.getId())
-                  .orElseThrow(() -> new NotFoundException(NotFoundMessageKey.PRODUCT));
-          final var stockUnit =
-              product.getSecondaryUnit() == null ? product.getUnit() : product.getSecondaryUnit();
-          final DocumentLine line =
-              DocumentLineMapper.buildLine(
-                  root, product, stockUnit, BigDecimal.ZERO, BigDecimal.ZERO);
-          line.setConversionFactorSnapshot(BigDecimal.ONE);
-          line.setCountedQuantity(DocumentWorkflowValues.nz(item.countedQuantity()));
-          line.setExpectedQuantity(
-              stockMovementService
-                  .findEffectiveThrough(product.getId(), warehouse.getId(), root.getCountedAt())
-                  .stream()
-                  .map(StockMovement::getQuantityChange)
-                  .reduce(BigDecimal.ZERO, BigDecimal::add));
-          root.getLines().add(lineService.save(line));
-        }
         writer.addActivity(root, DocumentActivityEvent.CREATED, "stock count");
         result = responseMapper.toResponse(documentService.save(root));
       }

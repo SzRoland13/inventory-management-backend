@@ -34,6 +34,7 @@ import dev.roland.inventory_management_backend.features.document.enumeration.Ret
 import dev.roland.inventory_management_backend.features.document.enumeration.ReturnDisposition;
 import dev.roland.inventory_management_backend.features.document.enumeration.WarehouseOperationType;
 import dev.roland.inventory_management_backend.features.document.mapper.DocumentResponseMapper;
+import dev.roland.inventory_management_backend.features.document.message.DocumentApiMessageKey;
 import dev.roland.inventory_management_backend.features.document_line.DocumentLine;
 import dev.roland.inventory_management_backend.features.document_line_allocation.DocumentLineAllocation;
 import dev.roland.inventory_management_backend.features.document_line_allocation.service.DocumentLineAllocationService;
@@ -429,6 +430,23 @@ class WarehouseOperationPreviewServiceTest {
   }
 
   @Test
+  void rejectsEmptyStockCountReconciliationUntilProductsAreAdded() {
+    final Document count = document(DocumentType.STOCK_COUNT, DocumentStatus.DRAFT);
+    count.setCountedAt(LocalDateTime.of(2026, 10, 1, 10, 0));
+    count.setSourceWarehouse(warehouse);
+    count.setLines(List.of());
+    when(accessService.find(DOCUMENT_ID)).thenReturn(count);
+    final WarehouseOperationRequest countRequest =
+        request(null, null, null, count.getCountedAt(), null, null, null, null, List.of(), null);
+
+    final WarehouseOperationPreview preview =
+        service.preview(DOCUMENT_ID, WarehouseOperationType.STOCK_COUNT_RECONCILE, countRequest);
+
+    assertFalse(preview.valid());
+    assertTrue(preview.lines().isEmpty());
+  }
+
+  @Test
   void reportsMissingReturnSourceDirectionReasonAndDisposition() {
     final WarehouseOperationPreview preview =
         service.preview(
@@ -550,10 +568,7 @@ class WarehouseOperationPreviewServiceTest {
     assertTrue(
         conflict
             .blockers()
-            .contains(
-                dev.roland.inventory_management_backend.features.document.message
-                    .DocumentApiMessageKey.DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT
-                    .getKey()));
+            .contains(DocumentApiMessageKey.DOCUMENT_CORRECTION_CLOSED_QUANTITY_CONFLICT.getKey()));
 
     final var excessiveReopenLine =
         new WarehouseOperationRequest.WarehouseOperationLine(

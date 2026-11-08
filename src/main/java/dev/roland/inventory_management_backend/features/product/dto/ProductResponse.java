@@ -21,6 +21,7 @@ import dev.roland.inventory_management_backend.features.product.enumeration.Prod
  * @param ean product European Article Number
  * @param id unique identifier
  * @param name display name
+ * @param minimumStockQuantity optional low-stock threshold in the main unit
  * @param pricing product pricing configuration
  * @param sku product stock keeping unit
  * @param status product status
@@ -34,6 +35,7 @@ public record ProductResponse(
     String sku,
     String ean,
     String name,
+    BigDecimal minimumStockQuantity,
     String description,
     BrandResponse brand,
     ProductStatus status,
@@ -47,6 +49,46 @@ public record ProductResponse(
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
     LocalDateTime deletedAt) {
+
+  /** Backwards-compatible constructor for internal callers predating stock thresholds. */
+  public ProductResponse(
+      final Long id,
+      final String sku,
+      final String ean,
+      final String name,
+      final String description,
+      final BrandResponse brand,
+      final ProductStatus status,
+      final Units units,
+      final Pricing pricing,
+      final Dimensions dimensions,
+      final List<Long> categoryIds,
+      final List<ProductAttributeValueResponse> attributes,
+      final List<ProductStockResponse> stockByWarehouse,
+      final List<ProductImageResponse> images,
+      final LocalDateTime createdAt,
+      final LocalDateTime updatedAt,
+      final LocalDateTime deletedAt) {
+    this(
+        id,
+        sku,
+        ean,
+        name,
+        null,
+        description,
+        brand,
+        status,
+        units,
+        pricing,
+        dimensions,
+        categoryIds,
+        attributes,
+        stockByWarehouse,
+        images,
+        createdAt,
+        updatedAt,
+        deletedAt);
+  }
 
   /** Copies response collections to keep the representation immutable. */
   public ProductResponse {

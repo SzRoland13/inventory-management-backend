@@ -171,6 +171,10 @@ public class PartnerFacadeImpl implements PartnerFacade {
     partner.setName(request.name().trim());
     partner.setType(request.type());
     partner.setTaxNumber(tax);
+    partner.setVatNumber(normalizeOptional(request.vatNumber()));
+    partner.setRegistrationNumber(normalizeOptional(request.registrationNumber()));
+    partner.setBankAccount(normalizeOptional(request.bankAccount()));
+    partner.setIban(normalizeOptional(request.iban()));
   }
 
   private static void apply(final Contact contact, final ContactRequest request) {
@@ -185,6 +189,10 @@ public class PartnerFacadeImpl implements PartnerFacade {
         request.email() == null || request.email().isBlank() ? null : request.email().trim());
   }
 
+  private static String normalizeOptional(final String value) {
+    return value == null || value.isBlank() ? null : value.trim();
+  }
+
   private PartnerResponse toResponse(final Partner partner) {
     final List<ContactResponse> contacts =
         contactService.list(partner.getId(), partner.getCompany().getId()).stream()
@@ -195,6 +203,10 @@ public class PartnerFacadeImpl implements PartnerFacade {
         partner.getName(),
         partner.getType(),
         partner.getTaxNumber(),
+        partner.getVatNumber(),
+        partner.getRegistrationNumber(),
+        partner.getBankAccount(),
+        partner.getIban(),
         partner.getDeletedAt() != null,
         partner.getCreatedAt(),
         partner.getUpdatedAt(),

@@ -1,8 +1,8 @@
 package dev.roland.inventory_management_backend.features.company.dto;
 
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import dev.roland.inventory_management_backend.common.validation.DomesticTaxNumber;
 import dev.roland.inventory_management_backend.common.validation.Iban;
 import dev.roland.inventory_management_backend.common.validation.ValidationKeys;
 import dev.roland.inventory_management_backend.common.validation.VatNumber;
@@ -18,9 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CompanyBillingDataUpdateRequest {
   @Size(max = 50, message = ValidationKeys.TOO_LONG)
-  @Pattern(
-      regexp = "^\\s*(?:[0-9]{8}-[1245]-[0-9]{2})?\\s*$",
-      message = ValidationKeys.INVALID_VALUE)
+  @DomesticTaxNumber
   private String taxNumber;
 
   @Size(max = 50, message = ValidationKeys.TOO_LONG)

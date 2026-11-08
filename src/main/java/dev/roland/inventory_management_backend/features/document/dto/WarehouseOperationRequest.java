@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -149,7 +150,7 @@ public record WarehouseOperationRequest(
           BigDecimal correctedQuantity,
       @Positive(message = ValidationKeys.INVALID_VALUE) Long correctedProductId,
       @Positive(message = ValidationKeys.INVALID_VALUE) Long correctedWarehouseId,
-      @Positive(message = ValidationKeys.INVALID_VALUE)
+      @DecimalMin(value = "0", message = ValidationKeys.INVALID_VALUE)
           @Digits(integer = 16, fraction = 8, message = ValidationKeys.INVALID_VALUE)
           BigDecimal countedQuantity,
       @Size(max = 500, message = ValidationKeys.TOO_LONG) String varianceReason,
